@@ -848,7 +848,10 @@ function DashboardContent() {
                     ))}
                   </div>
                 )}
-                {/* 4. Resultados via API */}
+              </div>
+            )}
+
+            {/* 4. Resultados via API */}
         {activeTab === 'placares_geral' && (
           <div>
             <div style={{ marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
@@ -980,10 +983,6 @@ function DashboardContent() {
                   );
                 })}
               </div>
-            )}
-          </div>
-        )}
-              </>
             )}
           </div>
         )}
