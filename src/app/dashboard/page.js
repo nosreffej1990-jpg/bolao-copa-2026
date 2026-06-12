@@ -848,8 +848,10 @@ function DashboardContent() {
                     ))}
                   </div>
                 )}
-              </div>
+              </>
             )}
+          </div>
+        )}
 
             {/* 4. Resultados via API */}
         {activeTab === 'placares_geral' && (
