@@ -395,8 +395,9 @@ body {
 .drawer-link {
     padding: 0.9rem 1.1rem;
     border-radius: var(--radius-md);
-    background-color: rgba(255,255,255,0.02);
-    border: 1px solid transparent;
+    background-color: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.08);
+    color: #cbd5e1;
     display: flex;
     align-items: center;
     gap: 1rem;
@@ -404,6 +405,13 @@ body {
     font-size: 0.9rem;
     cursor: pointer;
     transition: all 0.2s ease;
+    color: #cbd5e1;
+}
+
+.drawer-link:hover {
+    background-color: rgba(16, 185, 129, 0.1);
+    border-color: rgba(16, 185, 129, 0.3);
+    color: #ffffff;
 }
 
 .drawer-link.active {
@@ -412,7 +420,12 @@ body {
     color: #ffffff;
 }
 
-.drawer-link.active i {
+.drawer-link svg {
+    color: #94a3b8;
+    flex-shrink: 0;
+}
+
+.drawer-link.active svg, .drawer-link:hover svg {
     color: var(--soccer-green);
 }
 

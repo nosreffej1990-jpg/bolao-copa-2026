@@ -4,6 +4,7 @@ import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Icons } from '@/components/Icons';
 import { supabase } from '@/lib/supabase';
+import { getFinishedMatches, getLiveMatches, getUpcomingMatches, getFlagCode, formatMatchDate } from '@/lib/worldcupApi';
 
 function DashboardContent() {
   const router = useRouter();
@@ -19,6 +20,12 @@ function DashboardContent() {
   const [confrontos, setConfrontos] = useState([]);
   const [palpites, setPalpites] = useState({}); // key: match_id -> { home, away, saved }
   const [boloes, setBoloes] = useState([]);
+
+  // API worldcup26.ir states
+  const [apiFinished, setApiFinished] = useState([]);
+  const [apiLive, setApiLive] = useState([]);
+  const [apiUpcoming, setApiUpcoming] = useState([]);
+  const [apiLoading, setApiLoading] = useState(true);
   
   // Filters
   const [activeGroup, setActiveGroup] = useState('A');
@@ -27,6 +34,9 @@ function DashboardContent() {
   const [showCameraModal, setShowCameraModal] = useState(false);
   const [showPhotoModal, setShowPhotoModal] = useState(null); // photoUrl
   const [showBetsModal, setShowBetsModal] = useState(null); // bolaoData
+  const [showDeleteModal, setShowDeleteModal] = useState(null); // { id, bettor_name }
+  const [deletePassword, setDeletePassword] = useState('');
+  const [deleteError, setDeleteError] = useState('');
   
   // Camera simulation
   const [cameraStep, setCameraStep] = useState(1); // 1: choose, 2: capturing/ocr, 3: success
@@ -49,9 +59,36 @@ function DashboardContent() {
       setActiveTab(queryTab);
     }
 
-    // Load data from Supabase / LocalDB
+    // Load data from Supabase
     fetchData();
+
+    // Load API data on mount
+    fetchApiData();
   }, [searchParams]);
+
+  // Poll API every 60 seconds for live updates
+  useEffect(() => {
+    const interval = setInterval(fetchApiData, 60000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const fetchApiData = async () => {
+    setApiLoading(true);
+    try {
+      const [finished, live, upcoming] = await Promise.all([
+        getFinishedMatches(),
+        getLiveMatches(),
+        getUpcomingMatches(15),
+      ]);
+      setApiFinished(finished);
+      setApiLive(live);
+      setApiUpcoming(upcoming);
+    } catch (e) {
+      console.error('Erro na API:', e);
+    } finally {
+      setApiLoading(false);
+    }
+  };
 
   const fetchData = async () => {
     const { data: confs } = await supabase.from('confrontos').select('*');
@@ -133,6 +170,27 @@ function DashboardContent() {
       localStorage.removeItem('copa26_user');
     }
     router.push('/');
+  };
+
+  // Delete bolão with password confirmation
+  const USERS = { Jefferson: '060199', Junior: '062026' };
+  const confirmDeleteBolao = async () => {
+    if (!currentUser) return;
+    const correctPass = USERS[currentUser];
+    if (deletePassword !== correctPass) {
+      setDeleteError('Senha incorreta. Tente novamente.');
+      return;
+    }
+    const { error } = await supabase.from('boloes').delete().eq('id', showDeleteModal.id);
+    if (!error) {
+      showToast(`Bolão de ${showDeleteModal.bettor_name} excluído.`);
+      setShowDeleteModal(null);
+      setDeletePassword('');
+      setDeleteError('');
+      fetchData();
+    } else {
+      setDeleteError('Erro ao excluir. Tente novamente.');
+    }
   };
 
   // Upload/Camera bolão flow
@@ -250,22 +308,13 @@ function DashboardContent() {
 
           <nav className="drawer-nav">
             {currentUser && (
-              <>
-                <button
-                  className={`drawer-link ${activeTab === 'boloes' ? 'active' : ''}`}
-                  onClick={() => { setActiveTab('boloes'); setIsDrawerOpen(false); }}
-                >
-                  <Icons.Camera size={18} />
-                  <span>Bolões</span>
-                </button>
-                <button
-                  className={`drawer-link ${activeTab === 'placares' ? 'active' : ''}`}
-                  onClick={() => { setActiveTab('placares'); setIsDrawerOpen(false); }}
-                >
-                  <Icons.List size={18} />
-                  <span>Placares</span>
-                </button>
-              </>
+              <button
+                className={`drawer-link ${activeTab === 'boloes' ? 'active' : ''}`}
+                onClick={() => { setActiveTab('boloes'); setIsDrawerOpen(false); }}
+              >
+                <Icons.Camera size={18} />
+                <span>Bolões</span>
+              </button>
             )}
 
             <button
@@ -422,6 +471,9 @@ function DashboardContent() {
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              {boloes.length === 0 && (
+                <p style={{ textAlign: 'center', color: 'var(--text-secondary)', fontSize: '0.8rem', padding: '2rem 0' }}>Nenhum bolão cadastrado ainda. Clique em "Upar Bolão" para adicionar!</p>
+              )}
               {boloes.map(b => (
                 <div className="bolao-card" key={b.id}>
                   <div className="bolao-card-top">
@@ -443,6 +495,13 @@ function DashboardContent() {
                     <button className="bolao-action-btn btn-view-bets" onClick={() => setShowBetsModal(b)}>
                       <Icons.Trophy size={12} />
                       Apostas
+                    </button>
+                    <button
+                      className="bolao-action-btn"
+                      style={{ background: 'rgba(239,68,68,0.12)', border: '1px solid #ef4444', color: '#ef4444' }}
+                      onClick={() => { setShowDeleteModal({ id: b.id, bettor_name: b.bettor_name }); setDeletePassword(''); setDeleteError(''); }}
+                    >
+                      🗑️ Excluir
                     </button>
                   </div>
                 </div>
@@ -522,85 +581,135 @@ function DashboardContent() {
                     ))}
                   </div>
                 )}
-              </>
+                {/* 4. Resultados via API */}
+        {activeTab === 'placares_geral' && (
+          <div>
+            <div style={{ marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <div>
+                <h3 style={{ fontSize: '1.05rem', marginBottom: '0.2rem' }}>Resultados dos Jogos</h3>
+                <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Placares oficiais • Atualizado a cada 60s</p>
+              </div>
+              {apiLive.length > 0 && (
+                <span style={{ background: '#ef4444', color: '#fff', fontSize: '0.65rem', fontWeight: 'bold', padding: '0.2rem 0.5rem', borderRadius: '999px', animation: 'pulse 1.5s infinite' }}>🔴 AO VIVO</span>
+              )}
+            </div>
+
+            {/* Ao vivo */}
+            {apiLive.map(g => {
+              const hFlag = getFlagCode(g.home_team_name_en);
+              const aFlag = getFlagCode(g.away_team_name_en);
+              return (
+                <div className="matchup-card" key={g.id} style={{ borderColor: '#ef4444', boxShadow: '0 0 12px rgba(239,68,68,0.25)' }}>
+                  <div className="matchup-meta">
+                    <span style={{ color: '#ef4444', fontWeight: 'bold' }}>🔴 AO VIVO • Grupo {g.group}</span>
+                    <span>{g.time_elapsed}</span>
+                  </div>
+                  <div className="matchup-teams-row">
+                    <div className="matchup-team-item">
+                      <img src={`https://flagcdn.com/w80/${hFlag}.png`} className="team-flag" alt={g.home_team_name_en} />
+                      <span>{g.home_team_name_en}</span>
+                    </div>
+                    <div className="matchup-scores-center">
+                      <input type="number" className="score-field" value={g.home_score} readOnly />
+                      <span className="score-sep">x</span>
+                      <input type="number" className="score-field" value={g.away_score} readOnly />
+                    </div>
+                    <div className="matchup-team-item">
+                      <img src={`https://flagcdn.com/w80/${aFlag}.png`} className="team-flag" alt={g.away_team_name_en} />
+                      <span>{g.away_team_name_en}</span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+
+            {/* Finalizados */}
+            {apiLoading && apiFinished.length === 0 ? (
+              <p style={{ textAlign: 'center', color: 'var(--text-secondary)', fontSize: '0.8rem', padding: '2rem' }}>Carregando resultados...</p>
+            ) : apiFinished.length === 0 ? (
+              <p style={{ textAlign: 'center', color: 'var(--text-secondary)', fontSize: '0.8rem', padding: '2rem' }}>Nenhum jogo finalizado ainda.</p>
+            ) : (
+              <div className="matchup-list">
+                {apiFinished.map(g => {
+                  const hFlag = getFlagCode(g.home_team_name_en);
+                  const aFlag = getFlagCode(g.away_team_name_en);
+                  const { date, time } = formatMatchDate(g.local_date);
+                  return (
+                    <div className="matchup-card" key={g.id} style={{ borderColor: 'rgba(16,185,129,0.3)' }}>
+                      <div className="matchup-meta">
+                        <span>Grupo {g.group} • Encerrado</span>
+                        <span>{date} {time}</span>
+                      </div>
+                      <div className="matchup-teams-row">
+                        <div className="matchup-team-item">
+                          <img src={`https://flagcdn.com/w80/${hFlag}.png`} className="team-flag" alt={g.home_team_name_en} />
+                          <span>{g.home_team_name_en}</span>
+                        </div>
+                        <div className="matchup-scores-center">
+                          <input type="number" className="score-field" value={g.home_score} readOnly />
+                          <span className="score-sep">x</span>
+                          <input type="number" className="score-field" value={g.away_score} readOnly />
+                        </div>
+                        <div className="matchup-team-item">
+                          <img src={`https://flagcdn.com/w80/${aFlag}.png`} className="team-flag" alt={g.away_team_name_en} />
+                          <span>{g.away_team_name_en}</span>
+                        </div>
+                      </div>
+                      {g.home_scorers && g.home_scorers !== 'null' && (
+                        <p style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', marginTop: '0.5rem', textAlign: 'center' }}>⚽ {g.home_scorers.replace(/[{}\"/]/g, '')}</p>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
             )}
           </div>
         )}
 
-        {/* 4. Placares Gerais (Finished Matches with scores) */}
-        {activeTab === 'placares_geral' && (
-          <div>
-            <div style={{ marginBottom: '1.25rem' }}>
-              <h3 style={{ fontSize: '1.05rem', marginBottom: '0.2rem' }}>Resultados Oficiais</h3>
-              <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Partidas da Copa finalizadas com pontuação válida</p>
-            </div>
-
-            <div className="matchup-list">
-              {confrontos.filter(m => m.finished).map(match => (
-                <div className="matchup-card" key={match.id} style={{ borderColor: 'rgba(16, 185, 129, 0.2)' }}>
-                  <div className="matchup-meta">
-                    <span>Grupo {match.grupo} • Finalizado</span>
-                    <span>{new Date(match.match_date).toLocaleDateString('pt-BR')} {match.match_time.slice(0, 5)}</span>
-                  </div>
-                  <div className="matchup-teams-row">
-                    <div className="matchup-team-item">
-                      <img src={`https://flagcdn.com/w80/${match.home_code}.png`} className="team-flag" alt={match.home_team} />
-                      <span>{match.home_team}</span>
-                    </div>
-
-                    <div className="matchup-scores-center">
-                      <input type="number" className="score-field" value={match.home_score} disabled />
-                      <span className="score-sep">x</span>
-                      <input type="number" className="score-field" value={match.away_score} disabled />
-                    </div>
-
-                    <div className="matchup-team-item">
-                      <img src={`https://flagcdn.com/w80/${match.away_code}.png`} className="team-flag" alt={match.away_team} />
-                      <span>{match.away_team}</span>
-                    </div>
-                  </div>
-                </div>
-              ))}
-              {confrontos.filter(m => m.finished).length === 0 && (
-                <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', textAlign: 'center' }}>Nenhum jogo finalizado ainda.</p>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* 5. Próximos Confrontos (Upcoming matches) */}
+        {/* 5. Próximos Confrontos via API */}
         {activeTab === 'confrontos_geral' && (
           <div>
             <div style={{ marginBottom: '1.25rem' }}>
               <h3 style={{ fontSize: '1.05rem', marginBottom: '0.2rem' }}>Próximos Confrontos</h3>
-              <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Partidas com datas e horários oficiais da FIFA</p>
+              <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Partidas oficiais da Copa 2026 • worldcup26.ir</p>
             </div>
 
-            <div className="matchup-list">
-              {confrontos.filter(m => !m.finished).map(match => (
-                <div className="matchup-card" key={match.id}>
-                  <div className="matchup-meta">
-                    <span>Grupo {match.grupo} • {match.stadium}</span>
-                    <span>{new Date(match.match_date).toLocaleDateString('pt-BR')} {match.match_time.slice(0, 5)}</span>
-                  </div>
-                  <div className="matchup-teams-row">
-                    <div className="matchup-team-item">
-                      <img src={`https://flagcdn.com/w80/${match.home_code}.png`} className="team-flag" alt={match.home_team} />
-                      <span>{match.home_team}</span>
+            {apiLoading && apiUpcoming.length === 0 ? (
+              <p style={{ textAlign: 'center', color: 'var(--text-secondary)', fontSize: '0.8rem', padding: '2rem' }}>Carregando calendário...</p>
+            ) : (
+              <div className="matchup-list">
+                {apiUpcoming.map(g => {
+                  const hFlag = getFlagCode(g.home_team_name_en);
+                  const aFlag = getFlagCode(g.away_team_name_en);
+                  const { date, time } = formatMatchDate(g.local_date);
+                  return (
+                    <div className="matchup-card" key={g.id}>
+                      <div className="matchup-meta">
+                        <span>Grupo {g.group} • Rodada {g.matchday}</span>
+                        <span>{date} às {time}</span>
+                      </div>
+                      <div className="matchup-teams-row">
+                        <div className="matchup-team-item">
+                          <img src={`https://flagcdn.com/w80/${hFlag}.png`} className="team-flag" alt={g.home_team_name_en} />
+                          <span>{g.home_team_name_en}</span>
+                        </div>
+                        <div className="matchup-scores-center">
+                          <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: 'bold' }}>vs</span>
+                        </div>
+                        <div className="matchup-team-item">
+                          <img src={`https://flagcdn.com/w80/${aFlag}.png`} className="team-flag" alt={g.away_team_name_en} />
+                          <span>{g.away_team_name_en}</span>
+                        </div>
+                      </div>
                     </div>
-
-                    <div className="matchup-scores-center">
-                      <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 'bold' }}>vs</span>
-                    </div>
-
-                    <div className="matchup-team-item">
-                      <img src={`https://flagcdn.com/w80/${match.away_code}.png`} className="team-flag" alt={match.away_team} />
-                      <span>{match.away_team}</span>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+              </>
+            )}
           </div>
         )}
       </main>
@@ -782,6 +891,41 @@ function DashboardContent() {
                 </tbody>
               </table>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Exclusão de Bolão */}
+      {showDeleteModal && (
+        <div className="modal-overlay">
+          <div className="modal-container">
+            <div className="modal-header">
+              <h3>Excluir Bolão</h3>
+              <div onClick={() => { setShowDeleteModal(null); setDeletePassword(''); setDeleteError(''); }} className="modal-close">
+                <Icons.X size={20} />
+              </div>
+            </div>
+            <p style={{ fontSize: '0.85rem', marginBottom: '1rem', color: 'var(--text-secondary)' }}>
+              Você está excluindo o bolão de <strong style={{ color: '#fff' }}>{showDeleteModal.bettor_name}</strong>. Esta ação é irreversível e zerará os pontos deste participante.
+            </p>
+            <div className="form-group">
+              <label>Confirme sua senha para continuar</label>
+              <input
+                type="password"
+                className="form-control"
+                placeholder="Sua senha de login"
+                value={deletePassword}
+                onChange={(e) => { setDeletePassword(e.target.value); setDeleteError(''); }}
+              />
+            </div>
+            {deleteError && <p style={{ color: '#ef4444', fontSize: '0.75rem', marginBottom: '0.75rem' }}>{deleteError}</p>}
+            <button
+              className="btn-submit"
+              style={{ background: 'linear-gradient(135deg, #ef4444, #b91c1c)' }}
+              onClick={confirmDeleteBolao}
+            >
+              CONFIRMAR EXCLUSÃO
+            </button>
           </div>
         </div>
       )}
