@@ -108,6 +108,30 @@ export const supabase = isSupabaseConfigured ? supabaseClient : {
         });
         saveLocalDB(db);
         return { data: items, error: null };
+      },
+      update: (updatedFields) => {
+        return {
+          eq: async (field, val) => {
+            const list = db[table] || [];
+            list.forEach((item, idx) => {
+              if (item[field] === val) {
+                list[idx] = { ...item, ...updatedFields };
+              }
+            });
+            saveLocalDB(db);
+            return { data: list, error: null };
+          }
+        };
+      },
+      delete: () => {
+        return {
+          eq: async (field, val) => {
+            const list = db[table] || [];
+            db[table] = list.filter(item => item[field] !== val);
+            saveLocalDB(db);
+            return { data: db[table], error: null };
+          }
+        };
       }
     };
   }

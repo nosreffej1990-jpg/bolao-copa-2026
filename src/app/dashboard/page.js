@@ -94,8 +94,11 @@ function DashboardContent() {
     const tick = () => {
       if (apiUpcoming.length === 0) return;
       const next = apiUpcoming[0];
+      if (!next || !next.local_date) return;
       const [datePart, timePart] = next.local_date.split(' ');
+      if (!datePart || !timePart) return;
       const [month, day, year] = datePart.split('/');
+      if (!month || !day || !year) return;
       const target = new Date(`${year}-${month}-${day}T${timePart}:00`);
       const diff = target - new Date();
       if (diff <= 0) { setCountdown('AO VIVO AGORA!'); return; }
@@ -122,8 +125,11 @@ function DashboardContent() {
     if (!apiUpcoming.length || notifPermission !== 'granted') return;
     const checkAndNotify = () => {
       const next = apiUpcoming[0];
+      if (!next || !next.local_date) return;
       const [datePart, timePart] = next.local_date.split(' ');
+      if (!datePart || !timePart) return;
       const [month, day, year] = datePart.split('/');
+      if (!month || !day || !year) return;
       const target = new Date(`${year}-${month}-${day}T${timePart}:00`);
       const diff = target - new Date();
       if (diff > 0 && diff <= 15 * 60 * 1000) {
