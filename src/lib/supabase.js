@@ -44,32 +44,7 @@ const getLocalDB = () => {
     { id: 24, grupo: 'L', home_team: 'Gana', home_code: 'gh', away_team: 'Panamá', away_code: 'pa', match_date: '2026-06-17', match_time: '23:00:00', stadium: 'SoFi Stadium (Los Angeles)', home_score: null, away_score: null, finished: false }
   ];
 
-  const defaultBoloes = [
-    {
-      id: 1,
-      username: 'Jefferson',
-      bettor_name: 'Marcos Rhian',
-      photo_url: 'https://images.unsplash.com/photo-1518152006812-edab29b069ac?q=80&w=375&auto=format&fit=crop',
-      created_at: '2026-06-11T12:00:00Z',
-      bets_data: [
-        { match_id: 1, home: 'México', away: 'África do Sul', bet_home: 2, bet_away: 1, real_home: 2, real_away: 1, pts: 5 },
-        { match_id: 3, home: 'Canadá', away: 'Catar', bet_home: 2, bet_away: 0, real_home: 3, real_away: 0, pts: 3 },
-        { match_id: 5, home: 'Brasil', away: 'Marrocos', bet_home: 3, bet_away: 1, real_home: null, real_away: null, pts: null }
-      ]
-    },
-    {
-      id: 2,
-      username: 'Junior',
-      bettor_name: 'Ana Cláudia',
-      photo_url: 'https://images.unsplash.com/photo-1540747737956-37872ba68c5a?q=80&w=375&auto=format&fit=crop',
-      created_at: '2026-06-11T14:30:00Z',
-      bets_data: [
-        { match_id: 1, home: 'México', away: 'África do Sul', bet_home: 1, bet_away: 1, real_home: 2, real_away: 1, pts: 0 },
-        { match_id: 3, home: 'Canadá', away: 'Catar', bet_home: 3, bet_away: 0, real_home: 3, real_away: 0, pts: 5 },
-        { match_id: 5, home: 'Brasil', away: 'Marrocos', bet_home: 2, bet_away: 0, real_home: null, real_away: null, pts: null }
-      ]
-    }
-  ];
+  const defaultBoloes = [];
 
   if (!localStorage.getItem('copa26_confrontos')) {
     localStorage.setItem('copa26_confrontos', JSON.stringify(defaultConfrontos));

@@ -11,7 +11,7 @@ function DashboardContent() {
   
   // App states
   const [currentUser, setCurrentUser] = useState(null);
-  const [activeTab, setActiveTab] = useState('placares'); // placares, boloes, ranking, placares_geral, confrontos_geral
+  const [activeTab, setActiveTab] = useState('boloes'); // placares, boloes, ranking, placares_geral, confrontos_geral
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [toastMsg, setToastMsg] = useState('');
   
@@ -29,9 +29,10 @@ function DashboardContent() {
   const [showBetsModal, setShowBetsModal] = useState(null); // bolaoData
   
   // Camera simulation
-  const [cameraStep, setCameraStep] = useState(1); // 1: preview, 2: capturing/ocr, 3: success
+  const [cameraStep, setCameraStep] = useState(1); // 1: choose, 2: capturing/ocr, 3: success
   const [tempBettorName, setTempBettorName] = useState('');
   const [ocrLoading, setOcrLoading] = useState(false);
+  const [uploadedPhotoUrl, setUploadedPhotoUrl] = useState(null);
 
   useEffect(() => {
     // Check authentication
@@ -134,11 +135,20 @@ function DashboardContent() {
     router.push('/');
   };
 
-  // Simulation of Camera snap and OCR scanning
+  // Upload/Camera bolão flow
   const startCameraUpload = () => {
     setTempBettorName('');
+    setUploadedPhotoUrl(null);
     setCameraStep(1);
     setShowCameraModal(true);
+  };
+
+  // Handle file selection from device gallery/camera
+  const handleFileSelect = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const localUrl = URL.createObjectURL(file);
+    setUploadedPhotoUrl(localUrl);
   };
 
   const capturePhoto = () => {
@@ -146,12 +156,10 @@ function DashboardContent() {
       alert('Por favor, insira o nome do apostador.');
       return;
     }
-    setOcrLoading(true);
     setCameraStep(2);
-    
+
     // Simulate OCR scanning process for 2.5 seconds
     setTimeout(async () => {
-      setOcrLoading(false);
       setCameraStep(3);
 
       const generatedBets = [
@@ -160,57 +168,49 @@ function DashboardContent() {
         { match_id: 3, home: 'Canadá', away: 'Catar', bet_home: 1, bet_away: 0, real_home: 3, real_away: 0, pts: 3 }
       ];
 
+      // Use uploaded photo URL or fallback placeholder
+      const photoToSave = uploadedPhotoUrl || 'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?q=80&w=375&auto=format&fit=crop';
+
       // Insert bolão into database
       await supabase.from('boloes').insert({
         username: currentUser,
         bettor_name: tempBettorName.trim(),
-        photo_url: 'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?q=80&w=375&auto=format&fit=crop',
+        photo_url: photoToSave,
         bets_data: generatedBets
       });
 
-      showToast('Bolão lido e cadastrado!');
+      showToast('Bolão cadastrado com sucesso!');
       fetchData();
-      
+
       setTimeout(() => {
         setShowCameraModal(false);
       }, 1200);
     }, 2500);
   };
 
-  // Generate dynamic ranking based on points
+  // Generate ranking purely from real bolões in the database
   const getSortedRanking = () => {
-    // Basic static leaderboard entries
-    const players = [
-      { name: 'Lucas Silva', avatar: 'https://api.dicebear.com/7.x/adventurer/svg?seed=Lucas', pts: 53 },
-      { name: 'Mariana Costa', avatar: 'https://api.dicebear.com/7.x/adventurer/svg?seed=Mariana', pts: 51 },
-      { name: 'Thiago Oliveira', avatar: 'https://api.dicebear.com/7.x/adventurer/svg?seed=Thiago', pts: 38 },
-      { name: 'Camila Santos', avatar: 'https://api.dicebear.com/7.x/adventurer/svg?seed=Camila', pts: 31 },
-      { name: 'Gabriel Souza', avatar: 'https://api.dicebear.com/7.x/adventurer/svg?seed=Gabriel', pts: 29 }
-    ];
-
-    // Compute dynamic user scores if logged in
-    if (currentUser) {
-      // Jefferson user score calc
-      const savedCount = Object.values(palpites).filter(p => p.saved).length;
-      const jPoints = 42 + (savedCount * 2); // Simulating 2 points per forecast saved
-      const userIndex = players.findIndex(p => p.name.includes(currentUser));
-      if (userIndex !== -1) {
-        players[userIndex].pts = jPoints;
-      } else {
-        players.push({
-          name: `${currentUser} (Você)`,
-          avatar: `https://api.dicebear.com/7.x/adventurer/svg?seed=${currentUser}`,
-          pts: jPoints,
-          isCurrentUser: true
+    // Build player scores from real boloes data
+    const scoreMap = {};
+    boloes.forEach(b => {
+      if (!scoreMap[b.bettor_name]) {
+        scoreMap[b.bettor_name] = {
+          name: b.bettor_name,
+          avatar: `https://api.dicebear.com/7.x/identicon/svg?seed=${b.bettor_name}`,
+          pts: 0
+        };
+      }
+      // Sum up points from bets_data
+      if (Array.isArray(b.bets_data)) {
+        b.bets_data.forEach(bet => {
+          if (bet.pts !== null && bet.pts !== undefined) {
+            scoreMap[b.bettor_name].pts += bet.pts;
+          }
         });
       }
-    } else {
-      // Add mock Jefferson/Junior to list if not logged in
-      players.push({ name: 'Jefferson', avatar: 'https://api.dicebear.com/7.x/adventurer/svg?seed=Jefferson', pts: 42 });
-      players.push({ name: 'Junior', avatar: 'https://api.dicebear.com/7.x/adventurer/svg?seed=Junior', pts: 36 });
-    }
+    });
 
-    // Sort by points desc
+    const players = Object.values(scoreMap);
     return players.sort((a, b) => b.pts - a.pts).map((p, idx) => ({ ...p, rank: idx + 1 }));
   };
 
@@ -252,18 +252,18 @@ function DashboardContent() {
             {currentUser && (
               <>
                 <button
-                  className={`drawer-link ${activeTab === 'placares' ? 'active' : ''}`}
-                  onClick={() => { setActiveTab('placares'); setIsDrawerOpen(false); }}
-                >
-                  <Icons.List size={18} />
-                  <span>Meus Palpites</span>
-                </button>
-                <button
                   className={`drawer-link ${activeTab === 'boloes' ? 'active' : ''}`}
                   onClick={() => { setActiveTab('boloes'); setIsDrawerOpen(false); }}
                 >
                   <Icons.Camera size={18} />
-                  <span>Bolões (Fotos)</span>
+                  <span>Bolões</span>
+                </button>
+                <button
+                  className={`drawer-link ${activeTab === 'placares' ? 'active' : ''}`}
+                  onClick={() => { setActiveTab('placares'); setIsDrawerOpen(false); }}
+                >
+                  <Icons.List size={18} />
+                  <span>Placares</span>
                 </button>
               </>
             )}
@@ -456,62 +456,74 @@ function DashboardContent() {
           <div>
             <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
               <h3 style={{ fontSize: '1.15rem', marginBottom: '0.2rem' }}>Classificação do Bolão</h3>
-              <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Mapeamento de acertos e pontuação geral</p>
+              <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Pontuação calculada pelos bolões cadastrados</p>
             </div>
 
-            {/* Podiums Gold, Silver, Bronze */}
-            <div className="podium-container">
-              {/* 2nd Place */}
-              {top3[1] && (
-                <div className="podium-column second">
-                  <img src={top3[1].avatar} className="podium-avatar" alt="2nd" />
-                  <div className="podium-box">
-                    <span className="podium-name">{top3[1].name}</span>
-                    <span className="podium-pts">{top3[1].pts} pts</span>
-                    <span style={{ fontSize: '0.65rem', color: '#94a3b8', fontWeight: 'bold' }}>2º Lugar</span>
-                  </div>
-                </div>
-              )}
+            {ranking.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '3rem 1rem' }}>
+                <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🏆</div>
+                <p style={{ fontWeight: 'bold', marginBottom: '0.5rem' }}>Nenhum bolão cadastrado ainda</p>
+                <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Faça login e cadastre os bolões para ver a classificação aqui.</span>
+              </div>
+            ) : (
+              <>
+                {/* Podiums Gold, Silver, Bronze */}
+                <div className="podium-container">
+                  {/* 2nd Place */}
+                  {top3[1] && (
+                    <div className="podium-column second">
+                      <img src={top3[1].avatar} className="podium-avatar" alt="2nd" />
+                      <div className="podium-box">
+                        <span className="podium-name">{top3[1].name}</span>
+                        <span className="podium-pts">{top3[1].pts} pts</span>
+                        <span style={{ fontSize: '0.65rem', color: '#94a3b8', fontWeight: 'bold' }}>2º Lugar</span>
+                      </div>
+                    </div>
+                  )}
 
-              {/* 1st Place */}
-              {top3[0] && (
-                <div className="podium-column first">
-                  <span className="podium-crown">👑</span>
-                  <img src={top3[0].avatar} className="podium-avatar" alt="1st" />
-                  <div className="podium-box">
-                    <span className="podium-name">{top3[0].name}</span>
-                    <span className="podium-pts">{top3[0].pts} pts</span>
-                    <span style={{ fontSize: '0.65rem', color: 'var(--accent-gold)', fontWeight: 'bold' }}>1º Lugar</span>
-                  </div>
-                </div>
-              )}
+                  {/* 1st Place */}
+                  {top3[0] && (
+                    <div className="podium-column first">
+                      <span className="podium-crown">👑</span>
+                      <img src={top3[0].avatar} className="podium-avatar" alt="1st" />
+                      <div className="podium-box">
+                        <span className="podium-name">{top3[0].name}</span>
+                        <span className="podium-pts">{top3[0].pts} pts</span>
+                        <span style={{ fontSize: '0.65rem', color: 'var(--accent-gold)', fontWeight: 'bold' }}>1º Lugar</span>
+                      </div>
+                    </div>
+                  )}
 
-              {/* 3rd Place */}
-              {top3[2] && (
-                <div className="podium-column third">
-                  <img src={top3[2].avatar} className="podium-avatar" alt="3rd" />
-                  <div className="podium-box">
-                    <span className="podium-name">{top3[2].name}</span>
-                    <span className="podium-pts">{top3[2].pts} pts</span>
-                    <span style={{ fontSize: '0.65rem', color: '#b45309', fontWeight: 'bold' }}>3º Lugar</span>
-                  </div>
+                  {/* 3rd Place */}
+                  {top3[2] && (
+                    <div className="podium-column third">
+                      <img src={top3[2].avatar} className="podium-avatar" alt="3rd" />
+                      <div className="podium-box">
+                        <span className="podium-name">{top3[2].name}</span>
+                        <span className="podium-pts">{top3[2].pts} pts</span>
+                        <span style={{ fontSize: '0.65rem', color: '#b45309', fontWeight: 'bold' }}>3º Lugar</span>
+                      </div>
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
 
-            {/* List 4th place and below */}
-            <div className="ranking-list">
-              {restRank.map(item => (
-                <div className="ranking-item" key={item.name}>
-                  <div className="ranking-item-left">
-                    <span className="ranking-num">{item.rank}º</span>
-                    <img src={item.avatar} className="ranking-avatar" alt="player" />
-                    <span className="ranking-name">{item.name}</span>
+                {/* List 4th place and below */}
+                {restRank.length > 0 && (
+                  <div className="ranking-list">
+                    {restRank.map(item => (
+                      <div className="ranking-item" key={item.name}>
+                        <div className="ranking-item-left">
+                          <span className="ranking-num">{item.rank}º</span>
+                          <img src={item.avatar} className="ranking-avatar" alt="player" />
+                          <span className="ranking-name">{item.name}</span>
+                        </div>
+                        <span className="ranking-pts">{item.pts} pts</span>
+                      </div>
+                    ))}
                   </div>
-                  <span className="ranking-pts">{item.pts} pts</span>
-                </div>
-              ))}
-            </div>
+                )}
+              </>
+            )}
           </div>
         )}
 
@@ -618,12 +630,41 @@ function DashboardContent() {
                     onChange={(e) => setTempBettorName(e.target.value)}
                   />
                 </div>
-                <p style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>Simule a captura da folha de palpites:</p>
-                <div className="camera-box">
-                  <div className="camera-overlay-text">Pré-visualização de Câmera</div>
-                </div>
-                <button className="btn-submit" onClick={capturePhoto} style={{ marginTop: '0.5rem' }}>
-                  TIRAR FOTO E ESCANEAR
+
+                {/* Photo preview if file loaded */}
+                {uploadedPhotoUrl ? (
+                  <div className="camera-box">
+                    <img src={uploadedPhotoUrl} className="camera-preview-img" alt="Preview" />
+                    <span className="camera-overlay-text">Foto carregada ✓</span>
+                  </div>
+                ) : (
+                  <div className="camera-box" style={{ background: '#0a0a0a', border: '2px dashed rgba(255,255,255,0.1)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '0.75rem' }}>
+                    <span style={{ fontSize: '2rem' }}>📷</span>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Nenhuma foto selecionada</span>
+                  </div>
+                )}
+
+                {/* File input - opens gallery/camera on mobile */}
+                <label htmlFor="file-upload" style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem',
+                  width: '100%', padding: '0.75rem', marginTop: '0.75rem',
+                  background: 'rgba(59, 130, 246, 0.1)', border: '1px solid #3b82f6',
+                  borderRadius: '8px', color: '#3b82f6', fontWeight: '700', fontSize: '0.85rem',
+                  cursor: 'pointer'
+                }}>
+                  📁 Carregar Foto do Celular
+                </label>
+                <input
+                  id="file-upload"
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  style={{ display: 'none' }}
+                  onChange={handleFileSelect}
+                />
+
+                <button className="btn-submit" onClick={capturePhoto} style={{ marginTop: '0.75rem' }}>
+                  CONFIRMAR E ESCANEAR
                 </button>
               </div>
             )}

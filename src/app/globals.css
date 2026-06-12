@@ -128,70 +128,89 @@ body {
     animation: spin 0.8s linear infinite;
 }
 
-/* Home / Welcome Page */
+/* Home / Welcome Page (Imagem 01 Style) */
+.home-page-wrapper {
+    background-color: #ffffff;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.home-header {
+    background-color: #0e4a27;
+    padding: 2rem 1.5rem;
+    text-align: center;
+    border-bottom: 4px solid var(--accent-gold);
+}
+
+.home-header h1 {
+    font-size: 2.1rem;
+    color: var(--accent-gold);
+    font-weight: 800;
+    margin-bottom: 0.35rem;
+    letter-spacing: 0.02em;
+    font-family: var(--font-alt);
+}
+
+.home-header p {
+    font-size: 0.95rem;
+    color: rgba(255, 255, 255, 0.85);
+    font-weight: 600;
+    letter-spacing: 0.05em;
+}
+
 .home-container {
-    padding: 2.5rem 1.5rem;
+    padding: 2rem 1.25rem;
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
     flex-grow: 1;
-    text-align: center;
-}
-
-.home-logo {
-    font-size: 3.5rem;
-    margin-bottom: 1rem;
-    filter: drop-shadow(0 4px 12px rgba(251, 191, 36, 0.3));
-}
-
-.home-container h1 {
-    font-size: 1.85rem;
-    margin-bottom: 0.3rem;
-    color: #ffffff;
-    font-weight: 800;
-}
-
-.home-container .home-sub {
-    font-size: 0.75rem;
-    color: var(--accent-gold);
-    text-transform: uppercase;
-    letter-spacing: 0.25em;
-    margin-bottom: 3rem;
+    background-color: #ffffff;
 }
 
 .home-menu-grid {
     width: 100%;
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.25rem;
+    margin-top: 1rem;
 }
 
 .home-btn {
     width: 100%;
-    padding: 1.1rem;
-    background-color: var(--bg-card);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-md);
-    color: #ffffff;
-    font-size: 0.95rem;
-    font-weight: 700;
-    cursor: pointer;
+    padding: 1.5rem 0.5rem;
+    background-color: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    color: #0e4a27;
     display: flex;
+    flex-direction: column;
     align-items: center;
-    justify-content: space-between;
-    transition: all 0.2s ease;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    justify-content: center;
+    gap: 0.75rem;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+}
+
+.home-btn span {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #1e293b;
+    font-family: var(--font-main);
+}
+
+.home-btn svg, .home-btn i {
+    color: #0e4a27;
+    width: 28px;
+    height: 28px;
 }
 
 .home-btn:active {
-    transform: scale(0.98);
-    background-color: var(--bg-card-hover);
-    border-color: var(--accent-gold);
-}
-
-.home-btn i {
-    color: var(--accent-gold);
+    transform: scale(0.96);
+    background-color: #f8fafc;
+    border-color: #cbd5e1;
 }
 
 /* Login Modal / Container */

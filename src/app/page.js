@@ -66,91 +66,94 @@ export default function Home() {
 
       {/* Main Home Screen */}
       {!loading && (
-        <div className="home-container">
-          <div className="home-logo">🏆</div>
-          <h1>BOLÃO COPA 2026</h1>
-          <p className="home-sub">Edição do Trabalho</p>
+        <div className="home-page-wrapper">
+          <header className="home-header">
+            <h1>BOLÃO COPA 2026</h1>
+            <p>EUA • México • Canadá</p>
+          </header>
 
-          {!showLogin ? (
-            <div className="home-menu-grid">
-              <button className="home-btn" onClick={() => setShowLogin(true)}>
-                <span>1. ENTRAR (LOGIN)</span>
-                <Icons.Lock size={20} />
-              </button>
-              
-              <button className="home-btn" onClick={() => handleDirectNavigate('ranking')}>
-                <span>2. CLASSIFICAÇÃO (RANKING)</span>
-                <Icons.Trophy size={20} />
-              </button>
-
-              <button className="home-btn" onClick={() => handleDirectNavigate('placares_geral')}>
-                <span>3. PLACARES (RESULTADOS)</span>
-                <Icons.Check size={20} />
-              </button>
-
-              <button className="home-btn" onClick={() => handleDirectNavigate('confrontos_geral')}>
-                <span>4. JOGOS (CONFRONTOS)</span>
-                <Icons.Calendar size={20} />
-              </button>
-            </div>
-          ) : (
-            <div className="login-section">
-              <h3>
-                <Icons.Lock size={18} />
-                Entrar no Bolão
-              </h3>
-              
-              {errorMsg && (
-                <div style={{ color: '#ef4444', fontSize: '0.8rem', marginBottom: '1rem', fontWeight: 'bold' }}>
-                  {errorMsg}
-                </div>
-              )}
-
-              <form onSubmit={handleLoginSubmit}>
-                <div className="form-group">
-                  <label htmlFor="username">Usuário</label>
-                  <input
-                    type="text"
-                    id="username"
-                    className="form-control"
-                    placeholder="Ex: Jefferson"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    required
-                  />
-                </div>
-                <div className="form-group">
-                  <label htmlFor="password">Senha</label>
-                  <input
-                    type="password"
-                    id="password"
-                    className="form-control"
-                    placeholder="••••••"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                  />
-                </div>
-
-                <button type="submit" className="btn-submit">
-                  CONFIRMAR
+          <div className="home-container">
+            {!showLogin ? (
+              <div className="home-menu-grid">
+                <button className="home-btn" onClick={() => setShowLogin(true)}>
+                  <Icons.LogIn size={28} />
+                  <span>Login</span>
                 </button>
                 
-                <button
-                  type="button"
-                  className="btn-cancel"
-                  onClick={() => {
-                    setShowLogin(false);
-                    setErrorMsg('');
-                    setUsername('');
-                    setPassword('');
-                  }}
-                >
-                  Voltar
+                <button className="home-btn" onClick={() => handleDirectNavigate('ranking')}>
+                  <Icons.Trophy size={28} />
+                  <span>Ranking</span>
                 </button>
-              </form>
-            </div>
-          )}
+
+                <button className="home-btn" onClick={() => handleDirectNavigate('placares_geral')}>
+                  <Icons.BarChart size={28} />
+                  <span>Placares</span>
+                </button>
+
+                <button className="home-btn" onClick={() => handleDirectNavigate('confrontos_geral')}>
+                  <Icons.Calendar size={28} />
+                  <span>Próximos jogos</span>
+                </button>
+              </div>
+            ) : (
+              <div className="login-section">
+                <h3>
+                  <Icons.Lock size={18} />
+                  Entrar no Bolão
+                </h3>
+                
+                {errorMsg && (
+                  <div style={{ color: '#ef4444', fontSize: '0.8rem', marginBottom: '1rem', fontWeight: 'bold' }}>
+                    {errorMsg}
+                  </div>
+                )}
+
+                <form onSubmit={handleLoginSubmit}>
+                  <div className="form-group">
+                    <label htmlFor="username">Usuário</label>
+                    <input
+                      type="text"
+                      id="username"
+                      className="form-control"
+                      placeholder="Ex: Jefferson"
+                      value={username}
+                      onChange={(e) => setUsername(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label htmlFor="password">Senha</label>
+                    <input
+                      type="password"
+                      id="password"
+                      className="form-control"
+                      placeholder="••••••"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                    />
+                  </div>
+
+                  <button type="submit" className="btn-submit">
+                    CONFIRMAR
+                  </button>
+                  
+                  <button
+                    type="button"
+                    className="btn-cancel"
+                    onClick={() => {
+                      setShowLogin(false);
+                      setErrorMsg('');
+                      setUsername('');
+                      setPassword('');
+                    }}
+                  >
+                    Voltar
+                  </button>
+                </form>
+              </div>
+            )}
+          </div>
         </div>
       )}
     </>
