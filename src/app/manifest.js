@@ -1,7 +1,5 @@
-// src/app/manifest.ts — PWA Manifest para Bolão Copa 2026
-import type { MetadataRoute } from 'next';
-
-export default function manifest(): MetadataRoute.Manifest {
+// src/app/manifest.js — PWA Manifest para Bolão Copa 2026
+export default function manifest() {
   return {
     name: 'Bolão Copa 2026',
     short_name: 'Bolão 2026',
