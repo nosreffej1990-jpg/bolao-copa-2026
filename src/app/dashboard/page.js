@@ -1008,7 +1008,7 @@ function DashboardContent() {
             {apiLoading && apiGroups.length === 0 ? (
               <p style={{ textAlign: 'center', color: 'var(--text-secondary)', fontSize: '0.8rem', padding: '2rem' }}>Carregando grupos...</p>
             ) : (() => {
-              const groupData = apiGroups.find(g => g.group === selectedGroup);
+              const groupData = apiGroups.find(g => g.group === selectedGroup || g.name === selectedGroup);
               if (!groupData || !groupData.teams) return (
                 <p style={{ textAlign: 'center', color: 'var(--text-secondary)', fontSize: '0.8rem', padding: '2rem' }}>Dados do Grupo {selectedGroup} indisponíveis ainda.</p>
               );
