@@ -81,3 +81,17 @@ export function getFlagCode(teamNameEn) {
   };
   return map[teamNameEn] || 'un';
 }
+
+// Tabela de classificação dos grupos
+export async function getGroupStandings() {
+  try {
+    const res = await fetch(`${BASE_URL}/groups`, { cache: 'no-store' });
+    if (!res.ok) throw new Error('API groups error');
+    const data = await res.json();
+    return data.groups || data || [];
+  } catch (e) {
+    console.error('Erro ao buscar grupos:', e);
+    return [];
+  }
+}
+

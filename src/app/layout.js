@@ -1,9 +1,26 @@
 import './globals.css';
+import ServiceWorkerRegistrar from '@/components/ServiceWorkerRegistrar';
 
 export const metadata = {
   title: 'BOLÃO COPA 2026',
   description: 'O aplicativo definitivo de bolão da Copa do Mundo de 2026',
-  viewport: 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0',
+  manifest: '/manifest.webmanifest',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'black-translucent',
+    title: 'Bolão 2026',
+  },
+  other: {
+    'mobile-web-app-capable': 'yes',
+  },
+};
+
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  themeColor: '#10b981',
 };
 
 export default function RootLayout({ children }) {
@@ -13,8 +30,10 @@ export default function RootLayout({ children }) {
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+        <link rel="apple-touch-icon" href="/icons/icon-192.png" />
       </head>
       <body>
+        <ServiceWorkerRegistrar />
         <div className="phone-viewport">
           {children}
         </div>

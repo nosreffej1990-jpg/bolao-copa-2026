@@ -4,7 +4,7 @@ import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Icons } from '@/components/Icons';
 import { supabase } from '@/lib/supabase';
-import { getFinishedMatches, getLiveMatches, getUpcomingMatches, getFlagCode, formatMatchDate } from '@/lib/worldcupApi';
+import { getFinishedMatches, getLiveMatches, getUpcomingMatches, getFlagCode, formatMatchDate, getGroupStandings } from '@/lib/worldcupApi';
 
 function DashboardContent() {
   const router = useRouter();
@@ -34,11 +34,26 @@ function DashboardContent() {
   const [showCameraModal, setShowCameraModal] = useState(false);
   const [showPhotoModal, setShowPhotoModal] = useState(null); // photoUrl
   const [showBetsModal, setShowBetsModal] = useState(null); // bolaoData
-  const [showDeleteModal, setShowDeleteModal] = useState(null); // { id, bettor_name }
+  const [showDeleteModal, setShowDeleteModal] = useState(null);
   const [deletePassword, setDeletePassword] = useState('');
   const [deleteError, setDeleteError] = useState('');
-  const [showMatchModal, setShowMatchModal] = useState(null); // API game object
-  const [matchModalTab, setMatchModalTab] = useState('detalhes'); // 'detalhes' | 'palpites'
+  const [showMatchModal, setShowMatchModal] = useState(null);
+  const [matchModalTab, setMatchModalTab] = useState('detalhes');
+  const [showHistoryModal, setShowHistoryModal] = useState(null); // bolaoData
+  const [editingBet, setEditingBet] = useState(null); // { bolaoId, betIndex, bet }
+  const [editPassword, setEditPassword] = useState('');
+  const [editError, setEditError] = useState('');
+
+  // Countdown para próximo jogo
+  const [countdown, setCountdown] = useState('');
+  const [nextMatchInfo, setNextMatchInfo] = useState(null);
+
+  // Grupos da Copa
+  const [apiGroups, setApiGroups] = useState([]);
+  const [selectedGroup, setSelectedGroup] = useState('A');
+
+  // Notificações
+  const [notifPermission, setNotifPermission] = useState('default');
   
   // Camera simulation
   const [cameraStep, setCameraStep] = useState(1); // 1: choose, 2: capturing/ocr, 3: success
@@ -74,17 +89,72 @@ function DashboardContent() {
     return () => clearInterval(interval);
   }, []);
 
+  // Countdown para o próximo jogo
+  useEffect(() => {
+    const tick = () => {
+      if (apiUpcoming.length === 0) return;
+      const next = apiUpcoming[0];
+      const [datePart, timePart] = next.local_date.split(' ');
+      const [month, day, year] = datePart.split('/');
+      const target = new Date(`${year}-${month}-${day}T${timePart}:00`);
+      const diff = target - new Date();
+      if (diff <= 0) { setCountdown('AO VIVO AGORA!'); return; }
+      const h = Math.floor(diff / 3600000);
+      const m = Math.floor((diff % 3600000) / 60000);
+      const s = Math.floor((diff % 60000) / 1000);
+      setCountdown(`${String(h).padStart(2,'0')}h ${String(m).padStart(2,'0')}m ${String(s).padStart(2,'0')}s`);
+      setNextMatchInfo(next);
+    };
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, [apiUpcoming]);
+
+  // Checar permissão de notificação
+  useEffect(() => {
+    if (typeof Notification !== 'undefined') {
+      setNotifPermission(Notification.permission);
+    }
+  }, []);
+
+  // Notificar 15min antes do próximo jogo
+  useEffect(() => {
+    if (!apiUpcoming.length || notifPermission !== 'granted') return;
+    const checkAndNotify = () => {
+      const next = apiUpcoming[0];
+      const [datePart, timePart] = next.local_date.split(' ');
+      const [month, day, year] = datePart.split('/');
+      const target = new Date(`${year}-${month}-${day}T${timePart}:00`);
+      const diff = target - new Date();
+      if (diff > 0 && diff <= 15 * 60 * 1000) {
+        new Notification('⚽ Jogo em 15 minutos!', {
+          body: `${next.home_team_name_en} vs ${next.away_team_name_en}`,
+          icon: '/icons/icon-192.png',
+        });
+      }
+    };
+    const id = setInterval(checkAndNotify, 60000);
+    return () => clearInterval(id);
+  }, [apiUpcoming, notifPermission]);
+
   const fetchApiData = async () => {
     setApiLoading(true);
     try {
-      const [finished, live, upcoming] = await Promise.all([
+      const [finished, live, upcoming, groups] = await Promise.all([
         getFinishedMatches(),
         getLiveMatches(),
         getUpcomingMatches(15),
+        getGroupStandings(),
       ]);
       setApiFinished(finished);
       setApiLive(live);
       setApiUpcoming(upcoming);
+      setApiGroups(groups);
+
+      // Pontuação automática: atualizar pts dos bolões com jogos finalizados
+      if (finished.length > 0) {
+        autoCalculatePoints(finished);
+      }
     } catch (e) {
       console.error('Erro na API:', e);
     } finally {
@@ -174,9 +244,79 @@ function DashboardContent() {
     router.push('/');
   };
 
-  // Delete bolão with password confirmation
+  // Pontuação automática: percorre bolões e atualiza pts com base nos jogos finalizados
+  const autoCalculatePoints = async (finishedGames) => {
+    if (!boloes.length) return;
+    for (const b of boloes) {
+      if (!Array.isArray(b.bets_data)) continue;
+      let changed = false;
+      const updatedBets = b.bets_data.map(bet => {
+        const game = finishedGames.find(g =>
+          g.home_team_name_en.toLowerCase().includes((bet.home || '').split(' ')[0].toLowerCase()) ||
+          g.away_team_name_en.toLowerCase().includes((bet.away || '').split(' ')[0].toLowerCase())
+        );
+        if (!game) return bet;
+        const rH = parseInt(game.home_score);
+        const rA = parseInt(game.away_score);
+        let pts = 0;
+        if (bet.bet_home === rH && bet.bet_away === rA) pts = 5;
+        else {
+          const bW = bet.bet_home > bet.bet_away ? 'H' : bet.bet_home < bet.bet_away ? 'A' : 'D';
+          const rW = rH > rA ? 'H' : rH < rA ? 'A' : 'D';
+          if (bW === rW) pts = 3;
+        }
+        if (bet.pts !== pts) { changed = true; return { ...bet, real_home: rH, real_away: rA, pts }; }
+        return bet;
+      });
+      if (changed) {
+        await supabase.from('boloes').update({ bets_data: updatedBets }).eq('id', b.id);
+      }
+    }
+    fetchData();
+  };
+
+  // Compartilhar ranking via Web Share API (com fallback WhatsApp)
+  const shareRanking = async () => {
+    const text = ranking.map((r, i) => {
+      const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i+1}º`;
+      return `${medal} ${r.name} — ${r.pts} pts`;
+    }).join('\n');
+    const fullText = `🏆 Ranking Bolão Copa 2026 🏆\n\n${text}\n\n⚽ Quem vai ganhar?`;
+    if (navigator.canShare?.({ text: fullText })) {
+      try { await navigator.share({ title: 'Bolão Copa 2026', text: fullText }); return; }
+      catch (e) { if (e.name === 'AbortError') return; }
+    }
+    // Fallback: WhatsApp deep link
+    window.open(`https://wa.me/?text=${encodeURIComponent(fullText)}`, '_blank');
+  };
+
+  // Ativar notificações
+  const requestNotifications = async () => {
+    if (typeof Notification === 'undefined') { alert('Seu navegador não suporta notificações.'); return; }
+    const perm = await Notification.requestPermission();
+    setNotifPermission(perm);
+    if (perm === 'granted') showToast('Notificações ativadas! ✅');
+    else showToast('Permissão negada.');
+  };
+
+  // Salvar edição de palpite (admin)
   const USERS = { Jefferson: '060199', Junior: '062026' };
-  const confirmDeleteBolao = async () => {
+  const saveEditedBet = async () => {
+    if (!editingBet) return;
+    const correctPass = USERS[currentUser];
+    if (editPassword !== correctPass) { setEditError('Senha incorreta.'); return; }
+    const bolao = boloes.find(b => b.id === editingBet.bolaoId);
+    if (!bolao) return;
+    const updatedBets = bolao.bets_data.map((bet, idx) =>
+      idx === editingBet.betIndex ? { ...bet, bet_home: editingBet.home, bet_away: editingBet.away } : bet
+    );
+    await supabase.from('boloes').update({ bets_data: updatedBets }).eq('id', editingBet.bolaoId);
+    showToast('Palpite editado!');
+    setEditingBet(null);
+    setEditPassword('');
+    setEditError('');
+    fetchData();
+  };
     if (!currentUser) return;
     const correctPass = USERS[currentUser];
     if (deletePassword !== correctPass) {
@@ -339,15 +479,13 @@ function DashboardContent() {
           </div>
 
           <nav className="drawer-nav">
-            {currentUser && (
-              <button
-                className={`drawer-link ${activeTab === 'boloes' ? 'active' : ''}`}
-                onClick={() => { setActiveTab('boloes'); setIsDrawerOpen(false); }}
-              >
-                <Icons.Camera size={18} />
-                <span>Bolões</span>
-              </button>
-            )}
+            <button
+              className={`drawer-link ${activeTab === 'boloes' ? 'active' : ''}`}
+              onClick={() => { setActiveTab('boloes'); setIsDrawerOpen(false); }}
+            >
+              <Icons.Camera size={18} />
+              <span>Bolões</span>
+            </button>
 
             <button
               className={`drawer-link ${activeTab === 'ranking' ? 'active' : ''}`}
@@ -355,6 +493,14 @@ function DashboardContent() {
             >
               <Icons.Trophy size={18} />
               <span>Classificação</span>
+            </button>
+
+            <button
+              className={`drawer-link ${activeTab === 'grupos' ? 'active' : ''}`}
+              onClick={() => { setActiveTab('grupos'); setIsDrawerOpen(false); }}
+            >
+              <Icons.List size={18} />
+              <span>Grupos da Copa</span>
             </button>
 
             <button
@@ -371,6 +517,14 @@ function DashboardContent() {
             >
               <Icons.Calendar size={18} />
               <span>Próximos Confrontos</span>
+            </button>
+
+            <button
+              className={`drawer-link`}
+              onClick={() => { setIsDrawerOpen(false); requestNotifications(); }}
+            >
+              <Icons.Bell size={18} />
+              <span>{notifPermission === 'granted' ? '🔔 Notificações ON' : 'Ativar Notificações'}</span>
             </button>
           </nav>
 
@@ -403,7 +557,27 @@ function DashboardContent() {
 
       {/* Main Pages content switch */}
       <main className="dashboard-content">
-        
+
+        {/* Countdown Widget para próximo jogo */}
+        {nextMatchInfo && countdown && activeTab !== 'grupos' && (
+          <div style={{
+            background: 'linear-gradient(135deg, rgba(16,185,129,0.12), rgba(251,191,36,0.08))',
+            border: '1px solid rgba(16,185,129,0.25)', borderRadius: '12px',
+            padding: '0.75rem 1rem', marginBottom: '1rem',
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+              <img src={`https://flagcdn.com/w40/${getFlagCode(nextMatchInfo.home_team_name_en)}.png`} style={{ width: '24px' }} alt="" />
+              <span style={{ fontSize: '0.72rem', color: 'var(--text-secondary)' }}>vs</span>
+              <img src={`https://flagcdn.com/w40/${getFlagCode(nextMatchInfo.away_team_name_en)}.png`} style={{ width: '24px' }} alt="" />
+              <span style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', marginLeft: '0.25rem' }}>Próximo jogo</span>
+            </div>
+            <div style={{ textAlign: 'right' }}>
+              <div style={{ fontSize: '0.95rem', fontWeight: '900', color: countdown === 'AO VIVO AGORA!' ? '#ef4444' : 'var(--accent-gold)', letterSpacing: '1px' }}>{countdown}</div>
+            </div>
+          </div>
+        )}
+
         {/* 1. Placares (My Predictions Area - Requires Login) */}
         {activeTab === 'placares' && currentUser && (
           <div>
@@ -488,8 +662,20 @@ function DashboardContent() {
           </div>
         )}
 
-        {/* 2. Bolões (Bettors List & Upload Photo) */}
-        {activeTab === 'boloes' && currentUser && (
+        {/* 2. Bolões (Bettors List & Upload) */}
+        {activeTab === 'boloes' && (
+          !currentUser ? (
+            <div style={{ textAlign: 'center', padding: '3rem 1rem' }}>
+              <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🔐</div>
+              <p style={{ fontWeight: 'bold', marginBottom: '0.5rem', fontSize: '1rem' }}>Login necessário</p>
+              <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '1.5rem' }}>
+                Apenas administradores podem upar e gerenciar bolões.
+              </span>
+              <button className="btn-submit" style={{ maxWidth: '220px', margin: '0 auto' }} onClick={() => router.push('/')}>
+                Ir para Login
+              </button>
+            </div>
+          ) : (
           <div>
             <div className="boloes-header">
               <div>
@@ -502,18 +688,14 @@ function DashboardContent() {
               </button>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               {boloes.length === 0 && (
                 <p style={{ textAlign: 'center', color: 'var(--text-secondary)', fontSize: '0.8rem', padding: '2rem 0' }}>Nenhum bolão cadastrado ainda. Clique em "Upar Bolão" para adicionar!</p>
               )}
               {boloes.map(b => (
                 <div className="bolao-card" key={b.id}>
                   <div className="bolao-card-top">
-                    <img
-                      src={`https://api.dicebear.com/7.x/identicon/svg?seed=${b.bettor_name}`}
-                      className="bolao-avatar"
-                      alt="avatar"
-                    />
+                    <img src={`https://api.dicebear.com/7.x/identicon/svg?seed=${b.bettor_name}`} className="bolao-avatar" alt="avatar" />
                     <div className="bolao-details">
                       <h4>{b.bettor_name}</h4>
                       <span>Registrado por: {b.username}</span>
@@ -521,18 +703,17 @@ function DashboardContent() {
                   </div>
                   <div className="bolao-card-actions">
                     <button className="bolao-action-btn btn-view-photo" onClick={() => setShowPhotoModal(b.photo_url)}>
-                      <Icons.Eye size={12} />
-                      Ver Foto
+                      <Icons.Eye size={12} /> Ver Foto
                     </button>
                     <button className="bolao-action-btn btn-view-bets" onClick={() => setShowBetsModal(b)}>
-                      <Icons.Trophy size={12} />
-                      Apostas
+                      <Icons.Trophy size={12} /> Apostas
                     </button>
-                    <button
-                      className="bolao-action-btn"
-                      style={{ background: 'rgba(239,68,68,0.12)', border: '1px solid #ef4444', color: '#ef4444' }}
-                      onClick={() => { setShowDeleteModal({ id: b.id, bettor_name: b.bettor_name }); setDeletePassword(''); setDeleteError(''); }}
-                    >
+                    <button className="bolao-action-btn" style={{ background: 'rgba(99,102,241,0.12)', border: '1px solid #6366f1', color: '#818cf8' }}
+                      onClick={() => setShowHistoryModal(b)}>
+                      📊 Histórico
+                    </button>
+                    <button className="bolao-action-btn" style={{ background: 'rgba(239,68,68,0.12)', border: '1px solid #ef4444', color: '#ef4444' }}
+                      onClick={() => { setShowDeleteModal({ id: b.id, bettor_name: b.bettor_name }); setDeletePassword(''); setDeleteError(''); }}>
                       🗑️ Excluir
                     </button>
                   </div>
@@ -540,6 +721,7 @@ function DashboardContent() {
               ))}
             </div>
           </div>
+          )
         )}
 
         {/* 3. Ranking */}
@@ -558,7 +740,60 @@ function DashboardContent() {
               </div>
             ) : (
               <>
-                {/* Podiums Gold, Silver, Bronze */}
+                {/* Podiums */}
+                <div className="podium-container">
+                  {top3[1] && (<div className="podium-column second">
+                    <img src={top3[1].avatar} className="podium-avatar" alt="2nd" />
+                    <div className="podium-box">
+                      <span className="podium-name">{top3[1].name}</span>
+                      <span className="podium-pts">{top3[1].pts} pts</span>
+                      <span style={{ fontSize: '0.65rem', color: '#94a3b8', fontWeight: 'bold' }}>2º Lugar</span>
+                    </div>
+                  </div>)}
+                  {top3[0] && (<div className="podium-column first">
+                    <span className="podium-crown">👑</span>
+                    <img src={top3[0].avatar} className="podium-avatar" alt="1st" />
+                    <div className="podium-box">
+                      <span className="podium-name">{top3[0].name}</span>
+                      <span className="podium-pts">{top3[0].pts} pts</span>
+                      <span style={{ fontSize: '0.65rem', color: 'var(--accent-gold)', fontWeight: 'bold' }}>1º Lugar</span>
+                    </div>
+                  </div>)}
+                  {top3[2] && (<div className="podium-column third">
+                    <img src={top3[2].avatar} className="podium-avatar" alt="3rd" />
+                    <div className="podium-box">
+                      <span className="podium-name">{top3[2].name}</span>
+                      <span className="podium-pts">{top3[2].pts} pts</span>
+                      <span style={{ fontSize: '0.65rem', color: '#b45309', fontWeight: 'bold' }}>3º Lugar</span>
+                    </div>
+                  </div>)}
+                </div>
+                {restRank.length > 0 && (
+                  <div className="ranking-list">
+                    {restRank.map(item => (
+                      <div className="ranking-item" key={item.name}>
+                        <div className="ranking-item-left">
+                          <span className="ranking-num">{item.rank}º</span>
+                          <img src={item.avatar} className="ranking-avatar" alt="player" />
+                          <span className="ranking-name">{item.name}</span>
+                        </div>
+                        <span className="ranking-pts">{item.pts} pts</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {/* Compartilhar Ranking */}
+                <button onClick={shareRanking} style={{
+                  width: '100%', marginTop: '1.25rem', padding: '0.85rem',
+                  background: 'linear-gradient(135deg, #25D366, #128C7E)',
+                  border: 'none', borderRadius: '10px', color: '#fff',
+                  fontWeight: '700', fontSize: '0.9rem', cursor: 'pointer',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem'
+                }}>
+                  📤 Compartilhar Ranking no WhatsApp
+                </button>
+              </>
+            )}
                 <div className="podium-container">
                   {/* 2nd Place */}
                   {top3[1] && (
@@ -750,6 +985,65 @@ function DashboardContent() {
         )}
               </>
             )}
+          </div>
+        )}
+
+        {/* 6. Grupos da Copa via API */}
+        {activeTab === 'grupos' && (
+          <div>
+            <div style={{ marginBottom: '1rem' }}>
+              <h3 style={{ fontSize: '1.05rem', marginBottom: '0.2rem' }}>Grupos da Copa 2026</h3>
+              <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Classificação em tempo real • Verde = classificado</p>
+            </div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', marginBottom: '1rem' }}>
+              {['A','B','C','D','E','F','G','H','I','J','K','L'].map(g => (
+                <button key={g} onClick={() => setSelectedGroup(g)} style={{
+                  padding: '0.35rem 0.75rem', borderRadius: '999px', fontSize: '0.78rem', fontWeight: '700',
+                  border: 'none', cursor: 'pointer',
+                  background: selectedGroup === g ? 'var(--soccer-green)' : 'rgba(255,255,255,0.08)',
+                  color: selectedGroup === g ? '#000' : '#cbd5e1'
+                }}>Grupo {g}</button>
+              ))}
+            </div>
+            {apiLoading && apiGroups.length === 0 ? (
+              <p style={{ textAlign: 'center', color: 'var(--text-secondary)', fontSize: '0.8rem', padding: '2rem' }}>Carregando grupos...</p>
+            ) : (() => {
+              const groupData = apiGroups.find(g => g.group === selectedGroup);
+              if (!groupData || !groupData.teams) return (
+                <p style={{ textAlign: 'center', color: 'var(--text-secondary)', fontSize: '0.8rem', padding: '2rem' }}>Dados do Grupo {selectedGroup} indisponíveis ainda.</p>
+              );
+              return (
+                <div style={{ overflowX: 'auto' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.75rem' }}>
+                    <thead>
+                      <tr style={{ borderBottom: '1px solid var(--border-color)' }}>
+                        {['Pos','País','J','V','E','D','SG','Pts'].map(h => (
+                          <th key={h} style={{ padding: '0.5rem 0.3rem', color: h === 'Pts' ? 'var(--accent-gold)' : 'var(--text-secondary)', textAlign: h === 'País' ? 'left' : 'center' }}>{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {groupData.teams.map((t, idx) => (
+                        <tr key={t.team} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)', background: idx < 2 ? 'rgba(16,185,129,0.07)' : 'transparent' }}>
+                          <td style={{ padding: '0.6rem 0.3rem', color: idx < 2 ? 'var(--soccer-green)' : 'var(--text-secondary)', fontWeight: 'bold', textAlign: 'center' }}>{t.position ?? idx+1}º</td>
+                          <td style={{ padding: '0.6rem 0.3rem', fontWeight: '600' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                              <img src={`https://flagcdn.com/w40/${getFlagCode(t.team)}.png`} style={{ width: '20px' }} alt="" />{t.team}
+                            </div>
+                          </td>
+                          <td style={{ textAlign: 'center', padding: '0.6rem 0.3rem' }}>{t.played ?? '-'}</td>
+                          <td style={{ textAlign: 'center', padding: '0.6rem 0.3rem' }}>{t.won ?? '-'}</td>
+                          <td style={{ textAlign: 'center', padding: '0.6rem 0.3rem' }}>{t.drawn ?? '-'}</td>
+                          <td style={{ textAlign: 'center', padding: '0.6rem 0.3rem' }}>{t.lost ?? '-'}</td>
+                          <td style={{ textAlign: 'center', padding: '0.6rem 0.3rem' }}>{t.goalDifference ?? t.goal_difference ?? '-'}</td>
+                          <td style={{ textAlign: 'center', padding: '0.6rem 0.3rem', fontWeight: '900', color: 'var(--accent-gold)' }}>{t.points ?? '-'}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              );
+            })()}
           </div>
         )}
       </main>
@@ -1118,6 +1412,91 @@ function DashboardContent() {
             >
               CONFIRMAR EXCLUSÃO
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Histórico de Palpites */}
+      {showHistoryModal && (() => {
+        const b = showHistoryModal;
+        const total = Array.isArray(b.bets_data) ? b.bets_data.length : 0;
+        const finalizados = Array.isArray(b.bets_data) ? b.bets_data.filter(bt => bt.pts !== null && bt.pts !== undefined) : [];
+        const exatos = finalizados.filter(bt => bt.pts === 5).length;
+        const corretos = finalizados.filter(bt => bt.pts === 3).length;
+        const erros = finalizados.filter(bt => bt.pts === 0).length;
+        const totalPts = finalizados.reduce((acc, bt) => acc + (bt.pts || 0), 0);
+        return (
+          <div className="modal-overlay" onClick={() => setShowHistoryModal(null)}>
+            <div className="modal-container" onClick={e => e.stopPropagation()} style={{ maxHeight: '90vh', overflowY: 'auto' }}>
+              <div className="modal-header">
+                <h3>Histórico — {b.bettor_name}</h3>
+                <div onClick={() => setShowHistoryModal(null)} className="modal-close"><Icons.X size={20} /></div>
+              </div>
+              {/* Stats resumo */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '0.5rem', marginBottom: '1rem' }}>
+                {[{ label: 'Total Pts', val: totalPts, color: 'var(--accent-gold)' },
+                  { label: '🎯 Exatos', val: exatos, color: 'var(--soccer-green)' },
+                  { label: '✅ Vencedor', val: corretos, color: '#60a5fa' },
+                  { label: '❌ Erros', val: erros, color: '#f87171' }].map(s => (
+                  <div key={s.label} style={{ background: 'rgba(255,255,255,0.05)', borderRadius: '8px', padding: '0.5rem', textAlign: 'center' }}>
+                    <div style={{ fontSize: '1.1rem', fontWeight: '900', color: s.color }}>{s.val}</div>
+                    <div style={{ fontSize: '0.6rem', color: 'var(--text-secondary)' }}>{s.label}</div>
+                  </div>
+                ))}
+              </div>
+              {/* Lista de palpites */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                {(b.bets_data || []).map((bet, idx) => {
+                  const ptsColor = bet.pts === 5 ? 'var(--soccer-green)' : bet.pts === 3 ? 'var(--accent-gold)' : bet.pts === 0 ? '#f87171' : 'var(--text-muted)';
+                  return (
+                    <div key={idx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.5rem 0.6rem', borderRadius: '8px', background: 'rgba(255,255,255,0.04)' }}>
+                      <div style={{ flex: 1 }}>
+                        <p style={{ fontSize: '0.78rem', fontWeight: '600' }}>{bet.home} vs {bet.away}</p>
+                        <p style={{ fontSize: '0.65rem', color: 'var(--text-secondary)' }}>Chutou: {bet.bet_home} x {bet.bet_away}{bet.real_home !== null && bet.real_home !== undefined ? ` | Real: ${bet.real_home} x ${bet.real_away}` : ' | Pendente'}</p>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                        <span style={{ fontSize: '0.8rem', fontWeight: '900', color: ptsColor }}>{bet.pts !== null && bet.pts !== undefined ? `+${bet.pts}` : '-'}</span>
+                        {currentUser && (
+                          <button onClick={() => { setEditingBet({ bolaoId: b.id, betIndex: idx, home: bet.bet_home, away: bet.bet_away }); setEditPassword(''); setEditError(''); setShowHistoryModal(null); }}
+                            style={{ fontSize: '0.65rem', padding: '0.2rem 0.45rem', background: 'rgba(99,102,241,0.15)', border: '1px solid #6366f1', color: '#818cf8', borderRadius: '6px', cursor: 'pointer' }}>
+                            ✏️
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* Modal Editar Palpite (Admin) */}
+      {editingBet && (
+        <div className="modal-overlay">
+          <div className="modal-container">
+            <div className="modal-header">
+              <h3>Editar Palpite</h3>
+              <div onClick={() => setEditingBet(null)} className="modal-close"><Icons.X size={20} /></div>
+            </div>
+            <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', marginBottom: '1rem' }}>Corrija o placar apostado:</p>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem', justifyContent: 'center' }}>
+              <input type="number" min="0" max="20" value={editingBet.home}
+                onChange={e => setEditingBet(prev => ({ ...prev, home: parseInt(e.target.value) || 0 }))}
+                className="score-field" style={{ fontSize: '1.5rem', width: '60px', height: '60px', textAlign: 'center' }} />
+              <span style={{ fontSize: '1.2rem', color: 'var(--text-secondary)' }}>x</span>
+              <input type="number" min="0" max="20" value={editingBet.away}
+                onChange={e => setEditingBet(prev => ({ ...prev, away: parseInt(e.target.value) || 0 }))}
+                className="score-field" style={{ fontSize: '1.5rem', width: '60px', height: '60px', textAlign: 'center' }} />
+            </div>
+            <div className="form-group">
+              <label>Confirme sua senha</label>
+              <input type="password" className="form-control" placeholder="Sua senha de login"
+                value={editPassword} onChange={e => { setEditPassword(e.target.value); setEditError(''); }} />
+            </div>
+            {editError && <p style={{ color: '#ef4444', fontSize: '0.75rem', marginBottom: '0.75rem' }}>{editError}</p>}
+            <button className="btn-submit" onClick={saveEditedBet}>SALVAR CORREÇÃO</button>
           </div>
         </div>
       )}

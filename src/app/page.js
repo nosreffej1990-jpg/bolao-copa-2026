@@ -13,10 +13,7 @@ export default function Home() {
   const router = useRouter();
 
   useEffect(() => {
-    // Simulate initial asset loading
-    const timer = setTimeout(() => {
-      setLoading(false);
-    }, 2000);
+    const timer = setTimeout(() => setLoading(false), 2000);
     return () => clearTimeout(timer);
   }, []);
 
@@ -24,7 +21,6 @@ export default function Home() {
     e.preventDefault();
     setErrorMsg('');
 
-    // Pre-registered users
     const validUsers = [
       { user: 'Jefferson', pass: '060199' },
       { user: 'Junior', pass: '062026' }
@@ -35,13 +31,12 @@ export default function Home() {
     );
 
     if (match) {
-      // Save credentials in session storage / local storage
       if (typeof window !== 'undefined') {
         localStorage.setItem('copa26_user', match.user);
       }
-      router.push('/dashboard');
+      router.push('/dashboard?tab=boloes');
     } else {
-      setErrorMsg('Login ou Senha incorretos!');
+      setErrorMsg('Usuário ou senha incorretos!');
     }
   };
 
@@ -75,45 +70,42 @@ export default function Home() {
           <div className="home-container">
             {!showLogin ? (
               <div className="home-menu-grid">
-                <button className="home-btn" onClick={() => setShowLogin(true)}>
-                  <Icons.LogIn size={28} />
-                  <span>Login</span>
-                </button>
-                
                 <button className="home-btn" onClick={() => handleDirectNavigate('ranking')}>
                   <Icons.Trophy size={28} />
                   <span>Ranking</span>
                 </button>
-
                 <button className="home-btn" onClick={() => handleDirectNavigate('placares_geral')}>
-                  <Icons.BarChart size={28} />
-                  <span>Placares</span>
+                  <Icons.Check size={28} />
+                  <span>Resultados</span>
                 </button>
-
                 <button className="home-btn" onClick={() => handleDirectNavigate('confrontos_geral')}>
                   <Icons.Calendar size={28} />
-                  <span>Próximos jogos</span>
+                  <span>Confrontos</span>
+                </button>
+                <button className="home-btn" onClick={() => handleDirectNavigate('grupos')}>
+                  <Icons.List size={28} />
+                  <span>Grupos</span>
+                </button>
+                <button className="home-btn" onClick={() => setShowLogin(true)}>
+                  <Icons.LogIn size={28} />
+                  <span>Upar Bolão</span>
                 </button>
               </div>
             ) : (
-              <div className="login-section">
-                <h3>
-                  <Icons.Lock size={18} />
-                  Entrar no Bolão
-                </h3>
-                
-                {errorMsg && (
-                  <div style={{ color: '#ef4444', fontSize: '0.8rem', marginBottom: '1rem', fontWeight: 'bold' }}>
-                    {errorMsg}
-                  </div>
-                )}
+              <div className="login-container">
+                <div style={{ textAlign: 'center', marginBottom: '1.25rem' }}>
+                  <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>🔐</div>
+                  <h3 style={{ fontSize: '1rem', marginBottom: '0.25rem' }}>Acesso Restrito</h3>
+                  <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                    Faça login para adicionar e gerenciar bolões
+                  </p>
+                </div>
 
                 <form onSubmit={handleLoginSubmit}>
                   <div className="form-group">
-                    <label htmlFor="username">Usuário</label>
+                    <label>Usuário</label>
                     <input
                       type="text"
-                      id="username"
                       className="form-control"
                       placeholder="Ex: Jefferson"
                       value={username}
@@ -122,33 +114,28 @@ export default function Home() {
                     />
                   </div>
                   <div className="form-group">
-                    <label htmlFor="password">Senha</label>
+                    <label>Senha</label>
                     <input
                       type="password"
-                      id="password"
                       className="form-control"
-                      placeholder="••••••"
+                      placeholder="Sua senha"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       required
                     />
                   </div>
-
-                  <button type="submit" className="btn-submit">
-                    CONFIRMAR
-                  </button>
-                  
+                  {errorMsg && (
+                    <p style={{ color: '#ef4444', fontSize: '0.8rem', marginBottom: '0.75rem', textAlign: 'center' }}>
+                      ⚠️ {errorMsg}
+                    </p>
+                  )}
+                  <button type="submit" className="btn-submit">ENTRAR NO BOLÃO</button>
                   <button
                     type="button"
-                    className="btn-cancel"
-                    onClick={() => {
-                      setShowLogin(false);
-                      setErrorMsg('');
-                      setUsername('');
-                      setPassword('');
-                    }}
+                    onClick={() => { setShowLogin(false); setErrorMsg(''); }}
+                    style={{ width: '100%', marginTop: '0.75rem', background: 'transparent', border: 'none', color: 'var(--text-secondary)', fontSize: '0.8rem', cursor: 'pointer' }}
                   >
-                    Voltar
+                    ← Voltar
                   </button>
                 </form>
               </div>
