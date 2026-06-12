@@ -37,6 +37,8 @@ function DashboardContent() {
   const [showDeleteModal, setShowDeleteModal] = useState(null); // { id, bettor_name }
   const [deletePassword, setDeletePassword] = useState('');
   const [deleteError, setDeleteError] = useState('');
+  const [showMatchModal, setShowMatchModal] = useState(null); // API game object
+  const [matchModalTab, setMatchModalTab] = useState('detalhes'); // 'detalhes' | 'palpites'
   
   // Camera simulation
   const [cameraStep, setCameraStep] = useState(1); // 1: choose, 2: capturing/ocr, 3: success
@@ -193,7 +195,37 @@ function DashboardContent() {
     }
   };
 
-  // Upload/Camera bolão flow
+  // Get bet statistics for a specific match (by team name matching)
+  const getMatchBetStats = (game) => {
+    const results = [];
+    boloes.forEach(b => {
+      if (!Array.isArray(b.bets_data)) return;
+      const bet = b.bets_data.find(bd =>
+        bd.home?.toLowerCase().includes(game.home_team_name_en.split(' ')[0].toLowerCase()) ||
+        bd.away?.toLowerCase().includes(game.away_team_name_en.split(' ')[0].toLowerCase())
+      );
+      if (bet) {
+        const realHome = parseInt(game.home_score);
+        const realAway = parseInt(game.away_score);
+        let pts = 0;
+        if (bet.bet_home === realHome && bet.bet_away === realAway) pts = 5; // placar exato
+        else {
+          const betWinner = bet.bet_home > bet.bet_away ? 'H' : bet.bet_home < bet.bet_away ? 'A' : 'D';
+          const realWinner = realHome > realAway ? 'H' : realHome < realAway ? 'A' : 'D';
+          if (betWinner === realWinner) pts = 3; // vencedor certo
+        }
+        results.push({
+          name: b.bettor_name,
+          bet_home: bet.bet_home,
+          bet_away: bet.bet_away,
+          pts,
+          exact: pts === 5,
+          correct: pts === 3,
+        });
+      }
+    });
+    return results.sort((a, b) => b.pts - a.pts);
+  };
   const startCameraUpload = () => {
     setTempBettorName('');
     setUploadedPhotoUrl(null);
@@ -635,7 +667,12 @@ function DashboardContent() {
                   const aFlag = getFlagCode(g.away_team_name_en);
                   const { date, time } = formatMatchDate(g.local_date);
                   return (
-                    <div className="matchup-card" key={g.id} style={{ borderColor: 'rgba(16,185,129,0.3)' }}>
+                    <div
+                      className="matchup-card"
+                      key={g.id}
+                      style={{ borderColor: 'rgba(16,185,129,0.3)', cursor: 'pointer', position: 'relative' }}
+                      onClick={() => { setShowMatchModal(g); setMatchModalTab('detalhes'); }}
+                    >
                       <div className="matchup-meta">
                         <span>Grupo {g.group} • Encerrado</span>
                         <span>{date} {time}</span>
@@ -656,8 +693,11 @@ function DashboardContent() {
                         </div>
                       </div>
                       {g.home_scorers && g.home_scorers !== 'null' && (
-                        <p style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', marginTop: '0.5rem', textAlign: 'center' }}>⚽ {g.home_scorers.replace(/[{}\"/]/g, '')}</p>
+                        <p style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', marginTop: '0.5rem', textAlign: 'center' }}>⚽ {g.home_scorers.replace(/[{}"]/g, '')}</p>
                       )}
+                      <div style={{ display: 'flex', justifyContent: 'center', gap: '0.5rem', marginTop: '0.75rem' }}>
+                        <span style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', background: 'rgba(255,255,255,0.06)', padding: '0.2rem 0.6rem', borderRadius: '999px' }}>Toque para ver detalhes</span>
+                      </div>
                     </div>
                   );
                 })}
@@ -797,7 +837,159 @@ function DashboardContent() {
         </div>
       )}
 
+      {/* Modal Detalhes do Jogo */}
+      {showMatchModal && (() => {
+        const g = showMatchModal;
+        const hFlag = getFlagCode(g.home_team_name_en);
+        const aFlag = getFlagCode(g.away_team_name_en);
+        const { date, time } = formatMatchDate(g.local_date);
+        const betStats = getMatchBetStats(g);
+        const parseScorers = (raw) => {
+          if (!raw || raw === 'null') return [];
+          return raw.replace(/[{}"]/g, '').split(',').map(s => s.trim()).filter(Boolean);
+        };
+        const homeScorers = parseScorers(g.home_scorers);
+        const awayScorers = parseScorers(g.away_scorers);
+
+        return (
+          <div className="modal-overlay" onClick={() => setShowMatchModal(null)}>
+            <div className="modal-container" onClick={e => e.stopPropagation()} style={{ maxHeight: '90vh', overflowY: 'auto' }}>
+              {/* Header */}
+              <div className="modal-header">
+                <h3 style={{ fontSize: '0.95rem' }}>Grupo {g.group} • Rodada {g.matchday}</h3>
+                <div onClick={() => setShowMatchModal(null)} className="modal-close"><Icons.X size={20} /></div>
+              </div>
+
+              {/* Placar principal */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1rem', padding: '1rem 0', borderBottom: '1px solid var(--border-color)', marginBottom: '1rem' }}>
+                <div style={{ textAlign: 'center', flex: 1 }}>
+                  <img src={`https://flagcdn.com/w80/${hFlag}.png`} style={{ width: '48px', marginBottom: '0.4rem' }} alt={g.home_team_name_en} />
+                  <p style={{ fontSize: '0.75rem', fontWeight: 'bold' }}>{g.home_team_name_en}</p>
+                </div>
+                <div style={{ textAlign: 'center' }}>
+                  <div style={{ fontSize: '2rem', fontWeight: '900', color: '#fff', letterSpacing: '4px' }}>{g.home_score} — {g.away_score}</div>
+                  <span style={{ fontSize: '0.6rem', color: 'var(--soccer-green)', fontWeight: 'bold' }}>ENCERRADO • {date}</span>
+                </div>
+                <div style={{ textAlign: 'center', flex: 1 }}>
+                  <img src={`https://flagcdn.com/w80/${aFlag}.png`} style={{ width: '48px', marginBottom: '0.4rem' }} alt={g.away_team_name_en} />
+                  <p style={{ fontSize: '0.75rem', fontWeight: 'bold' }}>{g.away_team_name_en}</p>
+                </div>
+              </div>
+
+              {/* Tabs */}
+              <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
+                <button
+                  onClick={() => setMatchModalTab('detalhes')}
+                  style={{ flex: 1, padding: '0.6rem', borderRadius: '8px', fontWeight: '700', fontSize: '0.8rem', cursor: 'pointer', border: 'none',
+                    background: matchModalTab === 'detalhes' ? 'var(--soccer-green)' : 'rgba(255,255,255,0.07)',
+                    color: matchModalTab === 'detalhes' ? '#000' : '#cbd5e1' }}
+                >⚽ Detalhes</button>
+                <button
+                  onClick={() => setMatchModalTab('palpites')}
+                  style={{ flex: 1, padding: '0.6rem', borderRadius: '8px', fontWeight: '700', fontSize: '0.8rem', cursor: 'pointer', border: 'none',
+                    background: matchModalTab === 'palpites' ? 'var(--accent-gold)' : 'rgba(255,255,255,0.07)',
+                    color: matchModalTab === 'palpites' ? '#000' : '#cbd5e1' }}
+                >🏆 Palpites ({betStats.length})</button>
+              </div>
+
+              {/* Tab: Detalhes */}
+              {matchModalTab === 'detalhes' && (
+                <div>
+                  {/* Artilheiros */}
+                  {(homeScorers.length > 0 || awayScorers.length > 0) ? (
+                    <div style={{ marginBottom: '1rem' }}>
+                      <p style={{ fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--text-secondary)', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>⚽ Gols</p>
+                      <div style={{ display: 'flex', gap: '1rem' }}>
+                        <div style={{ flex: 1 }}>
+                          {homeScorers.map((s, i) => (
+                            <div key={i} style={{ fontSize: '0.78rem', padding: '0.35rem 0', borderBottom: '1px solid var(--border-color)', color: '#e2e8f0' }}>⚽ {s}</div>
+                          ))}
+                        </div>
+                        <div style={{ flex: 1, textAlign: 'right' }}>
+                          {awayScorers.map((s, i) => (
+                            <div key={i} style={{ fontSize: '0.78rem', padding: '0.35rem 0', borderBottom: '1px solid var(--border-color)', color: '#e2e8f0' }}>{s} ⚽</div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', textAlign: 'center', marginBottom: '1rem' }}>Detalhes de gols não disponíveis.</p>
+                  )}
+
+                  {/* Info do jogo */}
+                  <div style={{ background: 'rgba(255,255,255,0.04)', borderRadius: '8px', padding: '0.75rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem' }}>
+                      <span style={{ color: 'var(--text-secondary)' }}>Data</span>
+                      <span style={{ fontWeight: 'bold' }}>{date} às {time}</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem' }}>
+                      <span style={{ color: 'var(--text-secondary)' }}>Grupo</span>
+                      <span style={{ fontWeight: 'bold' }}>Grupo {g.group}</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem' }}>
+                      <span style={{ color: 'var(--text-secondary)' }}>Rodada</span>
+                      <span style={{ fontWeight: 'bold' }}>{g.matchday}ª Rodada</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem' }}>
+                      <span style={{ color: 'var(--text-secondary)' }}>Status</span>
+                      <span style={{ fontWeight: 'bold', color: 'var(--soccer-green)' }}>✔ Encerrado</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Tab: Palpites */}
+              {matchModalTab === 'palpites' && (
+                <div>
+                  <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '0.75rem' }}>
+                    Quem apostou neste jogo e quantos pontos ganhou:
+                  </p>
+                  {betStats.length === 0 ? (
+                    <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-secondary)', fontSize: '0.8rem' }}>
+                      <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>🎯</div>
+                      Nenhum bolão cadastrado com palpite para este jogo.
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                      {betStats.map((item, idx) => (
+                        <div key={idx} style={{
+                          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                          padding: '0.65rem 0.85rem', borderRadius: '8px',
+                          background: item.exact ? 'rgba(16,185,129,0.12)' : item.correct ? 'rgba(251,191,36,0.1)' : 'rgba(255,255,255,0.04)',
+                          border: `1px solid ${item.exact ? 'rgba(16,185,129,0.4)' : item.correct ? 'rgba(251,191,36,0.3)' : 'rgba(255,255,255,0.07)'}`
+                        }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                            <span style={{ fontSize: '0.7rem', fontWeight: 'bold', color: 'var(--text-secondary)', minWidth: '18px' }}>{idx + 1}º</span>
+                            <img src={`https://api.dicebear.com/7.x/identicon/svg?seed=${item.name}`} style={{ width: '28px', height: '28px', borderRadius: '50%' }} alt="" />
+                            <div>
+                              <p style={{ fontSize: '0.8rem', fontWeight: 'bold' }}>{item.name}</p>
+                              <p style={{ fontSize: '0.65rem', color: 'var(--text-secondary)' }}>Chutou: {item.bet_home} x {item.bet_away}</p>
+                            </div>
+                          </div>
+                          <div style={{ textAlign: 'right' }}>
+                            <span style={{
+                              fontSize: '0.85rem', fontWeight: '900',
+                              color: item.exact ? 'var(--soccer-green)' : item.correct ? 'var(--accent-gold)' : 'var(--text-muted)'
+                            }}>
+                              {item.pts > 0 ? `+${item.pts}` : '0'} pts
+                            </span>
+                            <p style={{ fontSize: '0.6rem', color: 'var(--text-secondary)' }}>
+                              {item.exact ? '🎯 Exato' : item.correct ? '✅ Vencedor' : '❌ Errou'}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      })()}
+
       {/* 2. Ver Foto Modal */}
+
       {showPhotoModal && (
         <div className="modal-overlay" onClick={() => setShowPhotoModal(null)}>
           <div className="modal-container" onClick={(e) => e.stopPropagation()} style={{ padding: '0.5rem' }}>
