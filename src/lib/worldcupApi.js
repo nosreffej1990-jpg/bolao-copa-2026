@@ -140,7 +140,7 @@ export async function getUpcomingMatches(limit = 15) {
 // Formata a data do jogo para exibição em pt-BR
 export function formatMatchDate(localDate) {
   const d = parseApiDate(localDate);
-  const [_, timePart] = localDate.split(' ');
+  const timePart = localDate && localDate.includes(' ') ? localDate.split(' ')[1] : '00:00';
   return {
     date: d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }),
     time: timePart || '00:00',
