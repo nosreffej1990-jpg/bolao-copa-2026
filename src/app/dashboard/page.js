@@ -317,6 +317,8 @@ function DashboardContent() {
     setEditError('');
     fetchData();
   };
+
+  const confirmDeleteBolao = async () => {
     if (!currentUser) return;
     const correctPass = USERS[currentUser];
     if (deletePassword !== correctPass) {
@@ -792,62 +794,6 @@ function DashboardContent() {
                 }}>
                   📤 Compartilhar Ranking no WhatsApp
                 </button>
-              </>
-            )}
-                <div className="podium-container">
-                  {/* 2nd Place */}
-                  {top3[1] && (
-                    <div className="podium-column second">
-                      <img src={top3[1].avatar} className="podium-avatar" alt="2nd" />
-                      <div className="podium-box">
-                        <span className="podium-name">{top3[1].name}</span>
-                        <span className="podium-pts">{top3[1].pts} pts</span>
-                        <span style={{ fontSize: '0.65rem', color: '#94a3b8', fontWeight: 'bold' }}>2º Lugar</span>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* 1st Place */}
-                  {top3[0] && (
-                    <div className="podium-column first">
-                      <span className="podium-crown">👑</span>
-                      <img src={top3[0].avatar} className="podium-avatar" alt="1st" />
-                      <div className="podium-box">
-                        <span className="podium-name">{top3[0].name}</span>
-                        <span className="podium-pts">{top3[0].pts} pts</span>
-                        <span style={{ fontSize: '0.65rem', color: 'var(--accent-gold)', fontWeight: 'bold' }}>1º Lugar</span>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* 3rd Place */}
-                  {top3[2] && (
-                    <div className="podium-column third">
-                      <img src={top3[2].avatar} className="podium-avatar" alt="3rd" />
-                      <div className="podium-box">
-                        <span className="podium-name">{top3[2].name}</span>
-                        <span className="podium-pts">{top3[2].pts} pts</span>
-                        <span style={{ fontSize: '0.65rem', color: '#b45309', fontWeight: 'bold' }}>3º Lugar</span>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* List 4th place and below */}
-                {restRank.length > 0 && (
-                  <div className="ranking-list">
-                    {restRank.map(item => (
-                      <div className="ranking-item" key={item.name}>
-                        <div className="ranking-item-left">
-                          <span className="ranking-num">{item.rank}º</span>
-                          <img src={item.avatar} className="ranking-avatar" alt="player" />
-                          <span className="ranking-name">{item.name}</span>
-                        </div>
-                        <span className="ranking-pts">{item.pts} pts</span>
-                      </div>
-                    ))}
-                  </div>
-                )}
               </>
             )}
           </div>
