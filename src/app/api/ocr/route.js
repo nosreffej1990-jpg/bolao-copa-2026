@@ -90,7 +90,7 @@ O formato de retorno DEVE ser um objeto JSON puro. Não inclua Markdown, blocos 
         }
       ],
       generationConfig: {
-        response_mime_type: 'application/json'
+        responseMimeType: 'application/json'
       }
     };
 
