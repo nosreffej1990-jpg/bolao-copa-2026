@@ -211,7 +211,7 @@ body {
     width: 100%;
     max-width: 480px;
     min-height: 100vh;
-    background-color: #080f0c;
+    background-color: var(--bg-app);
     border-left: 1px solid var(--border-color);
     border-right: 1px solid var(--border-color);
     box-shadow: 0 0 50px rgba(0, 0, 0, 0.6);
@@ -292,16 +292,16 @@ body {
     animation: spin 0.8s linear infinite;
 }
 
-/* Home / Welcome Page (Imagem 01 Style) */
+/* Home / Welcome Page */
 .home-page-wrapper {
-    background-color: #ffffff;
+    background-color: var(--bg-app);
     min-height: 100vh;
     display: flex;
     flex-direction: column;
 }
 
 .home-header {
-    background-color: #0e4a27;
+    background-color: var(--bg-header);
     padding: 2rem 1.5rem;
     text-align: center;
     border-bottom: 4px solid var(--accent-gold);
@@ -318,7 +318,7 @@ body {
 
 .home-header p {
     font-size: 0.95rem;
-    color: rgba(255, 255, 255, 0.85);
+    color: var(--text-secondary);
     font-weight: 600;
     letter-spacing: 0.05em;
 }
@@ -330,7 +330,7 @@ body {
     align-items: center;
     justify-content: flex-start;
     flex-grow: 1;
-    background-color: #ffffff;
+    background-color: var(--bg-app);
 }
 
 .home-menu-grid {
@@ -344,10 +344,10 @@ body {
 .home-btn {
     width: 100%;
     padding: 1.5rem 0.5rem;
-    background-color: #ffffff;
-    border: 1px solid #e2e8f0;
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
     border-radius: 16px;
-    color: #0e4a27;
+    color: var(--text-primary);
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -355,26 +355,30 @@ body {
     gap: 0.75rem;
     cursor: pointer;
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+    box-shadow: 0 4px 20px var(--card-glow);
 }
 
 .home-btn span {
     font-size: 0.9rem;
     font-weight: 700;
-    color: #1e293b;
+    color: var(--text-primary);
     font-family: var(--font-main);
 }
 
 .home-btn svg, .home-btn i {
-    color: #0e4a27;
+    color: var(--accent-gold);
     width: 28px;
     height: 28px;
 }
 
+.home-btn:hover {
+    background-color: var(--bg-card-hover);
+    border-color: var(--border-active);
+}
+
 .home-btn:active {
     transform: scale(0.96);
-    background-color: #f8fafc;
-    border-color: #cbd5e1;
+    border-color: var(--accent-gold);
 }
 
 /* Login Modal / Container */
@@ -412,7 +416,7 @@ body {
 .form-control {
     width: 100%;
     padding: 0.85rem;
-    background-color: #07100b;
+    background-color: var(--bg-card);
     border: 1px solid var(--border-color);
     border-radius: var(--radius-sm);
     color: #ffffff;
@@ -527,7 +531,7 @@ body {
 .drawer-content {
     width: 260px;
     height: 100%;
-    background-color: #07120a;
+    background-color: var(--bg-header);
     border-left: 1px solid var(--border-color);
     padding: 1.5rem;
     display: flex;
@@ -720,13 +724,13 @@ body {
 .score-field {
     width: 36px;
     height: 36px;
-    background-color: #060a08;
+    background-color: var(--bg-app);
     border: 1px solid var(--border-color);
     border-radius: var(--radius-sm);
     text-align: center;
     font-size: 1.1rem;
     font-weight: 800;
-    color: #ffffff;
+    color: var(--text-primary);
 }
 
 .score-field:focus {
@@ -806,7 +810,7 @@ body {
     width: 36px;
     height: 36px;
     border-radius: 50%;
-    background-color: #080f0c;
+    background-color: var(--bg-app);
 }
 
 .bolao-details h4 {
@@ -866,8 +870,8 @@ body {
 .modal-container {
     width: 100%;
     max-width: 400px;
-    background-color: #08110b;
-    border: 1px solid var(--border-color);
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-active);
     border-radius: var(--radius-lg);
     padding: 1.25rem;
     max-height: 85vh;
@@ -1114,7 +1118,7 @@ body {
     width: 28px;
     height: 28px;
     border-radius: 50%;
-    background-color: #060a08;
+    background-color: var(--bg-app);
 }
 
 .ranking-name {
