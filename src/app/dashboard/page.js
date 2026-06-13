@@ -47,6 +47,63 @@ const compressImage = (file, maxWidth = 1024, maxHeight = 1024) => {
   });
 };
 
+// Helper to dynamically calculate points and results for bets based on current confrontos scores
+const getCalculatedBets = (betsData, confrontosList) => {
+  if (!Array.isArray(betsData)) return [];
+  return betsData.map(bet => {
+    const match = confrontosList.find(c => c.id === bet.match_id);
+    if (!match) return { ...bet, real_home: null, real_away: null, pts: null };
+
+    const hasRealScore = match.home_score !== null && match.home_score !== undefined && String(match.home_score).trim() !== '' 
+                      && match.away_score !== null && match.away_score !== undefined && String(match.away_score).trim() !== '';
+
+    if (!hasRealScore) {
+      return {
+        ...bet,
+        real_home: null,
+        real_away: null,
+        pts: null
+      };
+    }
+
+    const rH = parseInt(match.home_score);
+    const rA = parseInt(match.away_score);
+    
+    const hasBetScore = bet.bet_home !== null && bet.bet_home !== undefined && String(bet.bet_home).trim() !== ''
+                     && bet.bet_away !== null && bet.bet_away !== undefined && String(bet.bet_away).trim() !== '';
+
+    if (!hasBetScore) {
+      return {
+        ...bet,
+        real_home: rH,
+        real_away: rA,
+        pts: 0
+      };
+    }
+
+    const bH = parseInt(bet.bet_home);
+    const bA = parseInt(bet.bet_away);
+
+    let pts = 0;
+    if (bH === rH && bA === rA) {
+      pts = 5;
+    } else {
+      const betWinner = bH > bA ? 'H' : bH < bA ? 'A' : 'D';
+      const realWinner = rH > rA ? 'H' : rH < rA ? 'A' : 'D';
+      if (betWinner === realWinner) {
+        pts = 3;
+      }
+    }
+
+    return {
+      ...bet,
+      real_home: rH,
+      real_away: rA,
+      pts: pts
+    };
+  });
+};
+
 function DashboardContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -632,14 +689,13 @@ function DashboardContent() {
           pts: 0
         };
       }
-      // Sum up points from bets_data
-      if (Array.isArray(b.bets_data)) {
-        b.bets_data.forEach(bet => {
-          if (bet.pts !== null && bet.pts !== undefined) {
-            scoreMap[b.bettor_name].pts += bet.pts;
-          }
-        });
-      }
+      // Sum up points dynamically from bets_data mapped to confrontos
+      const calculatedBets = getCalculatedBets(b.bets_data, confrontos);
+      calculatedBets.forEach(bet => {
+        if (bet.pts !== null && bet.pts !== undefined) {
+          scoreMap[b.bettor_name].pts += bet.pts;
+        }
+      });
     });
 
     const players = Object.values(scoreMap);
@@ -1508,7 +1564,7 @@ function DashboardContent() {
                   </tr>
                 </thead>
                 <tbody>
-                  {showBetsModal.bets_data.map((bet, idx) => {
+                  {getCalculatedBets(showBetsModal.bets_data, confrontos).map((bet, idx) => {
                     const badgeClass = bet.pts === 5 
                       ? 'exact' 
                       : bet.pts === 3 
@@ -1579,8 +1635,9 @@ function DashboardContent() {
       {/* Modal Histórico de Palpites */}
       {showHistoryModal && (() => {
         const b = showHistoryModal;
-        const total = Array.isArray(b.bets_data) ? b.bets_data.length : 0;
-        const finalizados = Array.isArray(b.bets_data) ? b.bets_data.filter(bt => bt.pts !== null && bt.pts !== undefined) : [];
+        const calculatedBets = getCalculatedBets(b.bets_data, confrontos);
+        const total = calculatedBets.length;
+        const finalizados = calculatedBets.filter(bt => bt.pts !== null && bt.pts !== undefined);
         const exatos = finalizados.filter(bt => bt.pts === 5).length;
         const corretos = finalizados.filter(bt => bt.pts === 3).length;
         const erros = finalizados.filter(bt => bt.pts === 0).length;
@@ -1606,7 +1663,7 @@ function DashboardContent() {
               </div>
               {/* Lista de palpites */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                {(b.bets_data || []).map((bet, idx) => {
+                {calculatedBets.map((bet, idx) => {
                   const ptsColor = bet.pts === 5 ? 'var(--soccer-green)' : bet.pts === 3 ? 'var(--accent-gold)' : bet.pts === 0 ? '#f87171' : 'var(--text-muted)';
                   return (
                     <div key={idx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.5rem 0.6rem', borderRadius: '8px', background: 'rgba(255,255,255,0.04)' }}>
