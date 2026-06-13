@@ -104,6 +104,89 @@ const getCalculatedBets = (betsData, confrontosList) => {
   });
 };
 
+// Helper to dynamically calculate group standings based on local confrontos data
+const calculateGroupStandings = (confrontosList) => {
+  const groupsMap = {};
+  
+  // Initialize groups A to L
+  const groupsList = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L'];
+  groupsList.forEach(g => {
+    groupsMap[g] = {};
+  });
+
+  confrontosList.forEach(m => {
+    const gName = m.grupo;
+    if (!gName || !groupsMap[gName]) return;
+
+    const tHome = m.home_team;
+    const tAway = m.away_team;
+
+    if (!tHome || !tAway) return;
+
+    // Initialize team stats if not exists
+    if (!groupsMap[gName][tHome]) {
+      groupsMap[gName][tHome] = { team: tHome, played: 0, won: 0, drawn: 0, lost: 0, gf: 0, ga: 0, goalDifference: 0, points: 0 };
+    }
+    if (!groupsMap[gName][tAway]) {
+      groupsMap[gName][tAway] = { team: tAway, played: 0, won: 0, drawn: 0, lost: 0, gf: 0, ga: 0, goalDifference: 0, points: 0 };
+    }
+
+    const hasScore = m.home_score !== null && m.home_score !== undefined && String(m.home_score).trim() !== ''
+                  && m.away_score !== null && m.away_score !== undefined && String(m.away_score).trim() !== '';
+
+    if (hasScore) {
+      const hScore = parseInt(m.home_score);
+      const aScore = parseInt(m.away_score);
+
+      groupsMap[gName][tHome].played += 1;
+      groupsMap[gName][tAway].played += 1;
+      groupsMap[gName][tHome].gf += hScore;
+      groupsMap[gName][tHome].ga += aScore;
+      groupsMap[gName][tAway].gf += aScore;
+      groupsMap[gName][tAway].ga += hScore;
+
+      if (hScore > aScore) {
+        groupsMap[gName][tHome].won += 1;
+        groupsMap[gName][tHome].points += 3;
+        groupsMap[gName][tAway].lost += 1;
+      } else if (hScore < aScore) {
+        groupsMap[gName][tAway].won += 1;
+        groupsMap[gName][tAway].points += 3;
+        groupsMap[gName][tHome].lost += 1;
+      } else {
+        groupsMap[gName][tHome].drawn += 1;
+        groupsMap[gName][tHome].points += 1;
+        groupsMap[gName][tAway].drawn += 1;
+        groupsMap[gName][tAway].points += 1;
+      }
+    }
+  });
+
+  // Calculate goal difference and sort each group
+  const finalStandings = Object.keys(groupsMap).map(gName => {
+    const teams = Object.values(groupsMap[gName]);
+    teams.forEach(t => {
+      t.goalDifference = t.gf - t.ga;
+    });
+
+    // Sort teams: points desc, goalDifference desc, gf desc, team name asc
+    teams.sort((a, b) => {
+      if (b.points !== a.points) return b.points - a.points;
+      if (b.goalDifference !== a.goalDifference) return b.goalDifference - a.goalDifference;
+      if (b.gf !== a.gf) return b.gf - a.gf;
+      return a.team.localeCompare(b.team);
+    });
+
+    return {
+      group: gName,
+      name: gName,
+      teams: teams
+    };
+  });
+
+  return finalStandings;
+};
+
 function DashboardContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -1221,10 +1304,11 @@ function DashboardContent() {
                 }}>Grupo {g}</button>
               ))}
             </div>
-            {apiLoading && apiGroups.length === 0 ? (
+            {confrontos.length === 0 ? (
               <p style={{ textAlign: 'center', color: 'var(--text-secondary)', fontSize: '0.8rem', padding: '2rem' }}>Carregando grupos...</p>
             ) : (() => {
-              const groupData = apiGroups.find(g => g.group === selectedGroup || g.name === selectedGroup);
+              const localGroups = calculateGroupStandings(confrontos);
+              const groupData = localGroups.find(g => g.group === selectedGroup || g.name === selectedGroup);
               if (!groupData || !groupData.teams) return (
                 <p style={{ textAlign: 'center', color: 'var(--text-secondary)', fontSize: '0.8rem', padding: '2rem' }}>Dados do Grupo {selectedGroup} indisponíveis ainda.</p>
               );

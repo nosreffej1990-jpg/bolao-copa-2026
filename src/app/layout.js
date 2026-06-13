@@ -1,5 +1,7 @@
 import './globals.css';
 import ServiceWorkerRegistrar from '@/components/ServiceWorkerRegistrar';
+import { ThemeProvider } from '@/components/ThemeProvider';
+import ThemeSelector from '@/components/ThemeSelector';
 
 export const metadata = {
   title: 'BOLÃO COPA 2026',
@@ -33,10 +35,13 @@ export default function RootLayout({ children }) {
         <link rel="apple-touch-icon" href="/icons/icon-192.png" />
       </head>
       <body>
-        <ServiceWorkerRegistrar />
-        <div className="phone-viewport">
-          {children}
-        </div>
+        <ThemeProvider>
+          <ServiceWorkerRegistrar />
+          <div className="phone-viewport">
+            {children}
+            <ThemeSelector />
+          </div>
+        </ThemeProvider>
       </body>
     </html>
   );
