@@ -330,6 +330,42 @@ function DashboardContent() {
     return () => clearInterval(id);
   }, [apiUpcoming, notifPermission]);
 
+  const syncConfrontosWithApi = async (finishedGames, currentConfs) => {
+    if (!currentConfs || currentConfs.length === 0) return;
+    let changed = false;
+    const updatedConfrontos = currentConfs.map(c => {
+      const apiGame = finishedGames.find(g =>
+        (g.home_team_name_en || '').toLowerCase().trim() === (c.home_team || '').toLowerCase().trim() &&
+        (g.away_team_name_en || '').toLowerCase().trim() === (c.away_team || '').toLowerCase().trim()
+      );
+      if (apiGame) {
+        const apiHomeScore = apiGame.home_score !== null && apiGame.home_score !== undefined ? parseInt(apiGame.home_score) : null;
+        const apiAwayScore = apiGame.away_score !== null && apiGame.away_score !== undefined ? parseInt(apiGame.away_score) : null;
+        
+        if (apiHomeScore !== null && apiAwayScore !== null && (c.home_score !== apiHomeScore || c.away_score !== apiAwayScore)) {
+          changed = true;
+          return {
+            ...c,
+            home_score: apiHomeScore,
+            away_score: apiAwayScore
+          };
+        }
+      }
+      return c;
+    });
+
+    if (changed) {
+      setConfrontos(updatedConfrontos);
+      for (const uc of updatedConfrontos) {
+        if (uc.home_score !== null && uc.away_score !== null) {
+          await supabase.from('confrontos')
+            .update({ home_score: uc.home_score, away_score: uc.away_score })
+            .eq('id', uc.id);
+        }
+      }
+    }
+  };
+
   const fetchApiData = async () => {
     setApiLoading(true);
     try {
@@ -348,6 +384,11 @@ function DashboardContent() {
       if (finished.length > 0) {
         autoCalculatePoints(finished);
       }
+
+      // Sincronizar confrontos locais com a API
+      if (finished.length > 0 && confrontos.length > 0) {
+        await syncConfrontosWithApi(finished, confrontos);
+      }
     } catch (e) {
       console.error('Erro na API:', e);
     } finally {
@@ -357,7 +398,8 @@ function DashboardContent() {
 
   const fetchData = async () => {
     const { data: confs } = await supabase.from('confrontos').select('*').order('id', { ascending: true });
-    setConfrontos(confs || []);
+    const loadedConfs = confs || [];
+    setConfrontos(loadedConfs);
 
     const { data: bols } = await supabase.from('boloes').select('*');
     setBoloes(bols || []);
@@ -377,6 +419,11 @@ function DashboardContent() {
         });
         setPalpites(palpsMap);
       }
+    }
+
+    // Sincronizar confrontos se a API já carregou os finalizados
+    if (loadedConfs.length > 0 && apiFinished.length > 0) {
+      await syncConfrontosWithApi(apiFinished, loadedConfs);
     }
   };
 
