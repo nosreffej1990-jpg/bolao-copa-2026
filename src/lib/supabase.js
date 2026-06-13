@@ -12,12 +12,8 @@ if (isSupabaseConfigured) {
   supabaseClient = createClient(supabaseUrl, supabaseAnonKey);
 }
 
-// In-Memory/LocalStorage Database for instant preview
-const getLocalDB = () => {
-  if (typeof window === 'undefined') return { confrontos: [], palpites: [], boloes: [] };
-  
-  // Default values
-  const defaultConfrontos = [
+// Default values
+const defaultConfrontos = [
     // Grupo A
     { id: 1, grupo: 'A', home_team: 'México', home_code: 'mx', away_team: 'África do Sul', away_code: 'za', match_date: '2026-06-11', match_time: '17:00:00', stadium: 'Estádio Azteca (CDMX)', home_score: 2, away_score: 1, finished: true },
     { id: 2, grupo: 'A', home_team: 'Coreia do Sul', home_code: 'kr', away_team: 'República Tcheca', away_code: 'cz', match_date: '2026-06-12', match_time: '14:00:00', stadium: 'BC Place (Vancouver)', home_score: null, away_score: null, finished: false },
@@ -113,7 +109,11 @@ const getLocalDB = () => {
     { id: 70, grupo: 'L', home_team: 'Panamá', home_code: 'pa', away_team: 'Croácia', away_code: 'hr', match_date: '2026-06-23', match_time: '23:00:00', stadium: 'SoFi Stadium (Los Angeles)', home_score: null, away_score: null, finished: false },
     { id: 71, grupo: 'L', home_team: 'Panamá', home_code: 'pa', away_team: 'Inglaterra', away_code: 'gb-eng', match_date: '2026-06-27', match_time: '20:00:00', stadium: 'Hard Rock Stadium (Miami)', home_score: null, away_score: null, finished: false },
     { id: 72, grupo: 'L', home_team: 'Croácia', home_code: 'hr', away_team: 'Gana', away_code: 'gh', match_date: '2026-06-27', match_time: '23:00:00', stadium: 'SoFi Stadium (Los Angeles)', home_score: null, away_score: null, finished: false }
-  ];
+];
+
+// In-Memory/LocalStorage Database for instant preview
+const getLocalDB = () => {
+  if (typeof window === 'undefined') return { confrontos: [], palpites: [], boloes: [] };
 
   const defaultBoloes = [];
 
@@ -225,5 +225,29 @@ export const supabase = isSupabaseConfigured ? supabaseClient : {
         };
       }
     };
+  }
+};
+
+export const resetDatabase = async () => {
+  if (typeof window !== 'undefined') {
+    localStorage.removeItem('copa26_confrontos');
+    localStorage.removeItem('copa26_palpites');
+    localStorage.removeItem('copa26_boloes');
+  }
+
+  if (isSupabaseConfigured && supabaseClient) {
+    try {
+      // Clear tables in Supabase
+      await supabaseClient.from('palpites').delete().gt('id', 0);
+      await supabaseClient.from('boloes').delete().gt('id', 0);
+      await supabaseClient.from('confrontos').delete().gt('id', 0);
+
+      // Reseed confrontos in Supabase
+      const { error } = await supabaseClient.from('confrontos').insert(defaultConfrontos);
+      if (error) throw error;
+    } catch (e) {
+      console.error('Erro ao resetar banco Supabase:', e);
+      throw e;
+    }
   }
 };

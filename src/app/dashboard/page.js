@@ -3,7 +3,7 @@
 import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Icons } from '@/components/Icons';
-import { supabase } from '@/lib/supabase';
+import { supabase, resetDatabase } from '@/lib/supabase';
 import { getFinishedMatches, getLiveMatches, getUpcomingMatches, getFlagCode, formatMatchDate, getGroupStandings } from '@/lib/worldcupApi';
 
 function DashboardContent() {
@@ -542,6 +542,22 @@ function DashboardContent() {
     }
   };
 
+  const handleResetDatabase = async () => {
+    const conf = window.confirm("⚠️ ATENÇÃO: Isso irá apagar TODOS os bolões cadastrados e palpites, e reiniciará os confrontos da Copa 2026 para o estado inicial correto (72 jogos). Deseja continuar?");
+    if (!conf) return;
+
+    try {
+      setApiLoading(true);
+      await resetDatabase();
+      showToast('Banco de dados reiniciado com sucesso!');
+      await fetchData();
+    } catch (e) {
+      alert('Erro ao reiniciar banco de dados.');
+    } finally {
+      setApiLoading(false);
+    }
+  };
+
   // Generate ranking purely from real bolões in the database
   const getSortedRanking = () => {
     // Build player scores from real boloes data
@@ -818,6 +834,9 @@ function DashboardContent() {
                 <button className="btn-upload-bolao" style={{ backgroundColor: 'rgba(255, 255, 255, 0.08)', color: '#fff', border: '1px solid var(--border-color)' }} onClick={startManualUpload}>
                   <Icons.Plus size={14} style={{ color: '#fff' }} />
                   Cadastrar Manualmente
+                </button>
+                <button className="btn-upload-bolao" style={{ backgroundColor: 'rgba(239, 68, 68, 0.12)', color: '#f87171', border: '1px solid rgba(239, 68, 68, 0.3)' }} onClick={handleResetDatabase}>
+                  🗑️ Reiniciar Dados
                 </button>
               </div>
             </div>
