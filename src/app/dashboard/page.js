@@ -4,7 +4,7 @@ import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Icons } from '@/components/Icons';
 import { supabase, resetDatabase } from '@/lib/supabase';
-import { getFinishedMatches, getLiveMatches, getUpcomingMatches, getFlagCode, formatMatchDate, getGroupStandings } from '@/lib/worldcupApi';
+import { getFinishedMatches, getLiveMatches, getUpcomingMatches, getFlagCode, formatMatchDate, getGroupStandings, fetchAllGames } from '@/lib/worldcupApi';
 
 // Helper to compress and resize images on client-side before sending to API
 const compressImage = (file, maxWidth = 1024, maxHeight = 1024) => {
@@ -47,11 +47,24 @@ const compressImage = (file, maxWidth = 1024, maxHeight = 1024) => {
   });
 };
 
+const normalizeTeamName = (name) => {
+  if (!name) return '';
+  return name.toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]/g, '')
+    .replace('repblica', 'republica')
+    .replace('bsnia', 'bosnia')
+    .trim();
+};
+
 // Helper to dynamically calculate points and results for bets based on current confrontos scores
 const getCalculatedBets = (betsData, confrontosList) => {
   if (!Array.isArray(betsData)) return [];
   return betsData.map(bet => {
-    const match = confrontosList.find(c => String(c.id) === String(bet.match_id));
+    const match = confrontosList.find(c => 
+      String(c.id) === String(bet.match_id) ||
+      (normalizeTeamName(c.home_team) === normalizeTeamName(bet.home) && normalizeTeamName(c.away_team) === normalizeTeamName(bet.away))
+    );
     if (!match) return { ...bet, real_home: null, real_away: null, pts: null };
 
     const hasRealScore = match.home_score !== null && match.home_score !== undefined && String(match.home_score).trim() !== '' 
@@ -335,22 +348,39 @@ function DashboardContent() {
     return () => clearInterval(id);
   }, [apiUpcoming, notifPermission]);
 
-  const syncConfrontosWithApi = async (finishedGames, currentConfs) => {
-    if (!currentConfs || currentConfs.length === 0) return;
+  const syncConfrontosWithApi = async (allApiGames, currentConfs) => {
+    if (!currentConfs || currentConfs.length === 0 || !allApiGames || allApiGames.length === 0) return;
     let changed = false;
     const updatedConfrontos = currentConfs.map(c => {
-      const apiGame = finishedGames.find(g => String(g.id) === String(c.id));
+      const apiGame = allApiGames.find(g =>
+        normalizeTeamName(g.home_team_name_en) === normalizeTeamName(c.home_team) &&
+        normalizeTeamName(g.away_team_name_en) === normalizeTeamName(c.away_team)
+      );
       if (apiGame) {
-        const apiHomeScore = apiGame.home_score !== null && apiGame.home_score !== undefined ? parseInt(apiGame.home_score) : null;
-        const apiAwayScore = apiGame.away_score !== null && apiGame.away_score !== undefined ? parseInt(apiGame.away_score) : null;
-        
-        if (apiHomeScore !== null && apiAwayScore !== null && (c.home_score !== apiHomeScore || c.away_score !== apiAwayScore)) {
-          changed = true;
-          return {
-            ...c,
-            home_score: apiHomeScore,
-            away_score: apiAwayScore
-          };
+        if (apiGame.finished === 'TRUE') {
+          const apiHomeScore = apiGame.home_score !== null && apiGame.home_score !== undefined ? parseInt(apiGame.home_score) : null;
+          const apiAwayScore = apiGame.away_score !== null && apiGame.away_score !== undefined ? parseInt(apiGame.away_score) : null;
+          
+          if (apiHomeScore !== null && apiAwayScore !== null && (c.home_score !== apiHomeScore || c.away_score !== apiAwayScore || !c.finished)) {
+            changed = true;
+            return {
+              ...c,
+              home_score: apiHomeScore,
+              away_score: apiAwayScore,
+              finished: true
+            };
+          }
+        } else {
+          // If the game is not finished in the API, it must have NULL scores in our local DB
+          if (c.home_score !== null || c.away_score !== null || c.finished) {
+            changed = true;
+            return {
+              ...c,
+              home_score: null,
+              away_score: null,
+              finished: false
+            };
+          }
         }
       }
       return c;
@@ -359,11 +389,13 @@ function DashboardContent() {
     if (changed) {
       setConfrontos(updatedConfrontos);
       for (const uc of updatedConfrontos) {
-        if (uc.home_score !== null && uc.away_score !== null) {
-          await supabase.from('confrontos')
-            .update({ home_score: uc.home_score, away_score: uc.away_score })
-            .eq('id', uc.id);
-        }
+        await supabase.from('confrontos')
+          .update({ 
+            home_score: uc.home_score, 
+            away_score: uc.away_score,
+            finished: uc.finished ?? false
+          })
+          .eq('id', uc.id);
       }
     }
   };
@@ -371,7 +403,8 @@ function DashboardContent() {
   const fetchApiData = async () => {
     setApiLoading(true);
     try {
-      const [finished, live, upcoming, groups] = await Promise.all([
+      const [allGames, finished, live, upcoming, groups] = await Promise.all([
+        fetchAllGames(),
         getFinishedMatches(),
         getLiveMatches(),
         getUpcomingMatches(15),
@@ -387,9 +420,9 @@ function DashboardContent() {
         autoCalculatePoints(finished);
       }
 
-      // Sincronizar confrontos locais com a API
-      if (finished.length > 0 && confrontos.length > 0) {
-        await syncConfrontosWithApi(finished, confrontos);
+      // Sincronizar confrontos locais com a API (passando todos os jogos para tratar não finalizados)
+      if (allGames.length > 0 && confrontos.length > 0) {
+        await syncConfrontosWithApi(allGames, confrontos);
       }
     } catch (e) {
       console.error('Erro na API:', e);
@@ -423,9 +456,12 @@ function DashboardContent() {
       }
     }
 
-    // Sincronizar confrontos se a API já carregou os finalizados
-    if (loadedConfs.length > 0 && apiFinished.length > 0) {
-      await syncConfrontosWithApi(apiFinished, loadedConfs);
+    // Sincronizar confrontos se a API já carregou os finalizados (passando todos os jogos para tratar não finalizados)
+    if (loadedConfs.length > 0) {
+      const allGames = await fetchAllGames();
+      if (allGames && allGames.length > 0) {
+        await syncConfrontosWithApi(allGames, loadedConfs);
+      }
     }
   };
 
@@ -493,7 +529,10 @@ function DashboardContent() {
       if (!Array.isArray(b.bets_data)) continue;
       let changed = false;
       const updatedBets = b.bets_data.map(bet => {
-        const game = finishedGames.find(g => String(g.id) === String(bet.match_id));
+        const game = finishedGames.find(g =>
+          normalizeTeamName(g.home_team_name_en) === normalizeTeamName(bet.home) &&
+          normalizeTeamName(g.away_team_name_en) === normalizeTeamName(bet.away)
+        );
         if (!game) return bet;
         const rH = parseInt(game.home_score);
         const rA = parseInt(game.away_score);
@@ -581,7 +620,10 @@ function DashboardContent() {
     const results = [];
     boloes.forEach(b => {
       if (!Array.isArray(b.bets_data)) return;
-      const bet = b.bets_data.find(bd => String(bd.match_id) === String(game.id));
+      const bet = b.bets_data.find(bd =>
+        normalizeTeamName(bd.home) === normalizeTeamName(game.home_team_name_en) &&
+        normalizeTeamName(bd.away) === normalizeTeamName(game.away_team_name_en)
+      );
       if (bet) {
         const realHome = parseInt(game.home_score);
         const realAway = parseInt(game.away_score);

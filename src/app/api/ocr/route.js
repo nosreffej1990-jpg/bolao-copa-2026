@@ -1,6 +1,16 @@
 import { NextResponse } from 'next/server';
 import { defaultConfrontos } from '@/lib/supabase';
 
+const normalizeTeamName = (name) => {
+  if (!name) return '';
+  return name.toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]/g, '')
+    .replace('repblica', 'republica')
+    .replace('bsnia', 'bosnia')
+    .trim();
+};
+
 export const dynamic = 'force-dynamic';
 
 export async function POST(req) {
@@ -162,7 +172,10 @@ MUITO IMPORTANTE: Retorne APENAS o objeto JSON puro, sem Markdown, sem blocos de
     
     // Map the simple bets array back to matches array with full details for UI
     const finalBets = defaultConfrontos.map(match => {
-      const foundBet = (parsedResult.bets || []).find(b => String(b.match_id) === String(match.id));
+      const foundBet = (parsedResult.bets || []).find(b =>
+        String(b.match_id) === String(match.id) ||
+        (normalizeTeamName(b.home) === normalizeTeamName(match.home_team) && normalizeTeamName(b.away) === normalizeTeamName(match.away_team))
+      );
       
       let betHome = '';
       let betAway = '';
