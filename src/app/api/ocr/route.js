@@ -49,8 +49,7 @@ export async function POST(req) {
       `ID: ${g.id} | Grupo: ${g.grupo} | ${g.home_team} x ${g.away_team}`
     ).join('\n');
 
-    const promptText = `
-Você é um leitor de imagem especialista em extrair dados estruturados de bolões de futebol da Copa do Mundo 2026.
+    const promptText = `Você é um leitor de imagem especialista em extrair dados estruturados de bolões de futebol da Copa do Mundo 2026.
 O usuário enviou uma foto de uma folha física de bolão.
 
 Instruções importantes:
@@ -71,36 +70,35 @@ Regras adicionais:
     - "bet_home": O placar do time da casa (número ou string vazia "")
     - "bet_away": O placar do time de fora (número ou string vazia "")
 
-O formato de retorno DEVE ser um objeto JSON puro. Não inclua Markdown, blocos de código ou qualquer outro texto explicativo.
-`;
+MUITO IMPORTANTE: Retorne APENAS o objeto JSON puro, sem Markdown, sem blocos de código, sem explicações.`;
 
-    // Make request to Gemini 1.5 Flash (try stable v1 first, fallback to v1beta)
+    // NOTE: generation_config / responseMimeType is intentionally omitted here.
+    // Both camelCase and snake_case variants cause 400 errors in the v1 REST endpoint.
+    // The model is instructed via the prompt to return pure JSON instead.
     const requestBody = {
       contents: [
         {
           parts: [
             { text: promptText },
             {
-              inline_data: {
-                mime_type: mimeType,
+              inlineData: {
+                mimeType: mimeType,
                 data: base64Data
               }
             }
           ]
         }
-      ],
-      generation_config: {
-        response_mime_type: 'application/json'
-      }
+      ]
     };
 
     let geminiRes;
-    let usedVersion = 'v1';
+    let usedVersion = 'v1beta';
     
+    // Use v1beta endpoint which has broader model support
     try {
-      console.log('Tentando chamar a API do Gemini via endpoint v1...');
+      console.log('Chamando API do Gemini via endpoint v1beta...');
       geminiRes = await fetch(
-        `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -108,16 +106,16 @@ O formato de retorno DEVE ser um objeto JSON puro. Não inclua Markdown, blocos 
         }
       );
     } catch (e) {
-      console.error('Falha de rede ao tentar v1:', e.message);
+      console.error('Falha de rede ao tentar v1beta:', e.message);
     }
 
-    // Fallback to v1beta if v1 failed or returned 404
+    // Fallback to v1 if v1beta failed or returned 404
     if (!geminiRes || geminiRes.status === 404) {
-      console.log('Endpoint v1 indisponível (404 ou erro). Tentando endpoint v1beta...');
-      usedVersion = 'v1beta';
+      console.log('Endpoint v1beta indisponível. Tentando endpoint v1...');
+      usedVersion = 'v1';
       try {
         geminiRes = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+          `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
           {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -125,7 +123,7 @@ O formato de retorno DEVE ser um objeto JSON puro. Não inclua Markdown, blocos 
           }
         );
       } catch (e) {
-        console.error('Falha de rede ao tentar v1beta:', e.message);
+        console.error('Falha de rede ao tentar v1:', e.message);
       }
     }
 
@@ -139,11 +137,11 @@ O formato de retorno DEVE ser um objeto JSON puro. Não inclua Markdown, blocos 
       
       let friendlyError = `Gemini API (${usedVersion}) retornou status ${geminiRes.status}`;
       if (geminiRes.status === 404) {
-        friendlyError = `Erro 404: O modelo gemini-1.5-flash não foi encontrado no endpoint ${usedVersion}. Certifique-se de que a Generative Language API está ativada no seu console Google Cloud e que sua chave do Google AI Studio é válida.`;
+        friendlyError = `Erro 404: Modelo não encontrado no endpoint ${usedVersion}. Verifique se a Generative Language API está ativada no Google Cloud Console.`;
       } else if (geminiRes.status === 400) {
-        friendlyError = `Erro 400: Requisição inválida no Gemini. Detalhes: ${errText}`;
+        friendlyError = `Erro 400: Requisição inválida. Detalhes: ${errText}`;
       } else if (geminiRes.status === 403) {
-        friendlyError = `Erro 403: Acesso negado. Sua chave API do Gemini pode estar inválida ou sem permissões de uso.`;
+        friendlyError = `Erro 403: Acesso negado. Chave API do Gemini inválida ou sem permissões.`;
       }
       
       throw new Error(friendlyError);
@@ -153,20 +151,18 @@ O formato de retorno DEVE ser um objeto JSON puro. Não inclua Markdown, blocos 
     const resultText = geminiData?.candidates?.[0]?.content?.parts?.[0]?.text;
 
     if (!resultText) {
-      throw new Error('No content returned from Gemini');
+      throw new Error('Nenhum conteúdo retornado pelo Gemini.');
     }
 
+    // Strip any Markdown code fences if the model included them
     let cleanJson = resultText.trim();
-    if (cleanJson.startsWith('```')) {
-      cleanJson = cleanJson.replace(/^```(?:json)?\s*/i, '');
-      cleanJson = cleanJson.replace(/\s*```$/, '');
-    }
+    cleanJson = cleanJson.replace(/^```(?:json)?\s*/i, '').replace(/\s*```\s*$/i, '');
 
     const parsedResult = JSON.parse(cleanJson);
     
     // Map the simple bets array back to matches array with full details for UI
     const finalBets = defaultConfrontos.map(match => {
-      const foundBet = (parsedResult.bets || []).find(b => b.match_id === match.id);
+      const foundBet = (parsedResult.bets || []).find(b => String(b.match_id) === String(match.id));
       
       let betHome = '';
       let betAway = '';

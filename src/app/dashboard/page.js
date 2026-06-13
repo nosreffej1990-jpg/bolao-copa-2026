@@ -51,7 +51,7 @@ const compressImage = (file, maxWidth = 1024, maxHeight = 1024) => {
 const getCalculatedBets = (betsData, confrontosList) => {
   if (!Array.isArray(betsData)) return [];
   return betsData.map(bet => {
-    const match = confrontosList.find(c => c.id === bet.match_id);
+    const match = confrontosList.find(c => String(c.id) === String(bet.match_id));
     if (!match) return { ...bet, real_home: null, real_away: null, pts: null };
 
     const hasRealScore = match.home_score !== null && match.home_score !== undefined && String(match.home_score).trim() !== '' 
@@ -224,6 +224,11 @@ function DashboardContent() {
   const [editingBet, setEditingBet] = useState(null); // { bolaoId, betIndex, bet }
   const [editPassword, setEditPassword] = useState('');
   const [editError, setEditError] = useState('');
+  // Edit bettor photo modal
+  const [editPhotoModal, setEditPhotoModal] = useState(null); // { bolaoId, bettorName, currentPhoto }
+  const [newPhotoPreview, setNewPhotoPreview] = useState(null);
+  const [newPhotoBase64, setNewPhotoBase64] = useState(null);
+  const [savingPhoto, setSavingPhoto] = useState(false);
 
   // Countdown para próximo jogo
   const [countdown, setCountdown] = useState('');
@@ -334,10 +339,7 @@ function DashboardContent() {
     if (!currentConfs || currentConfs.length === 0) return;
     let changed = false;
     const updatedConfrontos = currentConfs.map(c => {
-      const apiGame = finishedGames.find(g =>
-        (g.home_team_name_en || '').toLowerCase().trim() === (c.home_team || '').toLowerCase().trim() &&
-        (g.away_team_name_en || '').toLowerCase().trim() === (c.away_team || '').toLowerCase().trim()
-      );
+      const apiGame = finishedGames.find(g => String(g.id) === String(c.id));
       if (apiGame) {
         const apiHomeScore = apiGame.home_score !== null && apiGame.home_score !== undefined ? parseInt(apiGame.home_score) : null;
         const apiAwayScore = apiGame.away_score !== null && apiGame.away_score !== undefined ? parseInt(apiGame.away_score) : null;
@@ -491,10 +493,7 @@ function DashboardContent() {
       if (!Array.isArray(b.bets_data)) continue;
       let changed = false;
       const updatedBets = b.bets_data.map(bet => {
-        const game = finishedGames.find(g =>
-          g.home_team_name_en.toLowerCase().includes((bet.home || '').split(' ')[0].toLowerCase()) ||
-          g.away_team_name_en.toLowerCase().includes((bet.away || '').split(' ')[0].toLowerCase())
-        );
+        const game = finishedGames.find(g => String(g.id) === String(bet.match_id));
         if (!game) return bet;
         const rH = parseInt(game.home_score);
         const rA = parseInt(game.away_score);
@@ -582,10 +581,7 @@ function DashboardContent() {
     const results = [];
     boloes.forEach(b => {
       if (!Array.isArray(b.bets_data)) return;
-      const bet = b.bets_data.find(bd =>
-        bd.home?.toLowerCase().includes(game.home_team_name_en.split(' ')[0].toLowerCase()) ||
-        bd.away?.toLowerCase().includes(game.away_team_name_en.split(' ')[0].toLowerCase())
-      );
+      const bet = b.bets_data.find(bd => String(bd.match_id) === String(game.id));
       if (bet) {
         const realHome = parseInt(game.home_score);
         const realAway = parseInt(game.away_score);
@@ -708,7 +704,7 @@ function DashboardContent() {
   };
 
   const startManualUpload = () => {
-    setWizardBettorName('');
+    setWizardBettorName(''); // Force user to type a real name
     setBase64Photo(null);
     
     // Prefill all games with blank scores
@@ -726,6 +722,44 @@ function DashboardContent() {
     setShowWizardModal(true);
   };
 
+  // Handle photo edit for an existing bolão
+  const handlePhotoFileSelect = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const localUrl = URL.createObjectURL(file);
+    setNewPhotoPreview(localUrl);
+    try {
+      const compressed = await compressImage(file);
+      setNewPhotoBase64(compressed);
+    } catch (err) {
+      const reader = new FileReader();
+      reader.onloadend = () => setNewPhotoBase64(reader.result);
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const saveEditedPhoto = async () => {
+    if (!editPhotoModal || !newPhotoBase64) return;
+    setSavingPhoto(true);
+    try {
+      const { error } = await supabase
+        .from('boloes')
+        .update({ photo_url: newPhotoBase64 })
+        .eq('id', editPhotoModal.bolaoId);
+      if (!error) {
+        showToast('Foto atualizada com sucesso! ✅');
+        setEditPhotoModal(null);
+        setNewPhotoPreview(null);
+        setNewPhotoBase64(null);
+        fetchData();
+      } else {
+        alert('Erro ao salvar foto.');
+      }
+    } finally {
+      setSavingPhoto(false);
+    }
+  };
+
   const handleWizardScoreChange = (index, field, value) => {
     setWizardBets(prev => prev.map((bet, idx) => 
       idx === index ? { ...bet, [field]: value } : bet
@@ -733,14 +767,21 @@ function DashboardContent() {
   };
 
   const saveWizardBolao = async () => {
-    if (!wizardBettorName.trim()) {
-      alert('Por favor, insira o nome do apostador.');
+    const trimmedName = wizardBettorName.trim();
+    if (!trimmedName) {
+      alert('⚠️ Por favor, insira o nome do apostador antes de salvar.');
+      return;
+    }
+    // Block generic placeholder names
+    const forbiddenNames = ['novo apostador', 'apostador simulado', 'apostador desconhecido'];
+    if (forbiddenNames.includes(trimmedName.toLowerCase())) {
+      alert('⚠️ O nome "' + trimmedName + '" é inválido. Por favor, insira o nome real do apostador.');
       return;
     }
 
     // Map wizardBets back to database format
     const finalBetsData = wizardBets.map(bet => {
-      const match = confrontos.find(c => c.id === bet.match_id) || {};
+      const match = confrontos.find(c => String(c.id) === String(bet.match_id)) || {};
       const rH = match.home_score !== null ? parseInt(match.home_score) : null;
       const rA = match.away_score !== null ? parseInt(match.away_score) : null;
       
@@ -777,7 +818,7 @@ function DashboardContent() {
 
     const { error } = await supabase.from('boloes').insert({
       username: currentUser,
-      bettor_name: wizardBettorName.trim(),
+      bettor_name: trimmedName,
       photo_url: photoToSave,
       bets_data: finalBetsData
     });
@@ -1083,9 +1124,11 @@ function DashboardContent() {
                   <Icons.Plus size={14} style={{ color: '#fff' }} />
                   Cadastrar Manualmente
                 </button>
-                <button className="btn-upload-bolao" style={{ backgroundColor: 'rgba(239, 68, 68, 0.12)', color: '#f87171', border: '1px solid rgba(239, 68, 68, 0.3)' }} onClick={handleResetDatabase}>
-                  🗑️ Reiniciar Dados
-                </button>
+                {currentUser === 'Jefferson' && (
+                  <button className="btn-upload-bolao" style={{ backgroundColor: 'rgba(239, 68, 68, 0.12)', color: '#f87171', border: '1px solid rgba(239, 68, 68, 0.3)' }} onClick={handleResetDatabase}>
+                    🗑️ Reiniciar Dados
+                  </button>
+                )}
               </div>
             </div>
 
@@ -1096,7 +1139,27 @@ function DashboardContent() {
               {boloes.map(b => (
                 <div className="bolao-card" key={b.id}>
                   <div className="bolao-card-top">
-                    <img src={`https://api.dicebear.com/7.x/identicon/svg?seed=${b.bettor_name}`} className="bolao-avatar" alt="avatar" />
+                    <div style={{ position: 'relative', display: 'inline-block' }}>
+                    <img
+                      src={b.photo_url && b.photo_url.startsWith('data:') ? b.photo_url : `https://api.dicebear.com/7.x/identicon/svg?seed=${b.bettor_name}`}
+                      className="bolao-avatar"
+                      alt="avatar"
+                      style={{ width: '48px', height: '48px', borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--border-color)' }}
+                    />
+                    {currentUser && (
+                      <button
+                        title="Editar foto"
+                        onClick={() => { setEditPhotoModal({ bolaoId: b.id, bettorName: b.bettor_name, currentPhoto: b.photo_url }); setNewPhotoPreview(null); setNewPhotoBase64(null); }}
+                        style={{
+                          position: 'absolute', bottom: '-2px', right: '-2px',
+                          width: '18px', height: '18px', borderRadius: '50%',
+                          background: 'var(--accent-gold)', border: 'none', cursor: 'pointer',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          fontSize: '9px', lineHeight: 1
+                        }}
+                      >📷</button>
+                    )}
+                  </div>
                     <div className="bolao-details">
                       <h4>{b.bettor_name}</h4>
                       <span>Registrado por: {b.username}</span>
@@ -1113,10 +1176,12 @@ function DashboardContent() {
                       onClick={() => setShowHistoryModal(b)}>
                       📊 Histórico
                     </button>
-                    <button className="bolao-action-btn" style={{ background: 'rgba(239,68,68,0.12)', border: '1px solid #ef4444', color: '#ef4444' }}
-                      onClick={() => { setShowDeleteModal({ id: b.id, bettor_name: b.bettor_name }); setDeletePassword(''); setDeleteError(''); }}>
-                      🗑️ Excluir
-                    </button>
+                    {currentUser === 'Jefferson' && (
+                      <button className="bolao-action-btn" style={{ background: 'rgba(239,68,68,0.12)', border: '1px solid #ef4444', color: '#ef4444' }}
+                        onClick={() => { setShowDeleteModal({ id: b.id, bettor_name: b.bettor_name }); setDeletePassword(''); setDeleteError(''); }}>
+                        🗑️ Excluir
+                      </button>
+                    )}
                   </div>
                 </div>
               ))}
@@ -1987,6 +2052,54 @@ function DashboardContent() {
                 </button>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Editar Foto do Apostador */}
+      {editPhotoModal && (
+        <div className="modal-overlay" onClick={() => setEditPhotoModal(null)}>
+          <div className="modal-container" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>Editar Foto — {editPhotoModal.bettorName}</h3>
+              <div onClick={() => setEditPhotoModal(null)} className="modal-close"><Icons.X size={20} /></div>
+            </div>
+            
+            {/* Current / Preview Photo */}
+            <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
+              <img
+                src={newPhotoPreview || (editPhotoModal.currentPhoto && editPhotoModal.currentPhoto.startsWith('data:') ? editPhotoModal.currentPhoto : `https://api.dicebear.com/7.x/identicon/svg?seed=${editPhotoModal.bettorName}`)}
+                alt="foto atual"
+                style={{ width: '100px', height: '100px', borderRadius: '50%', objectFit: 'cover', border: '3px solid var(--accent-gold)', marginBottom: '0.5rem' }}
+              />
+              <p style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>{newPhotoPreview ? 'Nova foto selecionada' : 'Foto atual'}</p>
+            </div>
+
+            {/* File Input */}
+            <label htmlFor="edit-photo-upload" style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem',
+              width: '100%', padding: '0.75rem', marginBottom: '0.75rem',
+              background: 'rgba(59,130,246,0.1)', border: '1px solid #3b82f6',
+              borderRadius: '8px', color: '#3b82f6', fontWeight: '700', fontSize: '0.85rem', cursor: 'pointer'
+            }}>
+              📁 Escolher Nova Foto
+            </label>
+            <input
+              id="edit-photo-upload"
+              type="file"
+              accept="image/*"
+              style={{ display: 'none' }}
+              onChange={handlePhotoFileSelect}
+            />
+
+            <button
+              className="btn-submit"
+              onClick={saveEditedPhoto}
+              disabled={!newPhotoBase64 || savingPhoto}
+              style={{ opacity: (!newPhotoBase64 || savingPhoto) ? 0.5 : 1 }}
+            >
+              {savingPhoto ? 'Salvando...' : 'SALVAR FOTO'}
+            </button>
           </div>
         </div>
       )}

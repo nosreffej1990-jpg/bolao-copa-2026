@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Icons } from '@/components/Icons';
+import { getFlagCode } from '@/lib/worldcupApi';
 
 export default function Home() {
   const [loading, setLoading] = useState(true);
@@ -13,7 +14,9 @@ export default function Home() {
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [showInstallBtn, setShowInstallBtn] = useState(false);
   const [isIOS, setIsIOS] = useState(false);
+  const [isAndroid, setIsAndroid] = useState(false);
   const [isInstalled, setIsInstalled] = useState(false);
+  const [liveMatches, setLiveMatches] = useState([]);
   const router = useRouter();
 
   useEffect(() => {
@@ -25,7 +28,10 @@ export default function Home() {
       setIsInstalled(isStandalone);
       
       const userAgent = window.navigator.userAgent.toLowerCase();
-      setIsIOS(/iphone|ipad|ipod/.test(userAgent));
+      const isIOSDevice = /iphone|ipad|ipod/.test(userAgent);
+      const isAndroidDevice = /android/.test(userAgent);
+      setIsIOS(isIOSDevice);
+      setIsAndroid(isAndroidDevice);
     }
 
     const handleBeforeInstallPrompt = (e) => {
@@ -36,11 +42,31 @@ export default function Home() {
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
 
+    // Fetch live matches for home banner
+    fetchLiveMatches();
+
     return () => {
       clearTimeout(timer);
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     };
   }, []);
+
+  const fetchLiveMatches = async () => {
+    try {
+      const res = await fetch('/api/games', { cache: 'no-store' });
+      if (!res.ok) return;
+      const data = await res.json();
+      const games = data.games || [];
+      const live = games.filter(g =>
+        g.finished === 'FALSE' &&
+        g.time_elapsed !== 'notstarted' &&
+        g.time_elapsed !== 'finished'
+      );
+      setLiveMatches(live);
+    } catch (e) {
+      // silently fail - live scores are optional
+    }
+  };
 
   const handleInstallClick = async () => {
     if (!deferredPrompt) return;
@@ -87,7 +113,21 @@ export default function Home() {
         <div className="splash-screen">
           <div className="splash-logo-container">
             <div className="logo-glow"></div>
-            <img src="/icons/icon-192.png" className="splash-logo-img" alt="Taça" style={{ width: '90px', height: '90px', objectFit: 'contain', borderRadius: '20px', boxShadow: '0 0 24px rgba(251,191,36,0.35)' }} />
+            {/* Trophy icon with no white border - use filter drop-shadow instead of boxShadow */}
+            <img
+              src="/icons/icon-192.png"
+              className="splash-logo-img"
+              alt="Taça"
+              style={{
+                width: '90px',
+                height: '90px',
+                objectFit: 'contain',
+                borderRadius: '16px',
+                background: 'transparent',
+                mixBlendMode: 'normal',
+                filter: 'drop-shadow(0 0 18px rgba(251,191,36,0.5))'
+              }}
+            />
           </div>
           <h2>BOLÃO COPA 2026</h2>
           <span>Carregando...</span>
@@ -104,6 +144,49 @@ export default function Home() {
           </header>
 
           <div className="home-container">
+            {/* Live Match Banner */}
+            {liveMatches.length > 0 && (
+              <div
+                onClick={() => handleDirectNavigate('placares_geral')}
+                style={{
+                  background: 'linear-gradient(135deg, rgba(239,68,68,0.15), rgba(251,191,36,0.08))',
+                  border: '1px solid rgba(239,68,68,0.4)',
+                  borderRadius: '14px',
+                  padding: '0.85rem 1rem',
+                  marginBottom: '1.25rem',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '0.5rem'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <span style={{
+                    background: '#ef4444', color: '#fff', fontSize: '0.6rem',
+                    fontWeight: 'bold', padding: '0.2rem 0.5rem', borderRadius: '999px',
+                    animation: 'pulse 1.5s infinite', letterSpacing: '1px'
+                  }}>🔴 AO VIVO</span>
+                  <span style={{ fontSize: '0.65rem', color: 'var(--text-secondary)' }}>Toque para ver placar ›</span>
+                </div>
+                {liveMatches.slice(0, 2).map((g, idx) => (
+                  <div key={idx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <img src={`https://flagcdn.com/w40/${getFlagCode(g.home_team_name_en)}.png`} style={{ width: '22px' }} alt="" />
+                      <span style={{ fontSize: '0.78rem', fontWeight: 'bold' }}>{g.home_team_name_en}</span>
+                    </div>
+                    <span style={{ fontSize: '1.1rem', fontWeight: '900', color: '#fff', letterSpacing: '3px' }}>
+                      {g.home_score} — {g.away_score}
+                    </span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <span style={{ fontSize: '0.78rem', fontWeight: 'bold' }}>{g.away_team_name_en}</span>
+                      <img src={`https://flagcdn.com/w40/${getFlagCode(g.away_team_name_en)}.png`} style={{ width: '22px' }} alt="" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* iOS Install Banner */}
             {isIOS && !isInstalled && (
               <div className="ios-install-banner" style={{
                 background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)',
@@ -116,10 +199,34 @@ export default function Home() {
               </div>
             )}
 
+            {/* Android Install Banner (when beforeinstallprompt not available but not installed) */}
+            {isAndroid && !isInstalled && !showInstallBtn && (
+              <div style={{
+                background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)',
+                padding: '0.75rem 1rem', borderRadius: '12px', fontSize: '0.72rem',
+                color: 'var(--text-secondary)', marginBottom: '1.25rem', textAlign: 'center',
+                display: 'flex', flexDirection: 'column', gap: '0.2rem'
+              }}>
+                <span style={{ fontWeight: 'bold', color: '#fff', fontSize: '0.78rem' }}>📲 Instale o App no Android</span>
+                <span>Toque no menu <span style={{ color: 'var(--accent-gold)', fontWeight: 'bold' }}>⋮</span> do Chrome e depois em <span style={{ color: 'var(--accent-gold)', fontWeight: 'bold' }}>Adicionar à tela inicial</span>.</span>
+              </div>
+            )}
+
             {!showLogin ? (
               <div className="home-menu-grid">
+                {/* Android/Chrome Install Button (when prompt is available) */}
                 {showInstallBtn && (
-                  <button className="home-btn install-btn" onClick={handleInstallClick} style={{ gridColumn: 'span 2', background: 'linear-gradient(135deg, var(--soccer-green), #10b981)', color: '#000', fontWeight: 'bold', border: '1px solid rgba(255,255,255,0.1)' }}>
+                  <button
+                    id="install-btn"
+                    className="home-btn install-btn"
+                    onClick={handleInstallClick}
+                    style={{
+                      gridColumn: 'span 2',
+                      background: 'linear-gradient(135deg, var(--soccer-green), #10b981)',
+                      color: '#000', fontWeight: 'bold',
+                      border: '1px solid rgba(255,255,255,0.1)'
+                    }}
+                  >
                     <Icons.Plus size={24} style={{ color: '#000' }} />
                     <span>Adicionar à Tela Inicial</span>
                   </button>
