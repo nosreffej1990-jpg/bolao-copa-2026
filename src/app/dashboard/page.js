@@ -388,6 +388,58 @@ function DashboardContent() {
     setShowCameraModal(true);
   };
 
+  const performOcrScan = async (base64String, bettorNameInput) => {
+    setCameraStep(2);
+    try {
+      const res = await fetch('/api/ocr', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          image: base64String,
+          name: bettorNameInput
+        })
+      });
+
+      if (!res.ok) throw new Error('API OCR error');
+      const data = await res.json();
+      
+      if (data.error) {
+        throw new Error(data.error);
+      }
+
+      setWizardBettorName(data.bettor_name || bettorNameInput.trim() || 'Novo Apostador');
+      setWizardBets(data.bets);
+      setWizardActiveGroup('A');
+      
+      setShowCameraModal(false);
+      setShowWizardModal(true);
+    } catch (err) {
+      console.error('Erro na leitura com IA:', err);
+      alert('Não foi possível ler a imagem com a IA. Abrindo o formulário em branco para preenchimento manual.');
+      
+      // Fallback to manual blank form on error
+      const blankBets = confrontos.map(match => ({
+        match_id: match.id,
+        home: match.home_team,
+        away: match.away_team,
+        bet_home: '',
+        bet_away: '',
+        grupo: match.grupo
+      }));
+      
+      setWizardBettorName(bettorNameInput.trim() || 'Novo Apostador');
+      setWizardBets(blankBets);
+      setWizardActiveGroup('A');
+      
+      setShowCameraModal(false);
+      setShowWizardModal(true);
+    } finally {
+      setCameraStep(1);
+    }
+  };
+
   // Handle file selection from device gallery/camera and convert to Base64
   const handleFileSelect = (e) => {
     const file = e.target.files?.[0];
@@ -401,61 +453,18 @@ function DashboardContent() {
     const reader = new FileReader();
     reader.onloadend = () => {
       setBase64Photo(reader.result);
-      
-      // Automatically trigger scanning simulation
-      setCameraStep(2);
-      setTimeout(() => {
-        const prefilledBets = confrontos.map(match => {
-          const hasOcr = Math.random() > 0.3;
-          return {
-            match_id: match.id,
-            home: match.home_team,
-            away: match.away_team,
-            bet_home: hasOcr ? String(Math.floor(Math.random() * 3)) : '',
-            bet_away: hasOcr ? String(Math.floor(Math.random() * 2)) : '',
-            grupo: match.grupo
-          };
-        });
-
-        setWizardBettorName(tempBettorName.trim() || 'Novo Apostador');
-        setWizardBets(prefilledBets);
-        setWizardActiveGroup('A');
-        
-        setShowCameraModal(false);
-        setShowWizardModal(true);
-        setCameraStep(1); // reset step
-      }, 2000);
+      // Automatically trigger scanning using the real API (or fallback)
+      performOcrScan(reader.result, tempBettorName);
     };
     reader.readAsDataURL(file);
   };
 
   const capturePhoto = () => {
-    setCameraStep(2);
-
-    // Simulate OCR scanning process for 2 seconds
-    setTimeout(() => {
-      // Prefill matches from confrontos with simulated OCR values
-      const prefilledBets = confrontos.map(match => {
-        // Mock a 70% success rate for OCR reading, otherwise set empty to force manual check
-        const hasOcr = Math.random() > 0.3;
-        return {
-          match_id: match.id,
-          home: match.home_team,
-          away: match.away_team,
-          bet_home: hasOcr ? String(Math.floor(Math.random() * 3)) : '',
-          bet_away: hasOcr ? String(Math.floor(Math.random() * 2)) : '',
-          grupo: match.grupo
-        };
-      });
-
-      setWizardBettorName(tempBettorName.trim() || 'Novo Apostador');
-      setWizardBets(prefilledBets);
-      setWizardActiveGroup('A');
-      
-      setShowCameraModal(false);
-      setShowWizardModal(true);
-      setCameraStep(1); // reset step
-    }, 2000);
+    if (!base64Photo) {
+      alert('Por favor, carregue uma foto primeiro.');
+      return;
+    }
+    performOcrScan(base64Photo, tempBettorName);
   };
 
   const startManualUpload = () => {

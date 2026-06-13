@@ -13,7 +13,7 @@ if (isSupabaseConfigured) {
 }
 
 // Default values
-const defaultConfrontos = [
+export const defaultConfrontos = [
     // Grupo A
     { id: 1, grupo: 'A', home_team: 'México', home_code: 'mx', away_team: 'África do Sul', away_code: 'za', match_date: '2026-06-11', match_time: '17:00:00', stadium: 'Estádio Azteca (CDMX)', home_score: 2, away_score: 1, finished: true },
     { id: 2, grupo: 'A', home_team: 'Coreia do Sul', home_code: 'kr', away_team: 'República Tcheca', away_code: 'cz', match_date: '2026-06-12', match_time: '14:00:00', stadium: 'BC Place (Vancouver)', home_score: null, away_score: null, finished: false },
