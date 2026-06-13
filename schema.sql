@@ -144,3 +144,6 @@ INSERT INTO public.confrontos (id, grupo, home_team, home_code, away_team, away_
 (71, 'L', 'Panamá', 'pa', 'Inglaterra', 'gb-eng', '2026-06-27', '20:00:00', 'Hard Rock Stadium (Miami)', NULL, NULL, false),
 (72, 'L', 'Croácia', 'hr', 'Gana', 'gh', '2026-06-27', '23:00:00', 'SoFi Stadium (Los Angeles)', NULL, NULL, false)
 ON CONFLICT (id) DO NOTHING;
+
+-- Migration: Adicionar coluna avatar_url na tabela boloes se não existir
+ALTER TABLE public.boloes ADD COLUMN IF NOT EXISTS avatar_url TEXT DEFAULT NULL;

@@ -157,7 +157,9 @@ export default function Home() {
                   cursor: 'pointer',
                   display: 'flex',
                   flexDirection: 'column',
-                  gap: '0.5rem'
+                  gap: '0.5rem',
+                  width: '100%',
+                  boxSizing: 'border-box'
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -192,7 +194,8 @@ export default function Home() {
                 background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)',
                 padding: '0.75rem 1rem', borderRadius: '12px', fontSize: '0.72rem',
                 color: 'var(--text-secondary)', marginBottom: '1.25rem', textAlign: 'center',
-                boxShadow: '0 4px 12px rgba(0,0,0,0.15)', display: 'flex', flexDirection: 'column', gap: '0.2rem'
+                boxShadow: '0 4px 12px rgba(0,0,0,0.15)', display: 'flex', flexDirection: 'column', gap: '0.2rem',
+                width: '100%', boxSizing: 'border-box'
               }}>
                 <span style={{ fontWeight: 'bold', color: '#fff', fontSize: '0.78rem' }}>📲 Adicione o App à Tela Inicial</span>
                 <span>Toque no botão <span style={{ color: 'var(--accent-gold)', fontWeight: 'bold' }}>Compartilhar</span> e depois em <span style={{ color: 'var(--accent-gold)', fontWeight: 'bold' }}>Adicionar à Tela de Início</span> no seu Safari.</span>
@@ -205,7 +208,8 @@ export default function Home() {
                 background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)',
                 padding: '0.75rem 1rem', borderRadius: '12px', fontSize: '0.72rem',
                 color: 'var(--text-secondary)', marginBottom: '1.25rem', textAlign: 'center',
-                display: 'flex', flexDirection: 'column', gap: '0.2rem'
+                display: 'flex', flexDirection: 'column', gap: '0.2rem',
+                width: '100%', boxSizing: 'border-box'
               }}>
                 <span style={{ fontWeight: 'bold', color: '#fff', fontSize: '0.78rem' }}>📲 Instale o App no Android</span>
                 <span>Toque no menu <span style={{ color: 'var(--accent-gold)', fontWeight: 'bold' }}>⋮</span> do Chrome e depois em <span style={{ color: 'var(--accent-gold)', fontWeight: 'bold' }}>Adicionar à tela inicial</span>.</span>

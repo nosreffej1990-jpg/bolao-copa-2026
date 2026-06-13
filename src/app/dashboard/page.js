@@ -744,7 +744,7 @@ function DashboardContent() {
     try {
       const { error } = await supabase
         .from('boloes')
-        .update({ photo_url: newPhotoBase64 })
+        .update({ avatar_url: newPhotoBase64 })
         .eq('id', editPhotoModal.bolaoId);
       if (!error) {
         showToast('Foto atualizada com sucesso! ✅');
@@ -856,7 +856,7 @@ function DashboardContent() {
       if (!scoreMap[b.bettor_name]) {
         scoreMap[b.bettor_name] = {
           name: b.bettor_name,
-          avatar: `https://api.dicebear.com/7.x/identicon/svg?seed=${b.bettor_name}`,
+          avatar: b.avatar_url && b.avatar_url.startsWith('data:') ? b.avatar_url : `https://api.dicebear.com/7.x/identicon/svg?seed=${b.bettor_name}`,
           pts: 0
         };
       }
@@ -1141,15 +1141,15 @@ function DashboardContent() {
                   <div className="bolao-card-top">
                     <div style={{ position: 'relative', display: 'inline-block' }}>
                     <img
-                      src={b.photo_url && b.photo_url.startsWith('data:') ? b.photo_url : `https://api.dicebear.com/7.x/identicon/svg?seed=${b.bettor_name}`}
+                      src={b.avatar_url && b.avatar_url.startsWith('data:') ? b.avatar_url : `https://api.dicebear.com/7.x/identicon/svg?seed=${b.bettor_name}`}
                       className="bolao-avatar"
                       alt="avatar"
                       style={{ width: '48px', height: '48px', borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--border-color)' }}
                     />
                     {currentUser && (
                       <button
-                        title="Editar foto"
-                        onClick={() => { setEditPhotoModal({ bolaoId: b.id, bettorName: b.bettor_name, currentPhoto: b.photo_url }); setNewPhotoPreview(null); setNewPhotoBase64(null); }}
+                        title="Editar foto de perfil"
+                        onClick={() => { setEditPhotoModal({ bolaoId: b.id, bettorName: b.bettor_name, currentPhoto: b.avatar_url }); setNewPhotoPreview(null); setNewPhotoBase64(null); }}
                         style={{
                           position: 'absolute', bottom: '-2px', right: '-2px',
                           width: '18px', height: '18px', borderRadius: '50%',
@@ -1723,9 +1723,9 @@ function DashboardContent() {
 
             <div className="bets-header-meta">
               <img
-                src={`https://api.dicebear.com/7.x/identicon/svg?seed=${showBetsModal.bettor_name}`}
+                src={showBetsModal.avatar_url && showBetsModal.avatar_url.startsWith('data:') ? showBetsModal.avatar_url : `https://api.dicebear.com/7.x/identicon/svg?seed=${showBetsModal.bettor_name}`}
                 className="bolao-avatar"
-                style={{ width: '30px', height: '30px' }}
+                style={{ width: '30px', height: '30px', borderRadius: '50%', objectFit: 'cover' }}
                 alt="avatar"
               />
               <div>
