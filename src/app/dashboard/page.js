@@ -55,11 +55,17 @@ function DashboardContent() {
   // Notificações
   const [notifPermission, setNotifPermission] = useState('default');
   
-  // Camera simulation
-  const [cameraStep, setCameraStep] = useState(1); // 1: choose, 2: capturing/ocr, 3: success
+  // Camera / OCR / Wizard states
+  const [cameraStep, setCameraStep] = useState(1); // 1: choose, 2: capturing/ocr
   const [tempBettorName, setTempBettorName] = useState('');
-  const [ocrLoading, setOcrLoading] = useState(false);
   const [uploadedPhotoUrl, setUploadedPhotoUrl] = useState(null);
+  const [base64Photo, setBase64Photo] = useState(null);
+
+  // Wizard Manual Entry / Review states
+  const [showWizardModal, setShowWizardModal] = useState(false);
+  const [wizardBettorName, setWizardBettorName] = useState('');
+  const [wizardBets, setWizardBets] = useState([]); // Array of matches with score predictions
+  const [wizardActiveGroup, setWizardActiveGroup] = useState('A');
 
   useEffect(() => {
     // Check authentication
@@ -377,53 +383,163 @@ function DashboardContent() {
   const startCameraUpload = () => {
     setTempBettorName('');
     setUploadedPhotoUrl(null);
+    setBase64Photo(null);
     setCameraStep(1);
     setShowCameraModal(true);
   };
 
-  // Handle file selection from device gallery/camera
+  // Handle file selection from device gallery/camera and convert to Base64
   const handleFileSelect = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    
+    // Preview URL
     const localUrl = URL.createObjectURL(file);
     setUploadedPhotoUrl(localUrl);
+
+    // Convert to Base64 to save in database
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setBase64Photo(reader.result);
+      
+      // Automatically trigger scanning simulation
+      setCameraStep(2);
+      setTimeout(() => {
+        const prefilledBets = confrontos.map(match => {
+          const hasOcr = Math.random() > 0.3;
+          return {
+            match_id: match.id,
+            home: match.home_team,
+            away: match.away_team,
+            bet_home: hasOcr ? String(Math.floor(Math.random() * 3)) : '',
+            bet_away: hasOcr ? String(Math.floor(Math.random() * 2)) : '',
+            grupo: match.grupo
+          };
+        });
+
+        setWizardBettorName(tempBettorName.trim() || 'Novo Apostador');
+        setWizardBets(prefilledBets);
+        setWizardActiveGroup('A');
+        
+        setShowCameraModal(false);
+        setShowWizardModal(true);
+        setCameraStep(1); // reset step
+      }, 2000);
+    };
+    reader.readAsDataURL(file);
   };
 
   const capturePhoto = () => {
-    if (!tempBettorName.trim()) {
+    setCameraStep(2);
+
+    // Simulate OCR scanning process for 2 seconds
+    setTimeout(() => {
+      // Prefill matches from confrontos with simulated OCR values
+      const prefilledBets = confrontos.map(match => {
+        // Mock a 70% success rate for OCR reading, otherwise set empty to force manual check
+        const hasOcr = Math.random() > 0.3;
+        return {
+          match_id: match.id,
+          home: match.home_team,
+          away: match.away_team,
+          bet_home: hasOcr ? String(Math.floor(Math.random() * 3)) : '',
+          bet_away: hasOcr ? String(Math.floor(Math.random() * 2)) : '',
+          grupo: match.grupo
+        };
+      });
+
+      setWizardBettorName(tempBettorName.trim() || 'Novo Apostador');
+      setWizardBets(prefilledBets);
+      setWizardActiveGroup('A');
+      
+      setShowCameraModal(false);
+      setShowWizardModal(true);
+      setCameraStep(1); // reset step
+    }, 2000);
+  };
+
+  const startManualUpload = () => {
+    setWizardBettorName('');
+    setBase64Photo(null);
+    
+    // Prefill all games with blank scores
+    const blankBets = confrontos.map(match => ({
+      match_id: match.id,
+      home: match.home_team,
+      away: match.away_team,
+      bet_home: '',
+      bet_away: '',
+      grupo: match.grupo
+    }));
+
+    setWizardBets(blankBets);
+    setWizardActiveGroup('A');
+    setShowWizardModal(true);
+  };
+
+  const handleWizardScoreChange = (index, field, value) => {
+    setWizardBets(prev => prev.map((bet, idx) => 
+      idx === index ? { ...bet, [field]: value } : bet
+    ));
+  };
+
+  const saveWizardBolao = async () => {
+    if (!wizardBettorName.trim()) {
       alert('Por favor, insira o nome do apostador.');
       return;
     }
-    setCameraStep(2);
 
-    // Simulate OCR scanning process for 2.5 seconds
-    setTimeout(async () => {
-      setCameraStep(3);
+    // Map wizardBets back to database format
+    const finalBetsData = wizardBets.map(bet => {
+      const match = confrontos.find(c => c.id === bet.match_id) || {};
+      const rH = match.home_score !== null ? parseInt(match.home_score) : null;
+      const rA = match.away_score !== null ? parseInt(match.away_score) : null;
+      
+      let pts = null;
+      if (rH !== null && rA !== null && bet.bet_home !== '' && bet.bet_away !== '') {
+        const bH = parseInt(bet.bet_home);
+        const bA = parseInt(bet.bet_away);
+        if (bH === rH && bA === rA) {
+          pts = 5;
+        } else {
+          const bW = bH > bA ? 'H' : bH < bA ? 'A' : 'D';
+          const rW = rH > rA ? 'H' : rH < rA ? 'A' : 'D';
+          if (bW === rW) {
+            pts = 3;
+          } else {
+            pts = 0;
+          }
+        }
+      }
 
-      const generatedBets = [
-        { match_id: 5, home: 'Brasil', away: 'Marrocos', bet_home: Math.floor(Math.random() * 4), bet_away: Math.floor(Math.random() * 2), real_home: null, real_away: null, pts: null },
-        { match_id: 1, home: 'México', away: 'África do Sul', bet_home: 2, bet_away: 1, real_home: 2, real_away: 1, pts: 5 },
-        { match_id: 3, home: 'Canadá', away: 'Catar', bet_home: 1, bet_away: 0, real_home: 3, real_away: 0, pts: 3 }
-      ];
+      return {
+        match_id: bet.match_id,
+        home: bet.home,
+        away: bet.away,
+        bet_home: bet.bet_home !== '' ? parseInt(bet.bet_home) : null,
+        bet_away: bet.bet_away !== '' ? parseInt(bet.bet_away) : null,
+        real_home: rH,
+        real_away: rA,
+        pts: pts
+      };
+    });
 
-      // Use uploaded photo URL or fallback placeholder
-      const photoToSave = uploadedPhotoUrl || 'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?q=80&w=375&auto=format&fit=crop';
+    const photoToSave = base64Photo || 'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?q=80&w=375&auto=format&fit=crop';
 
-      // Insert bolão into database
-      await supabase.from('boloes').insert({
-        username: currentUser,
-        bettor_name: tempBettorName.trim(),
-        photo_url: photoToSave,
-        bets_data: generatedBets
-      });
+    const { error } = await supabase.from('boloes').insert({
+      username: currentUser,
+      bettor_name: wizardBettorName.trim(),
+      photo_url: photoToSave,
+      bets_data: finalBetsData
+    });
 
+    if (!error) {
       showToast('Bolão cadastrado com sucesso!');
+      setShowWizardModal(false);
       fetchData();
-
-      setTimeout(() => {
-        setShowCameraModal(false);
-      }, 1200);
-    }, 2500);
+    } else {
+      alert('Erro ao salvar bolão.');
+    }
   };
 
   // Generate ranking purely from real bolões in the database
@@ -629,6 +745,8 @@ function DashboardContent() {
                         <div className="matchup-scores-center">
                           <input
                             type="number"
+                            inputMode="numeric"
+                            pattern="[0-9]*"
                             min="0"
                             className="score-field"
                             value={savedBet.home}
@@ -637,6 +755,8 @@ function DashboardContent() {
                           <span className="score-sep">x</span>
                           <input
                             type="number"
+                            inputMode="numeric"
+                            pattern="[0-9]*"
                             min="0"
                             className="score-field"
                             value={savedBet.away}
@@ -690,10 +810,16 @@ function DashboardContent() {
                 <h3 style={{ fontSize: '1.05rem', marginBottom: '0.2rem' }}>Bolões Cadastrados</h3>
                 <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Visualize fotos e palpites lidos.</p>
               </div>
-              <button className="btn-upload-bolao" onClick={startCameraUpload}>
-                <Icons.Camera size={14} />
-                Upar Bolão
-              </button>
+              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                <button className="btn-upload-bolao" onClick={startCameraUpload}>
+                  <Icons.Camera size={14} />
+                  Upar Bolão
+                </button>
+                <button className="btn-upload-bolao" style={{ backgroundColor: 'rgba(255, 255, 255, 0.08)', color: '#fff', border: '1px solid var(--border-color)' }} onClick={startManualUpload}>
+                  <Icons.Plus size={14} style={{ color: '#fff' }} />
+                  Cadastrar Manualmente
+                </button>
+              </div>
             </div>
 
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
@@ -1435,11 +1561,11 @@ function DashboardContent() {
             </div>
             <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', marginBottom: '1rem' }}>Corrija o placar apostado:</p>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem', justifyContent: 'center' }}>
-              <input type="number" min="0" max="20" value={editingBet.home}
+              <input type="number" inputMode="numeric" pattern="[0-9]*" min="0" max="20" value={editingBet.home}
                 onChange={e => setEditingBet(prev => ({ ...prev, home: parseInt(e.target.value) || 0 }))}
                 className="score-field" style={{ fontSize: '1.5rem', width: '60px', height: '60px', textAlign: 'center' }} />
               <span style={{ fontSize: '1.2rem', color: 'var(--text-secondary)' }}>x</span>
-              <input type="number" min="0" max="20" value={editingBet.away}
+              <input type="number" inputMode="numeric" pattern="[0-9]*" min="0" max="20" value={editingBet.away}
                 onChange={e => setEditingBet(prev => ({ ...prev, away: parseInt(e.target.value) || 0 }))}
                 className="score-field" style={{ fontSize: '1.5rem', width: '60px', height: '60px', textAlign: 'center' }} />
             </div>
@@ -1450,6 +1576,148 @@ function DashboardContent() {
             </div>
             {editError && <p style={{ color: '#ef4444', fontSize: '0.75rem', marginBottom: '0.75rem' }}>{editError}</p>}
             <button className="btn-submit" onClick={saveEditedBet}>SALVAR CORREÇÃO</button>
+          </div>
+        </div>
+      )}
+
+      {/* 5. Cadastro/Revisão Wizard Modal */}
+      {showWizardModal && (
+        <div className="modal-overlay">
+          <div className="modal-container" style={{ maxWidth: '650px', width: '100%' }}>
+            <div className="modal-header">
+              <h3>Revisar / Cadastrar Bolão</h3>
+              <div onClick={() => setShowWizardModal(false)} className="modal-close">
+                <Icons.X size={20} />
+              </div>
+            </div>
+
+            <div className="form-group" style={{ marginBottom: '1rem' }}>
+              <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: 'bold' }}>Nome do Apostador</label>
+              <input
+                type="text"
+                className="form-control"
+                placeholder="Ex: Maria Clara"
+                value={wizardBettorName}
+                onChange={(e) => setWizardBettorName(e.target.value)}
+                style={{ fontSize: '0.9rem', padding: '0.6rem 0.75rem' }}
+              />
+            </div>
+
+            {/* Groups Select Tabs */}
+            <div className="group-tabs" style={{ display: 'flex', gap: '0.4rem', overflowX: 'auto', paddingBottom: '0.5rem', marginBottom: '1.25rem', borderBottom: '1px solid var(--border-color)' }}>
+              {groupsList.map(g => {
+                const groupBets = wizardBets.filter(b => b.grupo === g);
+                const filledCount = groupBets.filter(b => b.bet_home !== '' && b.bet_away !== '' && b.bet_home !== null && b.bet_away !== null).length;
+                const isActive = wizardActiveGroup === g;
+                return (
+                  <button
+                    key={g}
+                    className={`group-tab-btn ${isActive ? 'active' : ''}`}
+                    onClick={() => setWizardActiveGroup(g)}
+                    style={{
+                      flexShrink: 0,
+                      padding: '0.4rem 0.8rem',
+                      fontSize: '0.75rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.25rem',
+                      background: isActive ? 'var(--accent-gold)' : 'rgba(255,255,255,0.03)',
+                      color: isActive ? '#000' : 'var(--text-secondary)',
+                      border: 'none',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      fontWeight: 'bold'
+                    }}
+                  >
+                    Grupo {g}
+                    <span style={{
+                      fontSize: '0.65rem',
+                      padding: '0.1rem 0.3rem',
+                      borderRadius: '10px',
+                      background: isActive ? 'rgba(0,0,0,0.2)' : 'rgba(255,255,255,0.1)',
+                      color: isActive ? '#000' : 'var(--text-muted)'
+                    }}>
+                      {filledCount}/6
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* 6 Confrontos do Grupo Selecionado */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1.5rem', maxHeight: '45vh', overflowY: 'auto', paddingRight: '0.25rem' }}>
+              {wizardBets.map((bet, idx) => {
+                if (bet.grupo !== wizardActiveGroup) return null;
+                const hFlag = getFlagCode(bet.home);
+                const aFlag = getFlagCode(bet.away);
+                return (
+                  <div key={bet.match_id} style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    padding: '0.75rem',
+                    background: 'rgba(255,255,255,0.02)',
+                    border: '1px solid var(--border-color)',
+                    borderRadius: '10px',
+                    gap: '0.5rem'
+                  }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.65rem', color: 'var(--text-secondary)' }}>
+                      <span>Jogo #{bet.match_id}</span>
+                      <span>Grupo {bet.grupo}</span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flex: 1, minWidth: 0 }}>
+                        <img src={`https://flagcdn.com/w80/${hFlag}.png`} style={{ width: '28px', height: '20px', borderRadius: '4px', objectFit: 'cover', border: '1px solid rgba(255,255,255,0.1)' }} alt={bet.home} />
+                        <span style={{ fontSize: '0.8rem', fontWeight: 'bold', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{bet.home}</span>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', justifyContent: 'center' }}>
+                        <input
+                          type="number"
+                          inputMode="numeric"
+                          pattern="[0-9]*"
+                          min="0"
+                          placeholder="-"
+                          className="score-field"
+                          style={{ width: '45px', height: '40px', fontSize: '1.1rem', textAlign: 'center', borderRadius: '6px' }}
+                          value={bet.bet_home}
+                          onChange={(e) => handleWizardScoreChange(idx, 'bet_home', e.target.value)}
+                        />
+                        <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>x</span>
+                        <input
+                          type="number"
+                          inputMode="numeric"
+                          pattern="[0-9]*"
+                          min="0"
+                          placeholder="-"
+                          className="score-field"
+                          style={{ width: '45px', height: '40px', fontSize: '1.1rem', textAlign: 'center', borderRadius: '6px' }}
+                          value={bet.bet_away}
+                          onChange={(e) => handleWizardScoreChange(idx, 'bet_away', e.target.value)}
+                        />
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flex: 1, minWidth: 0, justifyContent: 'flex-end', textAlign: 'right' }}>
+                        <span style={{ fontSize: '0.8rem', fontWeight: 'bold', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{bet.away}</span>
+                        <img src={`https://flagcdn.com/w80/${aFlag}.png`} style={{ width: '28px', height: '20px', borderRadius: '4px', objectFit: 'cover', border: '1px solid rgba(255,255,255,0.1)' }} alt={bet.away} />
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Footer / Salvar */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px solid var(--border-color)', paddingTop: '1rem', marginTop: '1rem' }}>
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                Progresso: <strong>{wizardBets.filter(b => b.bet_home !== '' && b.bet_away !== '' && b.bet_home !== null && b.bet_away !== null).length}/72</strong> jogos
+              </span>
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <button className="btn-upload-bolao" style={{ backgroundColor: 'rgba(255,255,255,0.05)', color: 'var(--text-secondary)' }} onClick={() => setShowWizardModal(false)}>
+                  Cancelar
+                </button>
+                <button className="btn-upload-bolao" style={{ backgroundColor: 'var(--soccer-green)', color: '#000' }} onClick={saveWizardBolao}>
+                  Salvar Bolão
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
