@@ -117,9 +117,29 @@ const getLocalDB = () => {
 
   const defaultBoloes = [];
 
-  if (!localStorage.getItem('copa26_confrontos')) {
-    localStorage.setItem('copa26_confrontos', JSON.stringify(defaultConfrontos));
+  // Robust migration/verification of local mock database to ensure all 72 World Cup 2026 matches are present
+  let needsReset = false;
+  const storedConfs = localStorage.getItem('copa26_confrontos');
+  if (!storedConfs) {
+    needsReset = true;
+  } else {
+    try {
+      const parsed = JSON.parse(storedConfs) || [];
+      const hasItaly = parsed.some(c => c.home_team === 'Itália' || c.away_team === 'Itália');
+      if (parsed.length < 72 || hasItaly) {
+        needsReset = true;
+      }
+    } catch (e) {
+      needsReset = true;
+    }
   }
+
+  if (needsReset) {
+    localStorage.setItem('copa26_confrontos', JSON.stringify(defaultConfrontos));
+    localStorage.setItem('copa26_palpites', JSON.stringify([]));
+    localStorage.setItem('copa26_boloes', JSON.stringify([]));
+  }
+
   if (!localStorage.getItem('copa26_palpites')) {
     localStorage.setItem('copa26_palpites', JSON.stringify([]));
   }
