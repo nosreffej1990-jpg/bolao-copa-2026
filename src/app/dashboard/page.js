@@ -6,6 +6,47 @@ import { Icons } from '@/components/Icons';
 import { supabase, resetDatabase } from '@/lib/supabase';
 import { getFinishedMatches, getLiveMatches, getUpcomingMatches, getFlagCode, formatMatchDate, getGroupStandings } from '@/lib/worldcupApi';
 
+// Helper to compress and resize images on client-side before sending to API
+const compressImage = (file, maxWidth = 1024, maxHeight = 1024) => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = (event) => {
+      const img = new Image();
+      img.src = event.target.result;
+      img.onload = () => {
+        let width = img.width;
+        let height = img.height;
+
+        // Apply aspect ratio scaling
+        if (width > height) {
+          if (width > maxWidth) {
+            height = Math.round((height * maxWidth) / width);
+            width = maxWidth;
+          }
+        } else {
+          if (height > maxHeight) {
+            width = Math.round((width * maxHeight) / height);
+            height = maxHeight;
+          }
+        }
+
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+
+        // Convert to jpeg with 0.8 quality
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+        resolve(dataUrl);
+      };
+      img.onerror = (err) => reject(err);
+    };
+    reader.onerror = (err) => reject(err);
+  });
+};
+
 function DashboardContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -402,11 +443,15 @@ function DashboardContent() {
         })
       });
 
-      if (!res.ok) throw new Error('API OCR error');
-      const data = await res.json();
-      
-      if (data.error) {
-        throw new Error(data.error);
+      let data;
+      try {
+        data = await res.json();
+      } catch (jsonErr) {
+        throw new Error(`Resposta inválida do servidor (HTTP ${res.status})`);
+      }
+
+      if (!res.ok || data.error) {
+        throw new Error(data.error || `Erro HTTP ${res.status}`);
       }
 
       setWizardBettorName(data.bettor_name || bettorNameInput.trim() || 'Novo Apostador');
@@ -417,7 +462,7 @@ function DashboardContent() {
       setShowWizardModal(true);
     } catch (err) {
       console.error('Erro na leitura com IA:', err);
-      alert('Não foi possível ler a imagem com a IA. Abrindo o formulário em branco para preenchimento manual.');
+      alert(`Não foi possível ler a imagem com a IA: ${err.message}\n\nAbrindo o formulário em branco para preenchimento manual.`);
       
       // Fallback to manual blank form on error
       const blankBets = confrontos.map(match => ({
@@ -441,7 +486,7 @@ function DashboardContent() {
   };
 
   // Handle file selection from device gallery/camera and convert to Base64
-  const handleFileSelect = (e) => {
+  const handleFileSelect = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
     
@@ -449,14 +494,22 @@ function DashboardContent() {
     const localUrl = URL.createObjectURL(file);
     setUploadedPhotoUrl(localUrl);
 
-    // Convert to Base64 to save in database
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setBase64Photo(reader.result);
-      // Automatically trigger scanning using the real API (or fallback)
-      performOcrScan(reader.result, tempBettorName);
-    };
-    reader.readAsDataURL(file);
+    try {
+      // Compress and resize image first (max 1024px, 80% quality)
+      const compressedBase64 = await compressImage(file);
+      setBase64Photo(compressedBase64);
+      // Automatically trigger scanning using the real API
+      performOcrScan(compressedBase64, tempBettorName);
+    } catch (err) {
+      console.error('Erro ao comprimir a imagem, enviando original:', err);
+      // Fallback to raw FileReader if compression fails
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setBase64Photo(reader.result);
+        performOcrScan(reader.result, tempBettorName);
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const capturePhoto = () => {
