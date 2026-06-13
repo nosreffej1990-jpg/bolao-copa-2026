@@ -81,16 +81,16 @@ O formato de retorno DEVE ser um objeto JSON puro. Não inclua Markdown, blocos 
           parts: [
             { text: promptText },
             {
-              inlineData: {
-                mimeType: mimeType,
+              inline_data: {
+                mime_type: mimeType,
                 data: base64Data
               }
             }
           ]
         }
       ],
-      generationConfig: {
-        responseMimeType: 'application/json'
+      generation_config: {
+        response_mime_type: 'application/json'
       }
     };
 
@@ -156,7 +156,13 @@ O formato de retorno DEVE ser um objeto JSON puro. Não inclua Markdown, blocos 
       throw new Error('No content returned from Gemini');
     }
 
-    const parsedResult = JSON.parse(resultText.trim());
+    let cleanJson = resultText.trim();
+    if (cleanJson.startsWith('```')) {
+      cleanJson = cleanJson.replace(/^```(?:json)?\s*/i, '');
+      cleanJson = cleanJson.replace(/\s*```$/, '');
+    }
+
+    const parsedResult = JSON.parse(cleanJson);
     
     // Map the simple bets array back to matches array with full details for UI
     const finalBets = defaultConfrontos.map(match => {
