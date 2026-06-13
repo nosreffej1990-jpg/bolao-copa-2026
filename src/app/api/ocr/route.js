@@ -74,39 +74,79 @@ Regras adicionais:
 O formato de retorno DEVE ser um objeto JSON puro. Não inclua Markdown, blocos de código ou qualquer outro texto explicativo.
 `;
 
-    // Make request to Gemini 1.5 Flash
-    const geminiRes = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          contents: [
+    // Make request to Gemini 1.5 Flash (try stable v1 first, fallback to v1beta)
+    const requestBody = {
+      contents: [
+        {
+          parts: [
+            { text: promptText },
             {
-              parts: [
-                { text: promptText },
-                {
-                  inlineData: {
-                    mimeType: mimeType,
-                    data: base64Data
-                  }
-                }
-              ]
+              inlineData: {
+                mimeType: mimeType,
+                data: base64Data
+              }
             }
-          ],
-          generationConfig: {
-            responseMimeType: 'application/json'
-          }
-        })
+          ]
+        }
+      ],
+      generationConfig: {
+        responseMimeType: 'application/json'
       }
-    );
+    };
+
+    let geminiRes;
+    let usedVersion = 'v1';
+    
+    try {
+      console.log('Tentando chamar a API do Gemini via endpoint v1...');
+      geminiRes = await fetch(
+        `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(requestBody)
+        }
+      );
+    } catch (e) {
+      console.error('Falha de rede ao tentar v1:', e.message);
+    }
+
+    // Fallback to v1beta if v1 failed or returned 404
+    if (!geminiRes || geminiRes.status === 404) {
+      console.log('Endpoint v1 indisponível (404 ou erro). Tentando endpoint v1beta...');
+      usedVersion = 'v1beta';
+      try {
+        geminiRes = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(requestBody)
+          }
+        );
+      } catch (e) {
+        console.error('Falha de rede ao tentar v1beta:', e.message);
+      }
+    }
+
+    if (!geminiRes) {
+      throw new Error('Não foi possível estabelecer conexão com os servidores da API do Gemini.');
+    }
 
     if (!geminiRes.ok) {
       const errText = await geminiRes.text();
-      console.error('Erro na API do Gemini:', errText);
-      throw new Error(`Gemini API returned status ${geminiRes.status}`);
+      console.error(`Erro na API do Gemini (${usedVersion}):`, errText);
+      
+      let friendlyError = `Gemini API (${usedVersion}) retornou status ${geminiRes.status}`;
+      if (geminiRes.status === 404) {
+        friendlyError = `Erro 404: O modelo gemini-1.5-flash não foi encontrado no endpoint ${usedVersion}. Certifique-se de que a Generative Language API está ativada no seu console Google Cloud e que sua chave do Google AI Studio é válida.`;
+      } else if (geminiRes.status === 400) {
+        friendlyError = `Erro 400: Requisição inválida no Gemini. Detalhes: ${errText}`;
+      } else if (geminiRes.status === 403) {
+        friendlyError = `Erro 403: Acesso negado. Sua chave API do Gemini pode estar inválida ou sem permissões de uso.`;
+      }
+      
+      throw new Error(friendlyError);
     }
 
     const geminiData = await geminiRes.json();

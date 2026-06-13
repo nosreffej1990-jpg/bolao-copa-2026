@@ -356,7 +356,7 @@ function DashboardContent() {
   };
 
   const fetchData = async () => {
-    const { data: confs } = await supabase.from('confrontos').select('*');
+    const { data: confs } = await supabase.from('confrontos').select('*').order('id', { ascending: true });
     setConfrontos(confs || []);
 
     const { data: bols } = await supabase.from('boloes').select('*');
