@@ -350,7 +350,8 @@ function DashboardContent() {
 
   const syncConfrontosWithApi = async (allApiGames, currentConfs) => {
     if (!currentConfs || currentConfs.length === 0 || !allApiGames || allApiGames.length === 0) return;
-    let changed = false;
+    
+    const changedConfrontos = [];
     const updatedConfrontos = currentConfs.map(c => {
       const apiGame = allApiGames.find(g =>
         normalizeTeamName(g.home_team_name_en) === normalizeTeamName(c.home_team) &&
@@ -362,33 +363,35 @@ function DashboardContent() {
           const apiAwayScore = apiGame.away_score !== null && apiGame.away_score !== undefined ? parseInt(apiGame.away_score) : null;
           
           if (apiHomeScore !== null && apiAwayScore !== null && (c.home_score !== apiHomeScore || c.away_score !== apiAwayScore || !c.finished)) {
-            changed = true;
-            return {
+            const updated = {
               ...c,
               home_score: apiHomeScore,
               away_score: apiAwayScore,
               finished: true
             };
+            changedConfrontos.push(updated);
+            return updated;
           }
         } else {
           // If the game is not finished in the API, it must have NULL scores in our local DB
           if (c.home_score !== null || c.away_score !== null || c.finished) {
-            changed = true;
-            return {
+            const updated = {
               ...c,
               home_score: null,
               away_score: null,
               finished: false
             };
+            changedConfrontos.push(updated);
+            return updated;
           }
         }
       }
       return c;
     });
 
-    if (changed) {
+    if (changedConfrontos.length > 0) {
       setConfrontos(updatedConfrontos);
-      for (const uc of updatedConfrontos) {
+      for (const uc of changedConfrontos) {
         await supabase.from('confrontos')
           .update({ 
             home_score: uc.home_score, 
