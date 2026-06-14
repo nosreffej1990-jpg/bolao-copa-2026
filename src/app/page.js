@@ -119,13 +119,13 @@ export default function Home() {
               className="splash-logo-img"
               alt="Taça"
               style={{
-                width: '90px',
-                height: '90px',
+                width: '150px',
+                height: '150px',
                 objectFit: 'contain',
                 borderRadius: '16px',
                 background: 'transparent',
                 mixBlendMode: 'normal',
-                filter: 'drop-shadow(0 0 18px rgba(251,191,36,0.5))'
+                filter: 'drop-shadow(0 0 24px rgba(251,191,36,0.6))'
               }}
             />
           </div>
