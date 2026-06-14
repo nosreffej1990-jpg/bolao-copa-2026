@@ -189,6 +189,136 @@
     --card-glow: rgba(255, 107, 53, 0.1);
 }
 
+/* ============================================
+   TEMA: Argentina 🇦🇷
+   ============================================ */
+[data-theme="argentina"] {
+    --bg-app: #0b1f30;
+    --bg-header: #071522;
+    --bg-card: #132d46;
+    --bg-card-hover: #1c3d5e;
+    --border-color: rgba(116, 172, 223, 0.1);
+    --border-active: rgba(116, 172, 223, 0.5);
+    --primary-green: #74acdf;
+    --soccer-green: #74acdf;
+    --accent-gold: #f6b426;
+    --accent-gold-hover: #df9c16;
+    --text-primary: #ffffff;
+    --text-secondary: #c5dcf0;
+    --text-muted: #527fa6;
+    --splash-bg: radial-gradient(circle at center, #132d46, #040d14);
+    --btn-primary-bg: linear-gradient(135deg, #74acdf, #4c8ebf);
+    --btn-primary-color: #071522;
+    --nav-bg: #071522;
+    --nav-border: rgba(116, 172, 223, 0.12);
+    --nav-active: #f6b426;
+    --card-glow: rgba(116, 172, 223, 0.08);
+}
+
+/* ============================================
+   TEMA: Alemanha 🇩🇪
+   ============================================ */
+[data-theme="alemanha"] {
+    --bg-app: #0d0d0d;
+    --bg-header: #050505;
+    --bg-card: #1a1a1a;
+    --bg-card-hover: #262626;
+    --border-color: rgba(221, 42, 42, 0.15);
+    --border-active: rgba(255, 206, 0, 0.5);
+    --primary-green: #dd2a2a;
+    --soccer-green: #ffce00;
+    --accent-gold: #ffce00;
+    --accent-gold-hover: #e6b800;
+    --text-primary: #ffffff;
+    --text-secondary: #cccccc;
+    --text-muted: #7f7f7f;
+    --splash-bg: radial-gradient(circle at center, #1a1a1a, #000000);
+    --btn-primary-bg: linear-gradient(135deg, #dd2a2a, #b01b1b);
+    --btn-primary-color: #fff;
+    --nav-bg: #050505;
+    --nav-border: rgba(221, 42, 42, 0.15);
+    --nav-active: #ffce00;
+    --card-glow: rgba(221, 42, 42, 0.08);
+}
+
+/* ============================================
+   TEMA: Espanha 🇪🇸
+   ============================================ */
+[data-theme="espanha"] {
+    --bg-app: #1c0303;
+    --bg-header: #100202;
+    --bg-card: #2e0808;
+    --bg-card-hover: #3f0c0c;
+    --border-color: rgba(255, 196, 0, 0.12);
+    --border-active: rgba(255, 196, 0, 0.5);
+    --primary-green: #c60b1e;
+    --soccer-green: #c60b1e;
+    --accent-gold: #ffc400;
+    --accent-gold-hover: #e0ad00;
+    --text-primary: #ffffff;
+    --text-secondary: #f7b5b5;
+    --text-muted: #a84242;
+    --splash-bg: radial-gradient(circle at center, #2e0808, #0b0101);
+    --btn-primary-bg: linear-gradient(135deg, #c60b1e, #a00817);
+    --btn-primary-color: #fff;
+    --nav-bg: #100202;
+    --nav-border: rgba(255, 196, 0, 0.15);
+    --nav-active: #ffc400;
+    --card-glow: rgba(198, 11, 30, 0.1);
+}
+
+/* ============================================
+   TEMA: Itália 🇮🇹
+   ============================================ */
+[data-theme="italia"] {
+    --bg-app: #041026;
+    --bg-header: #020917;
+    --bg-card: #081d45;
+    --bg-card-hover: #0c2b66;
+    --border-color: rgba(0, 100, 224, 0.15);
+    --border-active: rgba(0, 146, 70, 0.5);
+    --primary-green: #009246;
+    --soccer-green: #0064e0;
+    --accent-gold: #009246;
+    --accent-gold-hover: #007e3c;
+    --text-primary: #ffffff;
+    --text-secondary: #a6cbf7;
+    --text-muted: #5b87be;
+    --splash-bg: radial-gradient(circle at center, #081d45, #01040a);
+    --btn-primary-bg: linear-gradient(135deg, #0064e0, #004fb3);
+    --btn-primary-color: #fff;
+    --nav-bg: #020917;
+    --nav-border: rgba(0, 100, 224, 0.15);
+    --nav-active: #009246;
+    --card-glow: rgba(0, 100, 224, 0.1);
+}
+
+/* ============================================
+   TEMA: Uruguai 🇺🇾
+   ============================================ */
+[data-theme="uruguai"] {
+    --bg-app: #051829;
+    --bg-header: #030e1a;
+    --bg-card: #0b2d4c;
+    --bg-card-hover: #103f69;
+    --border-color: rgba(0, 168, 232, 0.15);
+    --border-active: rgba(247, 181, 0, 0.5);
+    --primary-green: #00a8e8;
+    --soccer-green: #00a8e8;
+    --accent-gold: #f7b500;
+    --accent-gold-hover: #dca000;
+    --text-primary: #ffffff;
+    --text-secondary: #bde3f7;
+    --text-muted: #4a80a4;
+    --splash-bg: radial-gradient(circle at center, #0b2d4c, #01060b);
+    --btn-primary-bg: linear-gradient(135deg, #00a8e8, #0084b6);
+    --btn-primary-color: #030e1a;
+    --nav-bg: #030e1a;
+    --nav-border: rgba(0, 168, 232, 0.12);
+    --nav-active: #f7b500;
+    --card-glow: rgba(0, 168, 232, 0.08);
+}
+
 * {
     margin: 0;
     padding: 0;
@@ -302,22 +432,26 @@ body {
 
 .home-header {
     background-color: var(--bg-header);
-    padding: 2rem 1.5rem;
-    text-align: center;
+    padding: 1.25rem 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 1rem;
     border-bottom: 4px solid var(--accent-gold);
 }
 
 .home-header h1 {
-    font-size: 2.1rem;
+    font-size: 1.7rem;
     color: var(--accent-gold);
     font-weight: 800;
-    margin-bottom: 0.35rem;
+    margin-bottom: 0.15rem;
     letter-spacing: 0.02em;
     font-family: var(--font-alt);
+    line-height: 1.2;
 }
 
 .home-header p {
-    font-size: 0.95rem;
+    font-size: 0.85rem;
     color: var(--text-secondary);
     font-weight: 600;
     letter-spacing: 0.05em;

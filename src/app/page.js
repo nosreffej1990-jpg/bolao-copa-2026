@@ -139,8 +139,19 @@ export default function Home() {
       {!loading && (
         <div className="home-page-wrapper">
           <header className="home-header">
-            <h1>BOLÃO COPA 2026</h1>
-            <p>EUA • México • Canadá</p>
+            <img
+              src="/icons/logo-transparent.png"
+              alt="Logo Copa 2026"
+              style={{
+                width: '60px',
+                height: '60px',
+                objectFit: 'contain'
+              }}
+            />
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', textAlign: 'left' }}>
+              <h1>BOLÃO COPA 2026</h1>
+              <p>EUA • México • Canadá</p>
+            </div>
           </header>
 
           <div className="home-container">
