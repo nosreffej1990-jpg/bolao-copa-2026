@@ -115,7 +115,7 @@ export default function Home() {
             <div className="logo-glow"></div>
             {/* Trophy icon with no white border - use filter drop-shadow instead of boxShadow */}
             <img
-              src="/icons/icon-192.png"
+              src="/icons/logo-transparent.png"
               className="splash-logo-img"
               alt="Taça"
               style={{
