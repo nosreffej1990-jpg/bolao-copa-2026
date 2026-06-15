@@ -3,7 +3,7 @@
 import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Icons } from '@/components/Icons';
-import { supabase, resetDatabase } from '@/lib/supabase';
+import { supabase, resetDatabase, defaultConfrontos } from '@/lib/supabase';
 import { getFinishedMatches, getLiveMatches, getUpcomingMatches, getFlagCode, formatMatchDate, getGroupStandings, fetchAllGames } from '@/lib/worldcupApi';
 
 // Helper to compress and resize images on client-side before sending to API
@@ -359,7 +359,18 @@ function DashboardContent() {
     
     const changedConfrontos = [];
     const updatedConfrontos = currentConfs.map(c => {
-      const apiGame = allApiGames.find(g => String(g.id) === String(c.id));
+      let apiGame = null;
+      if (c.id <= 72) {
+        // Group stage: match by team names (API IDs are chronological and differ from our Group-based IDs)
+        apiGame = allApiGames.find(g =>
+          normalizeTeamName(g.home_team_name_en) === normalizeTeamName(c.home_team) &&
+          normalizeTeamName(g.away_team_name_en) === normalizeTeamName(c.away_team)
+        );
+      } else {
+        // Knockout stage: match by match ID (chronological matches match 73-104)
+        apiGame = allApiGames.find(g => String(g.id) === String(c.id));
+      }
+
       if (apiGame) {
         const apiHomeName = apiGame.home_team_name_en && apiGame.home_team_name_en !== '0' && apiGame.home_team_name_en !== '' 
           ? apiGame.home_team_name_en 
@@ -380,7 +391,8 @@ function DashboardContent() {
         let nextHomeCode = c.home_code;
         let nextAwayCode = c.away_code;
 
-        if (apiHomeName !== c.home_team || apiAwayName !== c.away_team || apiHomeCode !== c.home_code || apiAwayCode !== c.away_code) {
+        // ONLY update team names and codes for knockout stage matches (id >= 73)
+        if (c.id >= 73 && (apiHomeName !== c.home_team || apiAwayName !== c.away_team || apiHomeCode !== c.home_code || apiAwayCode !== c.away_code)) {
           nextHomeTeam = apiHomeName;
           nextAwayTeam = apiAwayName;
           nextHomeCode = apiHomeCode;
@@ -953,6 +965,49 @@ function DashboardContent() {
     }
   };
 
+  const handleRestoreConfrontosOnly = async () => {
+    const conf = window.confirm("Deseja restaurar apenas as equipes e chaves originais dos confrontos? Os bolões cadastrados e seus palpites NÃO serão perdidos.");
+    if (!conf) return;
+
+    try {
+      setApiLoading(true);
+      
+      // Update local storage
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('copa26_confrontos', JSON.stringify(defaultConfrontos));
+      }
+
+      // Update Supabase dynamically
+      const isSupabase = !!(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_URL.startsWith('http') && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
+      if (isSupabase) {
+        for (const c of defaultConfrontos) {
+          const hScore = c.home_score !== null ? c.home_score : null;
+          const aScore = c.away_score !== null ? c.away_score : null;
+          
+          await supabase.from('confrontos')
+            .update({
+              home_team: c.home_team,
+              home_code: c.home_code,
+              away_team: c.away_team,
+              away_code: c.away_code,
+              home_score: hScore,
+              away_score: aScore,
+              finished: c.finished
+            })
+            .eq('id', c.id);
+        }
+      }
+
+      showToast('Confrontos restaurados com sucesso! ✅');
+      await fetchData();
+    } catch (e) {
+      console.error('Erro ao restaurar confrontos:', e);
+      alert('Erro ao restaurar confrontos.');
+    } finally {
+      setApiLoading(false);
+    }
+  };
+
   // Generate ranking purely from real bolões in the database
   const getSortedRanking = (stage = 'all') => {
     // Build player scores from real boloes data
@@ -1254,9 +1309,14 @@ function DashboardContent() {
                   Cadastrar Manualmente
                 </button>
                 {currentUser === 'Jefferson' && (
-                  <button className="btn-upload-bolao" style={{ backgroundColor: 'rgba(239, 68, 68, 0.12)', color: '#f87171', border: '1px solid rgba(239, 68, 68, 0.3)' }} onClick={handleResetDatabase}>
-                    🗑️ Reiniciar Dados
-                  </button>
+                  <>
+                    <button className="btn-upload-bolao" style={{ backgroundColor: 'rgba(59, 130, 246, 0.12)', color: '#60a5fa', border: '1px solid rgba(59, 130, 246, 0.3)' }} onClick={handleRestoreConfrontosOnly}>
+                      🔄 Restaurar Confrontos
+                    </button>
+                    <button className="btn-upload-bolao" style={{ backgroundColor: 'rgba(239, 68, 68, 0.12)', color: '#f87171', border: '1px solid rgba(239, 68, 68, 0.3)' }} onClick={handleResetDatabase}>
+                      🗑️ Reiniciar Dados
+                    </button>
+                  </>
                 )}
               </div>
             </div>
