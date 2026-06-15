@@ -108,7 +108,40 @@ export const defaultConfrontos = [
     { id: 69, grupo: 'L', home_team: 'Inglaterra', home_code: 'gb-eng', away_team: 'Gana', away_code: 'gh', match_date: '2026-06-22', match_time: '20:00:00', stadium: 'Hard Rock Stadium (Miami)', home_score: null, away_score: null, finished: false },
     { id: 70, grupo: 'L', home_team: 'Panamá', home_code: 'pa', away_team: 'Croácia', away_code: 'hr', match_date: '2026-06-23', match_time: '23:00:00', stadium: 'SoFi Stadium (Los Angeles)', home_score: null, away_score: null, finished: false },
     { id: 71, grupo: 'L', home_team: 'Panamá', home_code: 'pa', away_team: 'Inglaterra', away_code: 'gb-eng', match_date: '2026-06-27', match_time: '20:00:00', stadium: 'Hard Rock Stadium (Miami)', home_score: null, away_score: null, finished: false },
-    { id: 72, grupo: 'L', home_team: 'Croácia', home_code: 'hr', away_team: 'Gana', away_code: 'gh', match_date: '2026-06-27', match_time: '23:00:00', stadium: 'SoFi Stadium (Los Angeles)', home_score: null, away_score: null, finished: false }
+    { id: 72, grupo: 'L', home_team: 'Croácia', home_code: 'hr', away_team: 'Gana', away_code: 'gh', match_date: '2026-06-27', match_time: '23:00:00', stadium: 'SoFi Stadium (Los Angeles)', home_score: null, away_score: null, finished: false },
+    // Mata-mata
+    { id: 73, grupo: 'R32', home_team: 'Runner-up Group A', home_code: 'placeholder', away_team: 'Runner-up Group B', away_code: 'placeholder', match_date: '2026-06-28', match_time: '12:00:00', stadium: 'A definir', home_score: null, away_score: null, finished: false },
+    { id: 74, grupo: 'R32', home_team: 'Winner Group E', home_code: 'placeholder', away_team: '3rd Group A/B/C/D/F', away_code: 'placeholder', match_date: '2026-06-29', match_time: '16:30:00', stadium: 'A definir', home_score: null, away_score: null, finished: false },
+    { id: 75, grupo: 'R32', home_team: 'Winner Group F', home_code: 'placeholder', away_team: 'Runner-up Group C', away_code: 'placeholder', match_date: '2026-06-29', match_time: '19:00:00', stadium: 'A definir', home_score: null, away_score: null, finished: false },
+    { id: 76, grupo: 'R32', home_team: 'Winner Group C', home_code: 'placeholder', away_team: 'Runner-up Group F', away_code: 'placeholder', match_date: '2026-06-29', match_time: '12:00:00', stadium: 'A definir', home_score: null, away_score: null, finished: false },
+    { id: 77, grupo: 'R32', home_team: 'Winner Group I', home_code: 'placeholder', away_team: '3rd Group C/D/F/G/H', away_code: 'placeholder', match_date: '2026-06-30', match_time: '17:00:00', stadium: 'A definir', home_score: null, away_score: null, finished: false },
+    { id: 78, grupo: 'R32', home_team: 'Runner-up Group E', home_code: 'placeholder', away_team: 'Runner-up Group I', away_code: 'placeholder', match_date: '2026-06-30', match_time: '12:00:00', stadium: 'A definir', home_score: null, away_score: null, finished: false },
+    { id: 79, grupo: 'R32', home_team: 'Winner Group A', home_code: 'placeholder', away_team: '3rd Group C/E/F/H/I', away_code: 'placeholder', match_date: '2026-06-30', match_time: '19:00:00', stadium: 'A definir', home_score: null, away_score: null, finished: false },
+    { id: 80, grupo: 'R32', home_team: 'Winner Group L', home_code: 'placeholder', away_team: '3rd Group E/H/I/J/K', away_code: 'placeholder', match_date: '2026-07-01', match_time: '12:00:00', stadium: 'A definir', home_score: null, away_score: null, finished: false },
+    { id: 81, grupo: 'R32', home_team: 'Winner Group D', home_code: 'placeholder', away_team: '3rd Group B/E/F/I/J', away_code: 'placeholder', match_date: '2026-07-01', match_time: '17:00:00', stadium: 'A definir', home_score: null, away_score: null, finished: false },
+    { id: 82, grupo: 'R32', home_team: 'Winner Group G', home_code: 'placeholder', away_team: '3rd Group A/E/H/I/J', away_code: 'placeholder', match_date: '2026-07-01', match_time: '13:00:00', stadium: 'A definir', home_score: null, away_score: null, finished: false },
+    { id: 83, grupo: 'R32', home_team: 'Runner-up Group K', home_code: 'placeholder', away_team: 'Runner-up Group L', away_code: 'placeholder', match_date: '2026-07-02', match_time: '19:00:00', stadium: 'A definir', home_score: null, away_score: null, finished: false },
+    { id: 84, grupo: 'R32', home_team: 'Winner Group H', home_code: 'placeholder', away_team: 'Runner-up Group J', away_code: 'placeholder', match_date: '2026-07-02', match_time: '12:00:00', stadium: 'A definir', home_score: null, away_score: null, finished: false },
+    { id: 85, grupo: 'R32', home_team: 'Winner Group B', home_code: 'placeholder', away_team: '3rd Group E/F/G/I/J', away_code: 'placeholder', match_date: '2026-07-02', match_time: '20:00:00', stadium: 'A definir', home_score: null, away_score: null, finished: false },
+    { id: 86, grupo: 'R32', home_team: 'Winner Group J', home_code: 'placeholder', away_team: 'Runner-up Group H', away_code: 'placeholder', match_date: '2026-07-03', match_time: '18:00:00', stadium: 'A definir', home_score: null, away_score: null, finished: false },
+    { id: 87, grupo: 'R32', home_team: 'Winner Group K', home_code: 'placeholder', away_team: '3rd Group D/E/I/J/L', away_code: 'placeholder', match_date: '2026-07-03', match_time: '20:30:00', stadium: 'A definir', home_score: null, away_score: null, finished: false },
+    { id: 88, grupo: 'R32', home_team: 'Runner-up Group D', home_code: 'placeholder', away_team: 'Runner-up Group G', away_code: 'placeholder', match_date: '2026-07-03', match_time: '13:00:00', stadium: 'A definir', home_score: null, away_score: null, finished: false },
+    { id: 89, grupo: 'R16', home_team: 'Winner Match 74', home_code: 'placeholder', away_team: 'Winner Match 77', away_code: 'placeholder', match_date: '2026-07-04', match_time: '17:00:00', stadium: 'A definir', home_score: null, away_score: null, finished: false },
+    { id: 90, grupo: 'R16', home_team: 'Winner Match 73', home_code: 'placeholder', away_team: 'Winner Match 75', away_code: 'placeholder', match_date: '2026-07-04', match_time: '12:00:00', stadium: 'A definir', home_score: null, away_score: null, finished: false },
+    { id: 91, grupo: 'R16', home_team: 'Winner Match 76', home_code: 'placeholder', away_team: 'Winner Match 78', away_code: 'placeholder', match_date: '2026-07-05', match_time: '16:00:00', stadium: 'A definir', home_score: null, away_score: null, finished: false },
+    { id: 92, grupo: 'R16', home_team: 'Winner Match 79', home_code: 'placeholder', away_team: 'Winner Match 80', away_code: 'placeholder', match_date: '2026-07-05', match_time: '18:00:00', stadium: 'A definir', home_score: null, away_score: null, finished: false },
+    { id: 93, grupo: 'R16', home_team: 'Winner Match 83', home_code: 'placeholder', away_team: 'Winner Match 84', away_code: 'placeholder', match_date: '2026-07-06', match_time: '14:00:00', stadium: 'A definir', home_score: null, away_score: null, finished: false },
+    { id: 94, grupo: 'R16', home_team: 'Winner Match 81', home_code: 'placeholder', away_team: 'Winner Match 82', away_code: 'placeholder', match_date: '2026-07-06', match_time: '17:00:00', stadium: 'A definir', home_score: null, away_score: null, finished: false },
+    { id: 95, grupo: 'R16', home_team: 'Winner Match 86', home_code: 'placeholder', away_team: 'Winner Match 88', away_code: 'placeholder', match_date: '2026-07-07', match_time: '12:00:00', stadium: 'A definir', home_score: null, away_score: null, finished: false },
+    { id: 96, grupo: 'R16', home_team: 'Winner Match 85', home_code: 'placeholder', away_team: 'Winner Match 87', away_code: 'placeholder', match_date: '2026-07-07', match_time: '13:00:00', stadium: 'A definir', home_score: null, away_score: null, finished: false },
+    { id: 97, grupo: 'QF', home_team: 'Winner Match 89', home_code: 'placeholder', away_team: 'Winner Match 90', away_code: 'placeholder', match_date: '2026-07-09', match_time: '16:00:00', stadium: 'A definir', home_score: null, away_score: null, finished: false },
+    { id: 98, grupo: 'QF', home_team: 'Winner Match 93', home_code: 'placeholder', away_team: 'Winner Match 94', away_code: 'placeholder', match_date: '2026-07-10', match_time: '12:00:00', stadium: 'A definir', home_score: null, away_score: null, finished: false },
+    { id: 99, grupo: 'QF', home_team: 'Winner Match 91', home_code: 'placeholder', away_team: 'Winner Match 92', away_code: 'placeholder', match_date: '2026-07-11', match_time: '17:00:00', stadium: 'A definir', home_score: null, away_score: null, finished: false },
+    { id: 100, grupo: 'QF', home_team: 'Winner Match 95', home_code: 'placeholder', away_team: 'Winner Match 96', away_code: 'placeholder', match_date: '2026-07-11', match_time: '20:00:00', stadium: 'A definir', home_score: null, away_score: null, finished: false },
+    { id: 101, grupo: 'SF', home_team: 'Winner Match 97', home_code: 'placeholder', away_team: 'Winner Match 98', away_code: 'placeholder', match_date: '2026-07-14', match_time: '14:00:00', stadium: 'A definir', home_score: null, away_score: null, finished: false },
+    { id: 102, grupo: 'SF', home_team: 'Winner Match 99', home_code: 'placeholder', away_team: 'Winner Match 100', away_code: 'placeholder', match_date: '2026-07-15', match_time: '15:00:00', stadium: 'A definir', home_score: null, away_score: null, finished: false },
+    { id: 103, grupo: 'THIRD', home_team: 'Loser Match 101', home_code: 'placeholder', away_team: 'Loser Match 102', away_code: 'placeholder', match_date: '2026-07-18', match_time: '17:00:00', stadium: 'A definir', home_score: null, away_score: null, finished: false },
+    { id: 104, grupo: 'FINAL', home_team: 'Winner Match 101', home_code: 'placeholder', away_team: 'Winner Match 102', away_code: 'placeholder', match_date: '2026-07-19', match_time: '15:00:00', stadium: 'A definir', home_score: null, away_score: null, finished: false }
 ];
 
 // In-Memory/LocalStorage Database for instant preview
@@ -117,7 +150,7 @@ const getLocalDB = () => {
 
   const defaultBoloes = [];
 
-  // Robust migration/verification of local mock database to ensure all 72 World Cup 2026 matches are present
+  // Robust migration/verification of local mock database to ensure all 104 World Cup 2026 matches are present
   let needsReset = false;
   const storedConfs = localStorage.getItem('copa26_confrontos');
   if (!storedConfs) {
@@ -126,7 +159,7 @@ const getLocalDB = () => {
     try {
       const parsed = JSON.parse(storedConfs) || [];
       const hasItaly = parsed.some(c => c.home_team === 'Itália' || c.away_team === 'Itália');
-      if (parsed.length < 72 || hasItaly) {
+      if (parsed.length < 104 || hasItaly) {
         needsReset = true;
       }
     } catch (e) {

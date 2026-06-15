@@ -207,6 +207,7 @@ function DashboardContent() {
   // App states
   const [currentUser, setCurrentUser] = useState(null);
   const [activeTab, setActiveTab] = useState('boloes'); // placares, boloes, ranking, placares_geral, confrontos_geral
+  const [rankingStage, setRankingStage] = useState('all'); // all, groups, r32, r16, qf, sf, final
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [toastMsg, setToastMsg] = useState('');
   
@@ -245,7 +246,6 @@ function DashboardContent() {
   // Edit bettor name modal
   const [editNameModal, setEditNameModal] = useState(null); // { bolaoId, currentName }
   const [editNameInput, setEditNameInput] = useState('');
-
   // Countdown para próximo jogo
   const [countdown, setCountdown] = useState('');
   const [nextMatchInfo, setNextMatchInfo] = useState(null);
@@ -356,37 +356,67 @@ function DashboardContent() {
     
     const changedConfrontos = [];
     const updatedConfrontos = currentConfs.map(c => {
-      const apiGame = allApiGames.find(g =>
-        normalizeTeamName(g.home_team_name_en) === normalizeTeamName(c.home_team) &&
-        normalizeTeamName(g.away_team_name_en) === normalizeTeamName(c.away_team)
-      );
+      const apiGame = allApiGames.find(g => String(g.id) === String(c.id));
       if (apiGame) {
+        const apiHomeName = apiGame.home_team_name_en && apiGame.home_team_name_en !== '0' && apiGame.home_team_name_en !== '' 
+          ? apiGame.home_team_name_en 
+          : (apiGame.home_team_label || c.home_team);
+        const apiAwayName = apiGame.away_team_name_en && apiGame.away_team_name_en !== '0' && apiGame.away_team_name_en !== '' 
+          ? apiGame.away_team_name_en 
+          : (apiGame.away_team_label || c.away_team);
+          
+        const apiHomeCode = getFlagCode(apiHomeName) || 'placeholder';
+        const apiAwayCode = getFlagCode(apiAwayName) || 'placeholder';
+
+        let isDifferent = false;
+        let nextHomeScore = c.home_score;
+        let nextAwayScore = c.away_score;
+        let nextFinished = c.finished;
+        let nextHomeTeam = c.home_team;
+        let nextAwayTeam = c.away_team;
+        let nextHomeCode = c.home_code;
+        let nextAwayCode = c.away_code;
+
+        if (apiHomeName !== c.home_team || apiAwayName !== c.away_team || apiHomeCode !== c.home_code || apiAwayCode !== c.away_code) {
+          nextHomeTeam = apiHomeName;
+          nextAwayTeam = apiAwayName;
+          nextHomeCode = apiHomeCode;
+          nextAwayCode = apiAwayCode;
+          isDifferent = true;
+        }
+
         if (apiGame.finished === 'TRUE') {
           const apiHomeScore = apiGame.home_score !== null && apiGame.home_score !== undefined ? parseInt(apiGame.home_score) : null;
           const apiAwayScore = apiGame.away_score !== null && apiGame.away_score !== undefined ? parseInt(apiGame.away_score) : null;
           
           if (apiHomeScore !== null && apiAwayScore !== null && (c.home_score !== apiHomeScore || c.away_score !== apiAwayScore || !c.finished)) {
-            const updated = {
-              ...c,
-              home_score: apiHomeScore,
-              away_score: apiAwayScore,
-              finished: true
-            };
-            changedConfrontos.push(updated);
-            return updated;
+            nextHomeScore = apiHomeScore;
+            nextAwayScore = apiAwayScore;
+            nextFinished = true;
+            isDifferent = true;
           }
         } else {
-          // If the game is not finished in the API, it must have NULL scores in our local DB
           if (c.home_score !== null || c.away_score !== null || c.finished) {
-            const updated = {
-              ...c,
-              home_score: null,
-              away_score: null,
-              finished: false
-            };
-            changedConfrontos.push(updated);
-            return updated;
+            nextHomeScore = null;
+            nextAwayScore = null;
+            nextFinished = false;
+            isDifferent = true;
           }
+        }
+
+        if (isDifferent) {
+          const updated = {
+            ...c,
+            home_team: nextHomeTeam,
+            away_team: nextAwayTeam,
+            home_code: nextHomeCode,
+            away_code: nextAwayCode,
+            home_score: nextHomeScore,
+            away_score: nextAwayScore,
+            finished: nextFinished
+          };
+          changedConfrontos.push(updated);
+          return updated;
         }
       }
       return c;
@@ -397,6 +427,10 @@ function DashboardContent() {
       for (const uc of changedConfrontos) {
         await supabase.from('confrontos')
           .update({ 
+            home_team: uc.home_team,
+            away_team: uc.away_team,
+            home_code: uc.home_code,
+            away_code: uc.away_code,
             home_score: uc.home_score, 
             away_score: uc.away_score,
             finished: uc.finished ?? false
@@ -917,7 +951,7 @@ function DashboardContent() {
   };
 
   // Generate ranking purely from real bolões in the database
-  const getSortedRanking = () => {
+  const getSortedRanking = (stage = 'all') => {
     // Build player scores from real boloes data
     const scoreMap = {};
     boloes.forEach(b => {
@@ -934,7 +968,19 @@ function DashboardContent() {
       const calculatedBets = getCalculatedBets(b.bets_data, confrontos);
       calculatedBets.forEach(bet => {
         if (bet.pts !== null && bet.pts !== undefined) {
-          scoreMap[key].pts += bet.pts;
+          const matchId = parseInt(bet.match_id);
+          let include = false;
+          if (stage === 'all') include = true;
+          else if (stage === 'groups' && matchId <= 72) include = true;
+          else if (stage === 'r32' && matchId >= 73 && matchId <= 88) include = true;
+          else if (stage === 'r16' && matchId >= 89 && matchId <= 96) include = true;
+          else if (stage === 'qf' && matchId >= 97 && matchId <= 100) include = true;
+          else if (stage === 'sf' && matchId >= 101 && matchId <= 102) include = true;
+          else if (stage === 'final' && matchId >= 103 && matchId <= 104) include = true;
+
+          if (include) {
+            scoreMap[key].pts += bet.pts;
+          }
         }
       });
     });
@@ -943,7 +989,7 @@ function DashboardContent() {
     return players.sort((a, b) => b.pts - a.pts).map((p, idx) => ({ ...p, rank: idx + 1 }));
   };
 
-  const ranking = getSortedRanking();
+  const ranking = getSortedRanking(rankingStage);
   const top3 = ranking.slice(0, 3);
   const restRank = ranking.slice(3);
 
@@ -1017,6 +1063,16 @@ function DashboardContent() {
               <Icons.Calendar size={18} />
               <span>Próximos Confrontos</span>
             </button>
+
+            {currentUser && (
+              <button
+                className={`drawer-link ${activeTab === 'chaveamento' ? 'active' : ''}`}
+                onClick={() => { setActiveTab('chaveamento'); setIsDrawerOpen(false); }}
+              >
+                <Icons.BarChart size={18} style={{ transform: 'rotate(90deg)' }} />
+                <span>Chaveamento (Admin)</span>
+              </button>
+            )}
 
             <button
               className={`drawer-link`}
@@ -1274,9 +1330,41 @@ function DashboardContent() {
         {/* 3. Ranking */}
         {activeTab === 'ranking' && (
           <div>
-            <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
+            <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
               <h3 style={{ fontSize: '1.15rem', marginBottom: '0.2rem' }}>Classificação do Bolão</h3>
               <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Pontuação calculada pelos bolões cadastrados</p>
+            </div>
+
+            {/* Seletor de Fases da Classificação */}
+            <div style={{ display: 'flex', gap: '0.4rem', overflowX: 'auto', paddingBottom: '0.8rem', marginBottom: '1rem', scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}>
+              {[
+                { id: 'all', label: 'Geral' },
+                { id: 'groups', label: 'Fase de Grupos' },
+                { id: 'r32', label: '1/16 (32 avos)' },
+                { id: 'r16', label: '1/8 (oitavas)' },
+                { id: 'qf', label: 'Quartas' },
+                { id: 'sf', label: 'Semifinal' },
+                { id: 'final', label: 'Final' }
+              ].map(s => (
+                <button
+                  key={s.id}
+                  onClick={() => setRankingStage(s.id)}
+                  style={{
+                    padding: '0.4rem 0.8rem',
+                    borderRadius: '999px',
+                    fontSize: '0.75rem',
+                    fontWeight: '700',
+                    border: 'none',
+                    cursor: 'pointer',
+                    whiteSpace: 'nowrap',
+                    background: rankingStage === s.id ? 'var(--soccer-green)' : 'rgba(255,255,255,0.08)',
+                    color: rankingStage === s.id ? '#000' : '#cbd5e1',
+                    transition: 'all 0.2s'
+                  }}
+                >
+                  {s.label}
+                </button>
+              ))}
             </div>
 
             {ranking.length === 0 ? (
@@ -1537,6 +1625,205 @@ function DashboardContent() {
                 </div>
               );
             })()}
+          </div>
+        )}
+
+        {/* 7. Chaveamento da Copa (Admin Only / Test View) */}
+        {activeTab === 'chaveamento' && currentUser && (
+          <div className="tab-pane active" style={{ animation: 'fadeIn 0.4s ease-out' }}>
+            <div style={{ marginBottom: '1rem' }}>
+              <h3 style={{ color: 'var(--accent-gold)' }}>Chaveamento da Copa 2026</h3>
+              <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                Visualização de testes dos confrontos de mata-mata. (Oculto para usuários finais)
+              </p>
+            </div>
+            
+            <div style={{ display: 'flex', gap: '1.5rem', overflowX: 'auto', padding: '1rem 0' }}>
+              {/* Fase de 32 (16 avos) */}
+              <div style={{ flex: '0 0 240px', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                <h4 style={{ textAlign: 'center', color: 'var(--soccer-green)', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '0.5rem', fontSize: '0.85rem' }}>16 avos (32 times)</h4>
+                {confrontos.filter(c => c.grupo === 'R32').map(g => {
+                  const hFlag = getFlagCode(g.home_team);
+                  const aFlag = getFlagCode(g.away_team);
+                  return (
+                    <div key={g.id} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '0.5rem', fontSize: '0.75rem' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', color: '#94a3b8', marginBottom: '0.25rem', fontSize: '0.65rem' }}>
+                        <span>Jogo #{g.id}</span>
+                        <span>{g.match_date}</span>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', justifyContent: 'space-between' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                          <img src={`https://flagcdn.com/w40/${hFlag}.png`} style={{ width: '16px', height: '12px', objectFit: 'cover', borderRadius: '2px' }} alt="" />
+                          <span>{g.home_team}</span>
+                        </div>
+                        <span style={{ fontWeight: 'bold' }}>{g.home_score !== null ? g.home_score : '-'}</span>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', justifyContent: 'space-between', marginTop: '0.25rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                          <img src={`https://flagcdn.com/w40/${aFlag}.png`} style={{ width: '16px', height: '12px', objectFit: 'cover', borderRadius: '2px' }} alt="" />
+                          <span>{g.away_team}</span>
+                        </div>
+                        <span style={{ fontWeight: 'bold' }}>{g.away_score !== null ? g.away_score : '-'}</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Oitavas */}
+              <div style={{ flex: '0 0 240px', display: 'flex', flexDirection: 'column', gap: '2rem', justifyContent: 'space-around' }}>
+                <h4 style={{ textAlign: 'center', color: 'var(--soccer-green)', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '0.5rem', fontSize: '0.85rem' }}>Oitavas de Final</h4>
+                {confrontos.filter(c => c.grupo === 'R16').map(g => {
+                  const hFlag = getFlagCode(g.home_team);
+                  const aFlag = getFlagCode(g.away_team);
+                  return (
+                    <div key={g.id} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '0.5rem', fontSize: '0.75rem' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', color: '#94a3b8', marginBottom: '0.25rem', fontSize: '0.65rem' }}>
+                        <span>Jogo #{g.id}</span>
+                        <span>{g.match_date}</span>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', justifyContent: 'space-between' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                          <img src={`https://flagcdn.com/w40/${hFlag}.png`} style={{ width: '16px', height: '12px', objectFit: 'cover', borderRadius: '2px' }} alt="" />
+                          <span>{g.home_team}</span>
+                        </div>
+                        <span style={{ fontWeight: 'bold' }}>{g.home_score !== null ? g.home_score : '-'}</span>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', justifyContent: 'space-between', marginTop: '0.25rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                          <img src={`https://flagcdn.com/w40/${aFlag}.png`} style={{ width: '16px', height: '12px', objectFit: 'cover', borderRadius: '2px' }} alt="" />
+                          <span>{g.away_team}</span>
+                        </div>
+                        <span style={{ fontWeight: 'bold' }}>{g.away_score !== null ? g.away_score : '-'}</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Quartas */}
+              <div style={{ flex: '0 0 240px', display: 'flex', flexDirection: 'column', gap: '4rem', justifyContent: 'space-around' }}>
+                <h4 style={{ textAlign: 'center', color: 'var(--soccer-green)', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '0.5rem', fontSize: '0.85rem' }}>Quartas de Final</h4>
+                {confrontos.filter(c => c.grupo === 'QF').map(g => {
+                  const hFlag = getFlagCode(g.home_team);
+                  const aFlag = getFlagCode(g.away_team);
+                  return (
+                    <div key={g.id} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '0.5rem', fontSize: '0.75rem' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', color: '#94a3b8', marginBottom: '0.25rem', fontSize: '0.65rem' }}>
+                        <span>Jogo #{g.id}</span>
+                        <span>{g.match_date}</span>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', justifyContent: 'space-between' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                          <img src={`https://flagcdn.com/w40/${hFlag}.png`} style={{ width: '16px', height: '12px', objectFit: 'cover', borderRadius: '2px' }} alt="" />
+                          <span>{g.home_team}</span>
+                        </div>
+                        <span style={{ fontWeight: 'bold' }}>{g.home_score !== null ? g.home_score : '-'}</span>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', justifyContent: 'space-between', marginTop: '0.25rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                          <img src={`https://flagcdn.com/w40/${aFlag}.png`} style={{ width: '16px', height: '12px', objectFit: 'cover', borderRadius: '2px' }} alt="" />
+                          <span>{g.away_team}</span>
+                        </div>
+                        <span style={{ fontWeight: 'bold' }}>{g.away_score !== null ? g.away_score : '-'}</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Semifinais */}
+              <div style={{ flex: '0 0 240px', display: 'flex', flexDirection: 'column', gap: '8rem', justifyContent: 'space-around' }}>
+                <h4 style={{ textAlign: 'center', color: 'var(--soccer-green)', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '0.5rem', fontSize: '0.85rem' }}>Semifinais</h4>
+                {confrontos.filter(c => c.grupo === 'SF').map(g => {
+                  const hFlag = getFlagCode(g.home_team);
+                  const aFlag = getFlagCode(g.away_team);
+                  return (
+                    <div key={g.id} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '0.5rem', fontSize: '0.75rem' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', color: '#94a3b8', marginBottom: '0.25rem', fontSize: '0.65rem' }}>
+                        <span>Jogo #{g.id}</span>
+                        <span>{g.match_date}</span>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', justifyContent: 'space-between' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                          <img src={`https://flagcdn.com/w40/${hFlag}.png`} style={{ width: '16px', height: '12px', objectFit: 'cover', borderRadius: '2px' }} alt="" />
+                          <span>{g.home_team}</span>
+                        </div>
+                        <span style={{ fontWeight: 'bold' }}>{g.home_score !== null ? g.home_score : '-'}</span>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', justifyContent: 'space-between', marginTop: '0.25rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                          <img src={`https://flagcdn.com/w40/${aFlag}.png`} style={{ width: '16px', height: '12px', objectFit: 'cover', borderRadius: '2px' }} alt="" />
+                          <span>{g.away_team}</span>
+                        </div>
+                        <span style={{ fontWeight: 'bold' }}>{g.away_score !== null ? g.away_score : '-'}</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Final e Terceiro Lugar */}
+              <div style={{ flex: '0 0 240px', display: 'flex', flexDirection: 'column', gap: '3rem', justifyContent: 'center' }}>
+                <h4 style={{ textAlign: 'center', color: 'var(--soccer-green)', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '0.5rem', fontSize: '0.85rem' }}>Finais</h4>
+                
+                {/* Final */}
+                {confrontos.filter(c => c.grupo === 'FINAL').map(g => {
+                  const hFlag = getFlagCode(g.home_team);
+                  const aFlag = getFlagCode(g.away_team);
+                  return (
+                    <div key={g.id} style={{ background: 'rgba(251, 191, 36, 0.1)', border: '1px solid var(--accent-gold)', borderRadius: '8px', padding: '0.75rem', fontSize: '0.75rem' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--accent-gold)', fontWeight: 'bold', marginBottom: '0.25rem', fontSize: '0.65rem' }}>
+                        <span>FINAL (Jogo #{g.id})</span>
+                        <span>{g.match_date}</span>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', justifyContent: 'space-between', fontWeight: 'bold' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                          <img src={`https://flagcdn.com/w40/${hFlag}.png`} style={{ width: '16px', height: '12px', objectFit: 'cover', borderRadius: '2px' }} alt="" />
+                          <span>{g.home_team}</span>
+                        </div>
+                        <span>{g.home_score !== null ? g.home_score : '-'}</span>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', justifyContent: 'space-between', marginTop: '0.25rem', fontWeight: 'bold' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                          <img src={`https://flagcdn.com/w40/${aFlag}.png`} style={{ width: '16px', height: '12px', objectFit: 'cover', borderRadius: '2px' }} alt="" />
+                          <span>{g.away_team}</span>
+                        </div>
+                        <span>{g.away_score !== null ? g.away_score : '-'}</span>
+                      </div>
+                    </div>
+                  );
+                })}
+
+                {/* Terceiro Lugar */}
+                {confrontos.filter(c => c.grupo === 'THIRD').map(g => {
+                  const hFlag = getFlagCode(g.home_team);
+                  const aFlag = getFlagCode(g.away_team);
+                  return (
+                    <div key={g.id} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '0.5rem', fontSize: '0.75rem', marginTop: '2rem' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', color: '#94a3b8', marginBottom: '0.25rem', fontSize: '0.65rem' }}>
+                        <span>3º Lugar (Jogo #{g.id})</span>
+                        <span>{g.match_date}</span>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', justifyContent: 'space-between' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                          <img src={`https://flagcdn.com/w40/${hFlag}.png`} style={{ width: '16px', height: '12px', objectFit: 'cover', borderRadius: '2px' }} alt="" />
+                          <span>{g.home_team}</span>
+                        </div>
+                        <span style={{ fontWeight: 'bold' }}>{g.home_score !== null ? g.home_score : '-'}</span>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', justifyContent: 'space-between', marginTop: '0.25rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                          <img src={`https://flagcdn.com/w40/${aFlag}.png`} style={{ width: '16px', height: '12px', objectFit: 'cover', borderRadius: '2px' }} alt="" />
+                          <span>{g.away_team}</span>
+                        </div>
+                        <span style={{ fontWeight: 'bold' }}>{g.away_score !== null ? g.away_score : '-'}</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
           </div>
         )}
       </main>
