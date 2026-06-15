@@ -1186,19 +1186,19 @@ body {
 }
 
 .podium-column.first .podium-box {
-    height: 100px;
+    height: 110px;
     background: linear-gradient(180deg, rgba(251, 191, 36, 0.25), rgba(251, 191, 36, 0.05));
     border: 1px solid rgba(251, 191, 36, 0.3);
 }
 
 .podium-column.second .podium-box {
-    height: 80px;
+    height: 95px;
     background: linear-gradient(180deg, rgba(209, 213, 219, 0.2), rgba(209, 213, 219, 0.05));
     border: 1px solid rgba(209, 213, 219, 0.25);
 }
 
 .podium-column.third .podium-box {
-    height: 65px;
+    height: 85px;
     background: linear-gradient(180deg, rgba(180, 83, 9, 0.2), rgba(180, 83, 9, 0.05));
     border: 1px solid rgba(180, 83, 9, 0.25);
 }
