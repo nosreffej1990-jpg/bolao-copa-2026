@@ -73,6 +73,7 @@ const getCalculatedBets = (betsData, confrontosList) => {
     if (!hasRealScore) {
       return {
         ...bet,
+        match_id: match.id,
         real_home: null,
         real_away: null,
         pts: null
@@ -88,6 +89,7 @@ const getCalculatedBets = (betsData, confrontosList) => {
     if (!hasBetScore) {
       return {
         ...bet,
+        match_id: match.id,
         real_home: rH,
         real_away: rA,
         pts: 0
@@ -110,6 +112,7 @@ const getCalculatedBets = (betsData, confrontosList) => {
 
     return {
       ...bet,
+      match_id: match.id,
       real_home: rH,
       real_away: rA,
       pts: pts
