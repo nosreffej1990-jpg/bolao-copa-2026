@@ -242,6 +242,9 @@ function DashboardContent() {
   const [newPhotoPreview, setNewPhotoPreview] = useState(null);
   const [newPhotoBase64, setNewPhotoBase64] = useState(null);
   const [savingPhoto, setSavingPhoto] = useState(false);
+  // Edit bettor name modal
+  const [editNameModal, setEditNameModal] = useState(null); // { bolaoId, currentName }
+  const [editNameInput, setEditNameInput] = useState('');
 
   // Countdown para próximo jogo
   const [countdown, setCountdown] = useState('');
@@ -805,6 +808,26 @@ function DashboardContent() {
     }
   };
 
+  const saveEditedName = async () => {
+    if (!editNameModal || !editNameInput.trim()) return;
+    try {
+      const { error } = await supabase
+        .from('boloes')
+        .update({ bettor_name: editNameInput.trim() })
+        .eq('id', editNameModal.bolaoId);
+      if (!error) {
+        showToast('Nome atualizado com sucesso! ✅');
+        setEditNameModal(null);
+        setEditNameInput('');
+        fetchData();
+      } else {
+        alert('Erro ao salvar nome.');
+      }
+    } catch (e) {
+      console.error('Erro ao editar nome:', e);
+    }
+  };
+
   const handleWizardScoreChange = (index, field, value) => {
     setWizardBets(prev => prev.map((bet, idx) => 
       idx === index ? { ...bet, [field]: value } : bet
@@ -898,10 +921,12 @@ function DashboardContent() {
     // Build player scores from real boloes data
     const scoreMap = {};
     boloes.forEach(b => {
-      if (!scoreMap[b.bettor_name]) {
-        scoreMap[b.bettor_name] = {
+      const key = String(b.id);
+      if (!scoreMap[key]) {
+        scoreMap[key] = {
+          id: b.id,
           name: b.bettor_name,
-          avatar: b.avatar_url && b.avatar_url.startsWith('data:') ? b.avatar_url : `https://api.dicebear.com/7.x/identicon/svg?seed=${b.bettor_name}`,
+          avatar: b.avatar_url && b.avatar_url.startsWith('data:') ? b.avatar_url : `https://api.dicebear.com/7.x/identicon/svg?seed=${b.id}`,
           pts: 0
         };
       }
@@ -909,7 +934,7 @@ function DashboardContent() {
       const calculatedBets = getCalculatedBets(b.bets_data, confrontos);
       calculatedBets.forEach(bet => {
         if (bet.pts !== null && bet.pts !== undefined) {
-          scoreMap[b.bettor_name].pts += bet.pts;
+          scoreMap[key].pts += bet.pts;
         }
       });
     });
@@ -1206,7 +1231,18 @@ function DashboardContent() {
                     )}
                   </div>
                     <div className="bolao-details">
-                      <h4>{b.bettor_name}</h4>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                        <h4>{b.bettor_name}</h4>
+                        {currentUser && (
+                          <button
+                            title="Editar nome"
+                            onClick={() => { setEditNameModal({ bolaoId: b.id, currentName: b.bettor_name }); setEditNameInput(b.bettor_name); }}
+                            style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '0.8rem', padding: 0 }}
+                          >
+                            ✏️
+                          </button>
+                        )}
+                      </div>
                       <span>Registrado por: {b.username}</span>
                     </div>
                   </div>
@@ -2145,6 +2181,50 @@ function DashboardContent() {
             >
               {savingPhoto ? 'Salvando...' : 'SALVAR FOTO'}
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Editar Nome do Apostador */}
+      {editNameModal && (
+        <div className="modal-overlay" onClick={() => setEditNameModal(null)}>
+          <div className="modal-container" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>Editar Nome</h3>
+              <div onClick={() => setEditNameModal(null)} className="modal-close"><Icons.X size={20} /></div>
+            </div>
+            
+            <div style={{ marginBottom: '1.5rem' }}>
+              <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                Nome do Apostador
+              </label>
+              <input
+                type="text"
+                className="score-field"
+                style={{ width: '100%', padding: '0.75rem', fontSize: '1rem', borderRadius: '8px', color: '#fff', backgroundColor: 'rgba(255,255,255,0.05)', border: '1px solid var(--border-color)' }}
+                value={editNameInput}
+                onChange={e => setEditNameInput(e.target.value)}
+                placeholder="Nome do apostador"
+              />
+            </div>
+
+            <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+              <button 
+                className="btn-upload-bolao" 
+                style={{ backgroundColor: 'rgba(255,255,255,0.05)', color: 'var(--text-secondary)', padding: '0.5rem 1rem', borderRadius: '6px', border: 'none', cursor: 'pointer' }} 
+                onClick={() => setEditNameModal(null)}
+              >
+                Cancelar
+              </button>
+              <button 
+                className="btn-upload-bolao" 
+                style={{ backgroundColor: 'var(--accent-gold, #ffc107)', color: '#000', padding: '0.5rem 1rem', borderRadius: '6px', border: 'none', cursor: 'pointer', fontWeight: 'bold' }} 
+                onClick={saveEditedName}
+                disabled={!editNameInput.trim()}
+              >
+                Salvar
+              </button>
+            </div>
           </div>
         </div>
       )}
