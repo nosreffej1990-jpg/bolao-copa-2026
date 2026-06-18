@@ -185,7 +185,8 @@ export default function Home() {
       setUsername(formattedUsername);
       setPassword(regPassword);
     } catch (err) {
-      setRegErrorMsg('Erro ao realizar o cadastro. Tente novamente.');
+      console.error('Erro detalhado no cadastro:', err);
+      setRegErrorMsg(`Erro ao realizar o cadastro: ${err.message || err.error_description || JSON.stringify(err)}`);
     }
   };
 
