@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visualização da Animação do Carregamento da Taça - Bolão 2026</title>
+    <style>
+        :root {
+            --bg-color: #0b0f19;
+            --card-bg: rgba(17, 24, 39, 0.7);
+            --gold-light: #ffd700;
+            --gold-dark: #b8860b;
+            --gold-glow: rgba(255, 215, 0, 0.4);
+            --text-color: #f3f4f6;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-color);
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(20, 83, 45, 0.3) 0, transparent 50%),
+                radial-gradient(at 50% 0%, rgba(184, 134, 11, 0.15) 0, transparent 50%),
+                radial-gradient(at 100% 0%, rgba(17, 24, 39, 0.5) 0, transparent 50%);
+            font-family: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .container {
+            text-align: center;
+            padding: 2rem;
+            max-width: 500px;
+            width: 90%;
+        }
+
+        .card {
+            background: var(--card-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 24px;
+            padding: 3rem 2rem;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), 
+                        0 0 40px rgba(218, 165, 32, 0.05);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -150%;
+            width: 50%;
+            height: 100%;
+            background: linear-gradient(
+                90deg,
+                transparent,
+                rgba(255, 255, 255, 0.06),
+                transparent
+            );
+            transform: skewX(-25deg);
+            animation: shine 4s infinite;
+        }
+
+        @keyframes shine {
+            0% { left: -150%; }
+            50% { left: 150%; }
+            100% { left: 150%; }
+        }
+
+        h2 {
+            margin: 0;
+            font-size: 1.5rem;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            background: linear-gradient(135deg, #fff 0%, #a5b4fc 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        p {
+            margin: 0;
+            color: #9ca3af;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
+        /* SVG Trophy Loading Styling */
+        .trophy-wrapper {
+            position: relative;
+            width: 140px;
+            height: 180px;
+            margin: 1rem 0;
+        }
+
+        .trophy-svg {
+            width: 100%;
+            height: 100%;
+            filter: drop-shadow(0 0 15px rgba(0, 0, 0, 0.5));
+        }
+
+        /* Background silhouette */
+        .trophy-bg {
+            fill: rgba(255, 255, 255, 0.04);
+            stroke: rgba(255, 255, 255, 0.12);
+            stroke-width: 1.5;
+            transition: stroke 0.3s;
+        }
+
+        /* Shiny Golden Fill Gradient */
+        .gold-fill-gradient {
+            animation: pulse-glow 3s ease-in-out infinite alternate;
+        }
+
+        /* Wave and Liquid animation using clipPath */
+        .liquid-mask {
+            transform: translateY(100%); /* Controlled by JS or CSS animation */
+            transition: transform 0.1s linear;
+        }
+
+        /* Sparkling particles */
+        .particle {
+            position: absolute;
+            width: 6px;
+            height: 6px;
+            background: radial-gradient(circle, var(--gold-light) 0%, transparent 70%);
+            border-radius: 50%;
+            pointer-events: none;
+            opacity: 0;
+        }
+
+        .loading-percentage {
+            font-size: 2rem;
+            font-weight: 700;
+            font-family: monospace;
+            color: var(--gold-light);
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
+            margin-top: 0.5rem;
+        }
+
+        /* Interactive controls for preview */
+        .controls {
+            margin-top: 2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            width: 100%;
+            max-width: 350px;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #b8860b 0%, #ffd700 100%);
+            color: #0b0f19;
+            border: none;
+            padding: 0.8rem 1.5rem;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(218, 165, 32, 0.3);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(218, 165, 32, 0.5);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .slider-container {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            text-align: left;
+        }
+
+        .slider-label {
+            font-size: 0.85rem;
+            color: #9ca3af;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        input[type="range"] {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: rgba(255, 255, 255, 0.1);
+            outline: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: var(--gold-light);
+            cursor: pointer;
+            box-shadow: 0 0 8px var(--gold-light);
+            transition: transform 0.1s;
+        }
+
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+        }
+
+        /* Ambient glowing background aura */
+        .aura {
+            position: absolute;
+            width: 200px;
+            height: 200px;
+            background: radial-gradient(circle, rgba(218, 165, 32, 0.1) 0%, transparent 70%);
+            border-radius: 50%;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            z-index: -1;
+            transition: all 0.3s ease;
+        }
+
+        /* Model Selector Styling */
+        .model-selector {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-top: 1rem;
+            width: 100%;
+            max-width: 380px;
+        }
+        .model-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            color: #9ca3af;
+            padding: 0.55rem 0.8rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.75rem;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            outline: none;
+        }
+        .model-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            border-color: rgba(255, 255, 255, 0.15);
+        }
+        .model-btn.active {
+            background: linear-gradient(135deg, #ffd700 0%, #b8860b 100%);
+            color: #0b0f19;
+            border: none;
+            box-shadow: 0 0 12px rgba(255, 215, 0, 0.25);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1 style="font-size: 1.8rem; margin-bottom: 0.5rem; background: linear-gradient(135deg, #ffd700, #b8860b); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Visualização do Carregamento</h1>
+        <p style="margin-bottom: 2rem;">Interaja com os controles abaixo para simular a animação real da taça que o jogador verá ao confirmar a sua aposta.</p>
+
+        <div class="card">
+            <div class="aura" id="aura"></div>
+            
+            <h2>Processando sua Aposta...</h2>
+            <p id="status-text">Validando os palpites com o sistema.</p>
+
+            <div class="trophy-wrapper">
+                <!-- Particles generated dynamically by JS near the liquid surface -->
+                <div id="particles-container"></div>
+                
+                <svg class="trophy-svg" viewBox="0 0 100 120" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <!-- Premium Liquid Gold Gradient -->
+                        <linearGradient id="goldLiquid" x1="0%" y1="100%" x2="0%" y2="0%">
+                            <stop offset="0%" stop-color="#8a660d" />
+                            <stop offset="50%" stop-color="#d4af37" />
+                            <stop offset="85%" stop-color="#ffd700" />
+                            <stop offset="100%" stop-color="#fffbbf" />
+                        </linearGradient>
+
+                        <!-- Subtle Inner Shadow / Highlight for Gold -->
+                        <linearGradient id="goldHighlight" x1="0%" y1="0%" x2="100%" y2="0%">
+                            <stop offset="0%" stop-color="rgba(255,255,255,0.4)" />
+                            <stop offset="50%" stop-color="transparent" />
+                            <stop offset="100%" stop-color="rgba(0,0,0,0.3)" />
+                        </linearGradient>
+
+                        <!-- Clip Path to match the Trophy shape -->
+                        <clipPath id="trophyClip">
+                            <path id="clipPathPath" d="M 38,105 L 62,105 C 61,100 60,98 58,96 L 42,96 C 40,98 39,100 38,105 Z M 40,94 L 60,94 C 59,91 58,88 57,86 L 43,86 C 42,88 41,91 40,94 Z M 44,84 C 45,76 46,70 47,62 C 43,59 39,55 37,49 C 35,41 37,32 43,25 C 47,20 53,20 57,25 C 63,32 65,41 63,49 C 61,55 57,59 53,62 C 54,70 55,76 56,84 Z M 50,47 A 11,11 0 1, 0 50,25 A 11,11 0 1, 0 50,47 Z" />
+                        </clipPath>
+                    </defs>
+
+                    <!-- Background Silhouette / Outer Stroke -->
+                    <path id="trophyBgPath" class="trophy-bg" d="M 38,105 L 62,105 C 61,100 60,98 58,96 L 42,96 C 40,98 39,100 38,105 Z M 40,94 L 60,94 C 59,91 58,88 57,86 L 43,86 C 42,88 41,91 40,94 Z M 44,84 C 45,76 46,70 47,62 C 43,59 39,55 37,49 C 35,41 37,32 43,25 C 47,20 53,20 57,25 C 63,32 65,41 63,49 C 61,55 57,59 53,62 C 54,70 55,76 56,84 Z M 50,47 A 11,11 0 1, 0 50,25 A 11,11 0 1, 0 50,47 Z" />
+
+                    <!-- Filled Liquid Portion -->
+                    <g clip-path="url(#trophyClip)">
+                        <!-- Animated Liquid Wave -->
+                        <g id="liquid-group" style="transform: translateY(100%); transition: transform 0.1s ease-out;">
+                            <!-- Liquid Body -->
+                            <rect x="0" y="0" width="100" height="120" fill="url(#goldLiquid)" />
+                            
+                            <!-- Highlight overlay -->
+                            <rect x="0" y="0" width="100" height="120" fill="url(#goldHighlight)" style="mix-blend-mode: overlay;" />
+
+                            <!-- Wave Top -->
+                            <path d="M 0,0 Q 25,-4 50,0 T 100,0 L 100,10 L 0,10 Z" fill="#fffbbf" opacity="0.8">
+                                <animateTransform 
+                                    attributeName="transform" 
+                                    type="translate" 
+                                    from="-50,0" to="0,0" 
+                                    dur="1.5s" 
+                                    repeatCount="indefinite" />
+                            </path>
+                        </g>
+                    </g>
+
+                    <!-- Bright Golden Border (Matches Fill Level) -->
+                    <path d="M 38,105 L 62,105 C 61,100 60,98 58,96 L 42,96 C 40,98 39,100 38,105 Z M 40,94 L 60,94 C 59,91 58,88 57,86 L 43,86 C 42,88 41,91 40,94 Z M 44,84 C 45,76 46,70 47,62 C 43,59 39,55 37,49 C 35,41 37,32 43,25 C 47,20 53,20 57,25 C 63,32 65,41 63,49 C 61,55 57,59 53,62 C 54,70 55,76 56,84 Z M 50,47 A 11,11 0 1, 0 50,25 A 11,11 0 1, 0 50,47 Z" 
+                          fill="none" 
+                          stroke="url(#goldLiquid)" 
+                          stroke-width="1.5" 
+                          id="gold-border" 
+                          style="opacity: 0; transition: opacity 0.5s;" />
+                </svg>
+
+                <div class="loading-percentage" id="percentage-label">0%</div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button class="btn" id="btn-animate">Iniciar Simulação Automática</button>
+            
+            <div class="slider-container">
+                <div class="slider-label">
+                    <span>Ajuste Manual</span>
+                    <span id="slider-val">0%</span>
+                </div>
+                <input type="range" id="progress-slider" min="0" max="100" value="0">
+            </div>
+
+            <div style="font-size: 0.8rem; color: #9ca3af; margin-top: 0.5rem; font-weight: 600; text-align: left;">Escolha o Modelo da Taça:</div>
+            <div class="model-selector">
+                <button class="model-btn active" onclick="switchModel('realist')">Silhueta FIFA</button>
+                <button class="model-btn" onclick="switchModel('lowpoly')">Low-Poly FIFA</button>
+                <button class="model-btn" onclick="switchModel('victoria')">Victoria Cup</button>
+                <button class="model-btn" onclick="switchModel('globe')">Star Globe</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const models = {
+            realist: "M 38,105 L 62,105 C 61,100 60,98 58,96 L 42,96 C 40,98 39,100 38,105 Z M 40,94 L 60,94 C 59,91 58,88 57,86 L 43,86 C 42,88 41,91 40,94 Z M 44,84 C 45,76 46,70 47,62 C 43,59 39,55 37,49 C 35,41 37,32 43,25 C 47,20 53,20 57,25 C 63,32 65,41 63,49 C 61,55 57,59 53,62 C 54,70 55,76 56,84 Z M 50,47 A 11,11 0 1, 0 50,25 A 11,11 0 1, 0 50,47 Z",
+            lowpoly: "M 35,105 L 65,105 L 63,100 L 37,100 Z M 38,98 L 62,98 L 60,93 L 40,93 Z M 40,91 L 60,91 L 58,84 L 42,84 Z M 43,82 L 57,82 L 55,68 L 64,54 L 61,42 L 50,49 L 39,42 L 36,54 L 45,68 Z M 50,45 A 11,11 0 1, 0 50,23 A 11,11 0 1, 0 50,45 Z",
+            victoria: "M 36,105 L 64,105 L 61,98 L 39,98 Z M 48,98 L 52,98 L 52,82 L 48,82 Z M 34,42 C 34,68 42,80 48,82 L 52,82 C 58,80 66,68 66,42 C 66,32 62,24 50,24 C 38,24 34,32 34,42 Z M 34,45 C 26,45 28,62 34,60 M 66,45 C 74,45 72,62 66,60",
+            globe: "M 35,105 L 65,105 L 60,98 L 40,98 Z M 43,98 L 57,98 L 54,82 L 46,82 Z M 50,22 A 20,20 0 1, 0 50,62 A 20,20 0 1, 0 50,22 Z M 48,64 L 52,64 L 54,80 L 46,80 Z M 32,32 L 68,68 M 68,32 L 32,68"
+        };
+
+        const liquidGroup = document.getElementById('liquid-group');
+        const percentageLabel = document.getElementById('percentage-label');
+        const progressSlider = document.getElementById('progress-slider');
+        const sliderVal = document.getElementById('slider-val');
+        const btnAnimate = document.getElementById('btn-animate');
+        const statusText = document.getElementById('status-text');
+        const goldBorder = document.getElementById('gold-border');
+        const aura = document.getElementById('aura');
+        const particlesContainer = document.getElementById('particles-container');
+        const clipPathPath = document.getElementById('clipPathPath');
+        const trophyBgPath = document.getElementById('trophyBgPath');
+
+        window.switchModel = function(modelKey) {
+            const newPath = models[modelKey];
+            if (!newPath) return;
+
+            clipPathPath.setAttribute('d', newPath);
+            trophyBgPath.setAttribute('d', newPath);
+            goldBorder.setAttribute('d', newPath);
+
+            document.querySelectorAll('.model-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            const activeBtn = Array.from(document.querySelectorAll('.model-btn')).find(btn => btn.getAttribute('onclick').includes(modelKey));
+            if (activeBtn) activeBtn.classList.add('active');
+        };
+
+        let animationFrameId = null;
+        let isAnimating = false;
+
+        function updateProgress(value) {
+            // Formula to map 0% - 100% to translateY values inside the SVG
+            // SVG height is 120, so 100% full is translateY(0%) and 0% full is translateY(100%)
+            // Let's invert the percentage to offset: 100% -> translateY(0px), 0% -> translateY(120px)
+            const percentage = parseInt(value);
+            const translateY = 120 - (120 * (percentage / 100));
+            liquidGroup.style.transform = `translateY(${translateY}px)`;
+            percentageLabel.innerText = `${percentage}%`;
+            
+            // Adjust glowing aura intensity
+            aura.style.background = `radial-gradient(circle, rgba(218, 165, 32, ${0.1 + (percentage / 100) * 0.3}) 0%, transparent 70%)`;
+            aura.style.width = `${200 + (percentage / 100) * 80}px`;
+            aura.style.height = `${200 + (percentage / 100) * 80}px`;
+
+            // Border fade-in as we complete
+            goldBorder.style.opacity = percentage > 10 ? (percentage / 100) : 0;
+
+            // Trigger random sparkles near the liquid level
+            if (percentage > 0 && percentage < 100 && Math.random() < 0.3) {
+                createSparkle(percentage);
+            }
+
+            // Update status text based on progress
+            if (percentage === 0) {
+                statusText.innerText = "Pronto para processar...";
+            } else if (percentage < 30) {
+                statusText.innerText = "Criptografando seus palpites...";
+            } else if (percentage < 70) {
+                statusText.innerText = "Gerando comprovante oficial de aposta...";
+            } else if (percentage < 100) {
+                statusText.innerText = "Finalizando transação no Supabase...";
+            } else {
+                statusText.innerText = "Concluído! Enviando comprovante...";
+            }
+        }
+
+        function createSparkle(percentage) {
+            const sparkle = document.createElement('div');
+            sparkle.className = 'particle';
+            
+            // Approximate target level Y position on screen inside wrapper
+            // Height of wrapper is 180px
+            const levelY = 180 - (180 * (percentage / 100));
+            
+            // Distribute horizontally in the trophy cup region
+            // Cup width is roughly between 30% and 70% of 140px width
+            const startX = 35 + Math.random() * 70; // 35px to 105px
+            
+            sparkle.style.left = `${startX}px`;
+            sparkle.style.top = `${levelY + (Math.random() * 10 - 5)}px`;
+            sparkle.style.opacity = '1';
+            
+            particlesContainer.appendChild(sparkle);
+
+            // Animate up and fade out
+            const animTime = 600 + Math.random() * 400;
+            const targetY = -20 - Math.random() * 30;
+            
+            sparkle.animate([
+                { transform: 'translate(0, 0) scale(1)', opacity: 1 },
+                { transform: `translate(${(Math.random() * 20 - 10)}px, ${targetY}px) scale(0)`, opacity: 0 }
+            ], {
+                duration: animTime,
+                easing: 'ease-out'
+            });
+
+            setTimeout(() => {
+                sparkle.remove();
+            }, animTime);
+        }
+
+        // Slider control event listeners
+        progressSlider.addEventListener('input', (e) => {
+            if (isAnimating) {
+                isAnimating = false;
+                btnAnimate.innerText = "Iniciar Simulação Automática";
+            }
+            const val = e.target.value;
+            sliderVal.innerText = `${val}%`;
+            updateProgress(val);
+        });
+
+        // Auto animation function with automatic looping
+        function animate() {
+            let current = parseFloat(progressSlider.value);
+            if (current >= 100) {
+                current = 0;
+            }
+            
+            const step = () => {
+                if (!isAnimating) return;
+                current += 0.8; // Control speed
+                if (current >= 100) {
+                    current = 100;
+                    updateProgress(100);
+                    progressSlider.value = 100;
+                    sliderVal.innerText = "100%";
+                    
+                    // Create burst of sparkles at the end
+                    for (let i = 0; i < 15; i++) {
+                        setTimeout(() => createSparkle(95), i * 50);
+                    }
+
+                    // Loop automatically after 2 seconds
+                    setTimeout(() => {
+                        if (isAnimating) {
+                            progressSlider.value = 0;
+                            updateProgress(0);
+                            animate();
+                        }
+                    }, 2000);
+                    return;
+                }
+                updateProgress(current.toFixed(1));
+                progressSlider.value = current;
+                sliderVal.innerText = `${Math.round(current)}%`;
+                requestAnimationFrame(step);
+            };
+            requestAnimationFrame(step);
+        }
+
+        btnAnimate.addEventListener('click', () => {
+            if (isAnimating) {
+                isAnimating = false;
+                btnAnimate.innerText = "Iniciar Simulação Automática";
+            } else {
+                isAnimating = true;
+                btnAnimate.innerText = "Parar Simulação";
+                if (parseFloat(progressSlider.value) >= 100) {
+                    progressSlider.value = 0;
+                    updateProgress(0);
+                }
+                animate();
+            }
+        });
+
+        // Initialize state and run automatically
+        isAnimating = true;
+        btnAnimate.innerText = "Parar Simulação";
+        animate();
+    </script>
+</body>
+</html>

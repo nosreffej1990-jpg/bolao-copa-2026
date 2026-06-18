@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Icons } from '@/components/Icons';
 import { supabase, resetDatabase, defaultConfrontos } from '@/lib/supabase';
 import { getFinishedMatches, getLiveMatches, getUpcomingMatches, getFlagCode, formatMatchDate, getGroupStandings, fetchAllGames } from '@/lib/worldcupApi';
+import { useTheme, THEMES } from '@/components/ThemeProvider';
 
 // Helper to compress and resize images on client-side before sending to API
 const compressImage = (file, maxWidth = 1024, maxHeight = 1024) => {
@@ -67,7 +68,8 @@ const getCalculatedBets = (betsData, confrontosList) => {
     );
     if (!match) return { ...bet, real_home: null, real_away: null, pts: null };
 
-    const hasRealScore = match.home_score !== null && match.home_score !== undefined && String(match.home_score).trim() !== '' 
+    const isFinishedOrLive = match.finished === 'TRUE' || match.finished === true || match.time_elapsed === 'finished' || (match.time_elapsed && match.time_elapsed !== 'notstarted');
+    const hasRealScore = isFinishedOrLive && match.home_score !== null && match.home_score !== undefined && String(match.home_score).trim() !== '' 
                       && match.away_score !== null && match.away_score !== undefined && String(match.away_score).trim() !== '';
 
     if (!hasRealScore) {
@@ -206,18 +208,24 @@ const calculateGroupStandings = (confrontosList) => {
 function DashboardContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { theme } = useTheme();
+  const activeThemeObj = THEMES[theme] || THEMES['brasil'];
   
   // App states
   const [currentUser, setCurrentUser] = useState(null);
-  const [activeTab, setActiveTab] = useState('boloes'); // placares, boloes, ranking, placares_geral, confrontos_geral
+  const [currentUserRole, setCurrentUserRole] = useState('Jogador');
+  const [currentUserObj, setCurrentUserObj] = useState(null);
+  const [activeTab, setActiveTab] = useState('boloes'); // placares, boloes, ranking, placares_geral, confrontos_geral, gerenciar_usuarios, apostas_elim
   const [rankingStage, setRankingStage] = useState('all'); // all, groups, r32, r16, qf, sf, final
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [toastMsg, setToastMsg] = useState('');
+  const [toastType, setToastType] = useState('success'); // success, error
   
   // Data states
   const [confrontos, setConfrontos] = useState([]);
   const [palpites, setPalpites] = useState({}); // key: match_id -> { home, away, saved }
   const [boloes, setBoloes] = useState([]);
+  const [usersList, setUsersList] = useState([]);
 
   // API worldcup26.ir states
   const [apiFinished, setApiFinished] = useState([]);
@@ -227,6 +235,7 @@ function DashboardContent() {
   
   // Filters
   const [activeGroup, setActiveGroup] = useState('A');
+  const [bolaoTypeFilter, setBolaoTypeFilter] = useState('grupos');
   
   // Modals
   const [showCameraModal, setShowCameraModal] = useState(false);
@@ -238,6 +247,7 @@ function DashboardContent() {
   const [showMatchModal, setShowMatchModal] = useState(null);
   const [matchModalTab, setMatchModalTab] = useState('detalhes');
   const [showHistoryModal, setShowHistoryModal] = useState(null); // bolaoData
+  const [showRankingDetailsModal, setShowRankingDetailsModal] = useState(null); // bolaoData where pts > 0
   const [editingBet, setEditingBet] = useState(null); // { bolaoId, betIndex, bet }
   const [editPassword, setEditPassword] = useState('');
   const [editError, setEditError] = useState('');
@@ -253,12 +263,27 @@ function DashboardContent() {
   const [countdown, setCountdown] = useState('');
   const [nextMatchInfo, setNextMatchInfo] = useState(null);
 
+  // Knockout betting states
+  const [knockoutBets, setKnockoutBets] = useState({}); // key: match_id -> { home: '', away: '' }
+  const [knockoutStage, setKnockoutStage] = useState('r32'); // r32, r16, qf, sf, final
+  const [knockoutBettorName, setKnockoutBettorName] = useState('');
+  const [showBetConfirmation, setShowBetConfirmation] = useState(false);
+  const [bettingLoading, setBettingLoading] = useState(false);
+  const [bettingProgress, setBettingProgress] = useState(0);
+  const [showPaquetaModal, setShowPaquetaModal] = useState(false);
+
   // Grupos da Copa
   const [apiGroups, setApiGroups] = useState([]);
   const [selectedGroup, setSelectedGroup] = useState('A');
 
   // Notificações
   const [notifPermission, setNotifPermission] = useState('default');
+  
+  // Configs Globais
+  const [mataMataPublic, setMataMataPublic] = useState(false);
+  const [allowRegister, setAllowRegister] = useState(true);
+  const [paquetaTitle, setPaquetaTitle] = useState('ESCOLHEU TUDO CERTO OU SAIU CHUTANDO IGUAL O PAQUETÁ? 🇧🇷⚽');
+  const [paquetaBody, setPaquetaBody] = useState('Seus palpites do mata-mata foram processados com sucesso no banco de dados e o seu comprovante PDF foi gerado automaticamente! Boa sorte no Bolão da Copa 2026.');
   
   // Camera / OCR / Wizard states
   const [cameraStep, setCameraStep] = useState(1); // 1: choose, 2: capturing/ocr
@@ -276,8 +301,10 @@ function DashboardContent() {
     // Check authentication
     if (typeof window !== 'undefined') {
       const user = localStorage.getItem('copa26_user');
+      const role = localStorage.getItem('copa26_role') || 'Jogador';
       if (user) {
         setCurrentUser(user);
+        setCurrentUserRole(role);
       }
     }
 
@@ -487,6 +514,23 @@ function DashboardContent() {
   };
 
   const fetchData = async () => {
+    // Buscar configurações globais
+    try {
+      const { data: configData } = await supabase.from('config').select('*');
+      if (configData) {
+        const mmp = configData.find(c => c.key === 'mata_mata_public');
+        if (mmp) setMataMataPublic(mmp.value === 'true');
+        const reg = configData.find(c => c.key === 'allow_register');
+        if (reg) setAllowRegister(reg.value === 'true');
+        const pTitle = configData.find(c => c.key === 'paqueta_title');
+        if (pTitle) setPaquetaTitle(pTitle.value);
+        const pBody = configData.find(c => c.key === 'paqueta_body');
+        if (pBody) setPaquetaBody(pBody.value);
+      }
+    } catch (err) {
+      console.error('Erro ao carregar configurações:', err);
+    }
+
     const { data: confs } = await supabase.from('confrontos').select('*').order('id', { ascending: true });
     const loadedConfs = confs || [];
     setConfrontos(loadedConfs);
@@ -497,17 +541,42 @@ function DashboardContent() {
     // Load user's saved predictions if logged in
     if (typeof window !== 'undefined') {
       const user = localStorage.getItem('copa26_user');
+      const role = localStorage.getItem('copa26_role') || 'Jogador';
+      
       if (user) {
+        // Fetch current user details object for stage validation checks
+        const { data: userData } = await supabase.from('usuarios').select('*');
+        const loggedInUserObj = (userData || []).find(u => u.username.toLowerCase() === user.toLowerCase());
+        if (loggedInUserObj) {
+          setCurrentUserObj(loggedInUserObj);
+        }
+
         const { data: palps } = await supabase.from('palpites').select('*').eq('username', user);
         const palpsMap = {};
+        const koBets = {};
         (palps || []).forEach(p => {
           palpsMap[p.match_id] = {
             home: p.home_score,
             away: p.away_score,
             saved: true
           };
+          if (p.match_id >= 73) {
+            koBets[p.match_id] = {
+              home: String(p.home_score),
+              away: String(p.away_score)
+            };
+          }
         });
         setPalpites(palpsMap);
+        setKnockoutBets(koBets);
+      }
+
+      // Load registered users if Admin or Moderador
+      if (user && (role === 'Admin' || role === 'Moderador')) {
+        const { data: users, error } = await supabase.from('usuarios').select('*').order('username', { ascending: true });
+        if (!error && users) {
+          setUsersList(users);
+        }
       }
     }
 
@@ -563,8 +632,9 @@ function DashboardContent() {
   };
 
   // Toast trigger helper
-  const showToast = (msg) => {
+  const showToast = (msg, type = 'success') => {
     setToastMsg(msg);
+    setToastType(type);
     setTimeout(() => {
       setToastMsg('');
     }, 3000);
@@ -636,6 +706,10 @@ function DashboardContent() {
   const USERS = { Jefferson: '060199', Junior: '062026' };
   const saveEditedBet = async () => {
     if (!editingBet) return;
+    if (currentUserRole === 'Moderador') {
+      setEditError('🚫 Moderadores não têm permissão para editar palpites.');
+      return;
+    }
     const correctPass = USERS[currentUser];
     if (editPassword !== correctPass) { setEditError('Senha incorreta.'); return; }
     const bolao = boloes.find(b => b.id === editingBet.bolaoId);
@@ -653,6 +727,10 @@ function DashboardContent() {
 
   const confirmDeleteBolao = async () => {
     if (!currentUser) return;
+    if (currentUserRole === 'Moderador') {
+      setDeleteError('🚫 Moderadores não têm permissão para excluir bolões.');
+      return;
+    }
     const correctPass = USERS[currentUser];
     if (deletePassword !== correctPass) {
       setDeleteError('Senha incorreta. Tente novamente.');
@@ -670,9 +748,271 @@ function DashboardContent() {
     }
   };
 
+  const handleApproveUser = async (userId, phaseField = 'approved') => {
+    try {
+      const { error } = await supabase.from('usuarios').update({ [phaseField]: true }).eq('id', userId);
+      if (!error) {
+        showToast('Jogador aprovado com sucesso! ✅');
+        fetchData();
+      } else {
+        alert('Erro ao aprovar jogador.');
+      }
+    } catch (e) {
+      console.error('Erro ao aprovar jogador:', e);
+    }
+  };
+
+  const handleRevokeUser = async (userId, phaseField = 'approved') => {
+    try {
+      const { error } = await supabase.from('usuarios').update({ [phaseField]: false }).eq('id', userId);
+      if (!error) {
+        showToast('Acesso suspenso! 🚫', 'error');
+        fetchData();
+      } else {
+        alert('Erro ao suspender acesso.');
+      }
+    } catch (e) {
+      console.error('Erro ao suspender acesso:', e);
+    }
+  };
+
+  const loadJsPDF = () => {
+    return new Promise((resolve, reject) => {
+      if (window.jspdf) {
+        resolve(window.jspdf);
+        return;
+      }
+      const script = document.createElement('script');
+      script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+      script.onload = () => resolve(window.jspdf);
+      script.onerror = (e) => reject(e);
+      document.body.appendChild(script);
+    });
+  };
+
+  const generatePDFReceipt = async (userBets, username) => {
+    try {
+      const jspdfModule = await loadJsPDF();
+      const { jsPDF } = jspdfModule;
+      const doc = new jsPDF();
+      
+      // Header Banner
+      doc.setFillColor(11, 15, 25);
+      doc.rect(0, 0, 220, 40, 'F');
+      
+      doc.setTextColor(255, 215, 0);
+      doc.setFontSize(22);
+      doc.text('BOLÃO COPA 2026', 15, 25);
+      doc.setFontSize(10);
+      doc.setTextColor(255, 255, 255);
+      doc.text('COMPROVANTE OFICIAL DE PALPITES - MATA-MATA', 15, 33);
+      
+      // User info
+      doc.setFontSize(11);
+      doc.setTextColor(0, 0, 0);
+      doc.text(`Apostador: ${username}`, 15, 52);
+      doc.text(`Data de Emissão: ${new Date().toLocaleString('pt-BR')}`, 15, 58);
+      
+      doc.setDrawColor(218, 165, 32);
+      doc.setLineWidth(0.5);
+      doc.line(15, 62, 195, 62);
+      
+      // Table Header
+      doc.setFontSize(10);
+      doc.setFont('Helvetica', 'bold');
+      doc.text('Fase / Confronto', 15, 70);
+      doc.text('Palpite', 160, 70);
+      doc.line(15, 73, 195, 73);
+      
+      doc.setFont('Helvetica', 'normal');
+      let y = 80;
+      userBets.forEach((bet) => {
+        if (y > 280) {
+          doc.addPage();
+          y = 20;
+        }
+        
+        let phaseLabel = 'Mata-Mata';
+        if (bet.match_id >= 73 && bet.match_id <= 88) phaseLabel = '1/16';
+        else if (bet.match_id >= 89 && bet.match_id <= 96) phaseLabel = '1/8';
+        else if (bet.match_id >= 97 && bet.match_id <= 100) phaseLabel = 'Quartas';
+        else if (bet.match_id >= 101 && bet.match_id <= 102) phaseLabel = 'Semifinal';
+        else if (bet.match_id >= 103) phaseLabel = 'Final';
+
+        doc.text(`[${phaseLabel}] ${bet.home_team} x ${bet.away_team}`, 15, y);
+        doc.text(`${bet.home_score} x ${bet.away_score}`, 160, y);
+        y += 8;
+      });
+      
+      doc.save(`Comprovante_MataMata_${username}.pdf`);
+    } catch (err) {
+      console.error('Erro ao gerar PDF:', err);
+      alert('Erro ao gerar comprovante PDF. Suas apostas foram salvas com sucesso!');
+    }
+  };
+
+  const getMatchesForStage = (stage) => {
+    if (stage === 'r32') return confrontos.filter(m => m.id >= 73 && m.id <= 88);
+    if (stage === 'r16') return confrontos.filter(m => m.id >= 89 && m.id <= 96);
+    if (stage === 'qf') return confrontos.filter(m => m.id >= 97 && m.id <= 100);
+    if (stage === 'sf') return confrontos.filter(m => m.id >= 101 && m.id <= 102);
+    if (stage === 'final') return confrontos.filter(m => m.id >= 103 && m.id <= 104);
+    return [];
+  };
+
+  const handleKnockoutScoreChange = (matchId, team, val) => {
+    setKnockoutBets(prev => ({
+      ...prev,
+      [matchId]: {
+        ...prev[matchId],
+        [team]: val
+      }
+    }));
+  };
+
+  const startSaveKnockoutBets = () => {
+    const knockoutMatches = getMatchesForStage(knockoutStage);
+    
+    // Check if any fields are empty
+    const isInvalid = knockoutMatches.some(m => {
+      const b = knockoutBets[m.id];
+      return !b || b.home === undefined || b.away === undefined || b.home.trim() === '' || b.away.trim() === '';
+    });
+
+    if (isInvalid) {
+      alert(`⚠️ Deixe nenhum campo em branco! Preencha todos os ${knockoutMatches.length} placares da fase selecionada para salvar.`);
+      return;
+    }
+
+    const stageNames = {
+      r32: '1/16',
+      r16: 'Oitavas',
+      qf: 'Quartas',
+      sf: 'Semifinal',
+      final: 'Finais'
+    };
+    const phaseLabel = stageNames[knockoutStage] || 'Mata-Mata';
+    setKnockoutBettorName(`${currentUser} - ${phaseLabel}`);
+    setShowBetConfirmation(true);
+  };
+
+  const executeSaveKnockoutBets = async () => {
+    const finalBettorName = knockoutBettorName.trim() || `${currentUser} - Mata-Mata`;
+
+    // Verify if name already exists (case-insensitive local check)
+    const isDuplicateLocal = boloes.some(b => b.bettor_name && b.bettor_name.trim().toLowerCase() === finalBettorName.toLowerCase());
+    if (isDuplicateLocal) {
+      alert(`⚠️ Já existe uma aposta cadastrada com o nome "${finalBettorName}". Por favor, escolha outro nome ou identificador.`);
+      return;
+    }
+
+    // Verify if name already exists on Database (case-insensitive)
+    try {
+      const { data: existingBolao, error: checkError } = await supabase
+        .from('boloes')
+        .select('id')
+        .ilike('bettor_name', finalBettorName);
+      if (!checkError && existingBolao && existingBolao.length > 0) {
+        alert(`⚠️ Já existe uma aposta cadastrada com o nome "${finalBettorName}". Por favor, escolha outro nome ou identificador.`);
+        return;
+      }
+    } catch (e) {
+      console.error('Erro ao verificar duplicidade de nome:', e);
+    }
+
+    setShowBetConfirmation(false);
+    setBettingLoading(true);
+    setBettingProgress(0);
+
+    // Simulate trophy fill animation (0 to 100%) - Slower and more premium
+    let progress = 0;
+    const interval = setInterval(async () => {
+      progress += Math.floor(Math.random() * 3) + 1; // 1% to 3% increments
+      if (progress >= 100) {
+        progress = 100;
+        setBettingProgress(100);
+        clearInterval(interval);
+        
+        // Save to database
+        try {
+          const knockoutMatches = getMatchesForStage(knockoutStage);
+          
+          // Map to bets_data format for the boloes table
+          const betsData = knockoutMatches.map(m => {
+            const b = knockoutBets[m.id];
+            return {
+              match_id: m.id,
+              home: m.home_team,
+              away: m.away_team,
+              bet_home: parseInt(b.home),
+              bet_away: parseInt(b.away),
+              real_home: m.home_score !== null && m.home_score !== undefined && String(m.home_score) !== 'null' ? parseInt(m.home_score) : null,
+              real_away: m.away_score !== null && m.away_score !== undefined && String(m.away_score) !== 'null' ? parseInt(m.away_score) : null,
+              pts: null
+            };
+          });
+
+          // finalBettorName is already defined in the outer scope
+
+          // Insert as a new bolão sheet so it calculates individually
+          const { error } = await supabase.from('boloes').insert({
+            username: currentUser,
+            bettor_name: finalBettorName,
+            photo_url: 'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?q=80&w=375&auto=format&fit=crop',
+            bets_data: betsData
+          });
+          if (error) throw error;
+
+          // Reset user payment approval for this stage so they must pay again to enter another bracket
+          const stagesConfig = {
+            r32: 'approved_r32',
+            r16: 'approved_r16',
+            qf: 'approved_qf',
+            sf: 'approved_sf',
+            final: 'approved_final'
+          };
+          const currentStageKey = stagesConfig[knockoutStage];
+          if (currentStageKey) {
+            await supabase.from('usuarios').update({ [currentStageKey]: false }).eq('username', currentUser);
+          }
+
+          // Generate PDF Receipt Data
+          const pdfData = knockoutMatches.map(m => {
+            const b = knockoutBets[m.id];
+            return {
+              match_id: m.id,
+              home_team: m.home_team,
+              away_team: m.away_team,
+              home_score: parseInt(b.home),
+              away_score: parseInt(b.away)
+            };
+          });
+
+          // Generate Receipt PDF
+          await generatePDFReceipt(pdfData, currentUser);
+
+          setBettingLoading(false);
+          setShowPaquetaModal(true); // Open humor popup
+          showToast('Palpites salvos com sucesso! 🏆');
+          fetchData();
+        } catch (err) {
+          console.error(err);
+          setBettingLoading(false);
+          showToast('Erro ao salvar palpites.', 'error');
+        }
+      } else {
+        setBettingProgress(progress);
+      }
+    }, 120); // slower interval (every 120ms)
+  };
+
   // Get bet statistics for a specific match (by team name matching)
   const getMatchBetStats = (game) => {
     const results = [];
+    const isLive = game.time_elapsed && game.time_elapsed !== 'notstarted' && game.time_elapsed !== 'finished' && game.finished !== 'TRUE' && game.finished !== true;
+    const isFinished = game.finished === 'TRUE' || game.finished === true || game.time_elapsed === 'finished';
+    const hasScore = isFinished || isLive;
+    
     boloes.forEach(b => {
       if (!Array.isArray(b.bets_data)) return;
       const bet = b.bets_data.find(bd =>
@@ -680,22 +1020,35 @@ function DashboardContent() {
         normalizeTeamName(bd.away) === normalizeTeamName(game.away_team_name_en)
       );
       if (bet) {
-        const realHome = parseInt(game.home_score);
-        const realAway = parseInt(game.away_score);
+        const realHome = hasScore && game.home_score !== null && game.home_score !== undefined && String(game.home_score).trim() !== '' ? parseInt(game.home_score) : null;
+        const realAway = hasScore && game.away_score !== null && game.away_score !== undefined && String(game.away_score).trim() !== '' ? parseInt(game.away_score) : null;
         let pts = 0;
-        if (bet.bet_home === realHome && bet.bet_away === realAway) pts = 5; // placar exato
-        else {
-          const betWinner = bet.bet_home > bet.bet_away ? 'H' : bet.bet_home < bet.bet_away ? 'A' : 'D';
-          const realWinner = realHome > realAway ? 'H' : realHome < realAway ? 'A' : 'D';
-          if (betWinner === realWinner) pts = 3; // vencedor certo
+        let exact = false;
+        let correct = false;
+
+        if (hasScore && realHome !== null && realAway !== null) {
+          if (bet.bet_home === realHome && bet.bet_away === realAway) {
+            pts = 5;
+            exact = true;
+          } else {
+            const betWinner = bet.bet_home > bet.bet_away ? 'H' : bet.bet_home < bet.bet_away ? 'A' : 'D';
+            const realWinner = realHome > realAway ? 'H' : realHome < realAway ? 'A' : 'D';
+            if (betWinner === realWinner) {
+              pts = 3;
+              correct = true;
+            }
+          }
         }
+
         results.push({
           name: b.bettor_name,
           bet_home: bet.bet_home,
           bet_away: bet.bet_away,
           pts,
-          exact: pts === 5,
-          correct: pts === 3,
+          exact,
+          correct,
+          isFinished,
+          isLive
         });
       }
     });
@@ -859,10 +1212,38 @@ function DashboardContent() {
 
   const saveEditedName = async () => {
     if (!editNameModal || !editNameInput.trim()) return;
+    const trimmedNewName = editNameInput.trim();
+
+    // Verify if name already exists in another sheet (local check)
+    const isDuplicateLocal = boloes.some(b => 
+      b.id !== editNameModal.bolaoId && 
+      b.bettor_name && 
+      b.bettor_name.trim().toLowerCase() === trimmedNewName.toLowerCase()
+    );
+    if (isDuplicateLocal) {
+      alert(`⚠️ Já existe um apostador cadastrado com o nome "${trimmedNewName}". Por favor, escolha outro nome.`);
+      return;
+    }
+
+    // Verify if name already exists in another sheet on Database
+    try {
+      const { data: existingBolao, error: checkError } = await supabase
+        .from('boloes')
+        .select('id')
+        .ilike('bettor_name', trimmedNewName)
+        .neq('id', editNameModal.bolaoId);
+      if (!checkError && existingBolao && existingBolao.length > 0) {
+        alert(`⚠️ Já existe outro apostador cadastrado com o nome "${trimmedNewName}". Por favor, escolha outro nome.`);
+        return;
+      }
+    } catch (e) {
+      console.error('Erro ao verificar duplicidade de nome:', e);
+    }
+
     try {
       const { error } = await supabase
         .from('boloes')
-        .update({ bettor_name: editNameInput.trim() })
+        .update({ bettor_name: trimmedNewName })
         .eq('id', editNameModal.bolaoId);
       if (!error) {
         showToast('Nome atualizado com sucesso! ✅');
@@ -894,6 +1275,27 @@ function DashboardContent() {
     if (forbiddenNames.includes(trimmedName.toLowerCase())) {
       alert('⚠️ O nome "' + trimmedName + '" é inválido. Por favor, insira o nome real do apostador.');
       return;
+    }
+
+    // Verify if name already exists (case-insensitive local check)
+    const isDuplicateLocal = boloes.some(b => b.bettor_name && b.bettor_name.trim().toLowerCase() === trimmedName.toLowerCase());
+    if (isDuplicateLocal) {
+      alert(`⚠️ Já existe um apostador cadastrado com o nome "${trimmedName}". Por favor, escolha outro nome para evitar duplicidade.`);
+      return;
+    }
+
+    // Verify if name already exists on Database (case-insensitive)
+    try {
+      const { data: existingBolao, error: checkError } = await supabase
+        .from('boloes')
+        .select('id')
+        .ilike('bettor_name', trimmedName);
+      if (!checkError && existingBolao && existingBolao.length > 0) {
+        alert(`⚠️ Já existe um apostador cadastrado com o nome "${trimmedName}". Por favor, escolha outro nome.`);
+        return;
+      }
+    } catch (e) {
+      console.error('Erro ao verificar duplicidade de nome:', e);
     }
 
     // Map wizardBets back to database format
@@ -1056,19 +1458,35 @@ function DashboardContent() {
   return (
     <div className="dashboard-container">
       {/* Header */}
-      <header className="dashboard-header">
+      <header className="dashboard-header" style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div className="back-btn" onClick={() => router.push('/')}>
           <Icons.ChevronLeft size={24} />
         </div>
         
-        <div className="logo-mini">
-          <span style={{ fontSize: '1.25rem' }}>🏆</span>
+        <div className="logo-mini" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+          <img src="/icons/logo-transparent.png" alt="Logo" style={{ width: '28px', height: '28px', objectFit: 'contain' }} />
           <h2>BOLÃO COPA 2026</h2>
         </div>
 
-        <button className="menu-toggle-btn" onClick={() => setIsDrawerOpen(true)}>
-          <Icons.Menu size={20} />
-        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          {activeThemeObj && (
+            <img
+              src={`https://flagcdn.com/w40/${activeThemeObj.flag}.png`}
+              alt={activeThemeObj.nome}
+              style={{
+                width: '26px',
+                height: '26px',
+                borderRadius: '50%',
+                objectFit: 'cover',
+                border: '2px solid rgba(255, 255, 255, 0.2)',
+                boxShadow: '0 4px 10px rgba(0,0,0,0.3)'
+              }}
+            />
+          )}
+          <button className="menu-toggle-btn" onClick={() => setIsDrawerOpen(true)}>
+            <Icons.Menu size={20} />
+          </button>
+        </div>
       </header>
 
       {/* Navigation Drawer Menu */}
@@ -1122,7 +1540,28 @@ function DashboardContent() {
               <span>Próximos Confrontos</span>
             </button>
 
-            {currentUser && (
+            {(mataMataPublic || (currentUser && (currentUserRole === 'Admin' || currentUserRole === 'Jogador'))) && (
+              <button
+                className={`drawer-link ${activeTab === 'apostas_elim' ? 'active' : ''}`}
+                onClick={() => { setActiveTab('apostas_elim'); setIsDrawerOpen(false); }}
+                style={{ background: 'rgba(251,191,36,0.08)', borderLeft: '3px solid var(--accent-gold)' }}
+              >
+                <Icons.Trophy size={18} style={{ color: 'var(--accent-gold)' }} />
+                <span style={{ color: 'var(--accent-gold)', fontWeight: 'bold' }}>Apostar Mata-mata</span>
+              </button>
+            )}
+
+            {currentUser && (currentUserRole === 'Admin' || currentUserRole === 'Moderador') && (
+              <button
+                className={`drawer-link ${activeTab === 'gerenciar_usuarios' ? 'active' : ''}`}
+                onClick={() => { setActiveTab('gerenciar_usuarios'); setIsDrawerOpen(false); }}
+              >
+                <Icons.List size={18} />
+                <span>Gerenciar Usuários</span>
+              </button>
+            )}
+
+            {currentUser && currentUserRole === 'Admin' && (
               <button
                 className={`drawer-link ${activeTab === 'chaveamento' ? 'active' : ''}`}
                 onClick={() => { setActiveTab('chaveamento'); setIsDrawerOpen(false); }}
@@ -1299,92 +1738,215 @@ function DashboardContent() {
                 <h3 style={{ fontSize: '1.05rem', marginBottom: '0.2rem' }}>Bolões Cadastrados</h3>
                 <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Visualize fotos e palpites lidos.</p>
               </div>
-              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                <button className="btn-upload-bolao" onClick={startCameraUpload}>
-                  <Icons.Camera size={14} />
-                  Upar Bolão
-                </button>
-                <button className="btn-upload-bolao" style={{ backgroundColor: 'rgba(255, 255, 255, 0.08)', color: '#fff', border: '1px solid var(--border-color)' }} onClick={startManualUpload}>
-                  <Icons.Plus size={14} style={{ color: '#fff' }} />
-                  Cadastrar Manualmente
-                </button>
-                {currentUser === 'Jefferson' && (
-                  <>
-                    <button className="btn-upload-bolao" style={{ backgroundColor: 'rgba(59, 130, 246, 0.12)', color: '#60a5fa', border: '1px solid rgba(59, 130, 246, 0.3)' }} onClick={handleRestoreConfrontosOnly}>
-                      🔄 Restaurar Confrontos
-                    </button>
-                    <button className="btn-upload-bolao" style={{ backgroundColor: 'rgba(239, 68, 68, 0.12)', color: '#f87171', border: '1px solid rgba(239, 68, 68, 0.3)' }} onClick={handleResetDatabase}>
-                      🗑️ Reiniciar Dados
-                    </button>
-                  </>
-                )}
-              </div>
+              {currentUser && (currentUserRole === 'Admin' || currentUserRole === 'Moderador') && (
+                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                  <button className="btn-upload-bolao" onClick={startCameraUpload}>
+                    <Icons.Camera size={14} />
+                    Upar Bolão
+                  </button>
+                  <button className="btn-upload-bolao" style={{ backgroundColor: 'rgba(255, 255, 255, 0.08)', color: '#fff', border: '1px solid var(--border-color)' }} onClick={startManualUpload}>
+                    <Icons.Plus size={14} style={{ color: '#fff' }} />
+                    Cadastrar Manualmente
+                  </button>
+                  {currentUser === 'Jefferson' && (
+                    <>
+                      <button className="btn-upload-bolao" style={{ backgroundColor: 'rgba(59, 130, 246, 0.12)', color: '#60a5fa', border: '1px solid rgba(59, 130, 246, 0.3)' }} onClick={handleRestoreConfrontosOnly}>
+                        🔄 Restaurar Confrontos
+                      </button>
+                      <button className="btn-upload-bolao" style={{ backgroundColor: 'rgba(239, 68, 68, 0.12)', color: '#f87171', border: '1px solid rgba(239, 68, 68, 0.3)' }} onClick={handleResetDatabase}>
+                        🗑️ Reiniciar Dados
+                      </button>
+                    </>
+                  )}
+                </div>
+              )}
             </div>
 
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              {boloes.length === 0 && (
-                <p style={{ textAlign: 'center', color: 'var(--text-secondary)', fontSize: '0.8rem', padding: '2rem 0' }}>Nenhum bolão cadastrado ainda. Clique em "Upar Bolão" para adicionar!</p>
-              )}
-              {boloes.map(b => (
-                <div className="bolao-card" key={b.id}>
-                  <div className="bolao-card-top">
-                    <div style={{ position: 'relative', display: 'inline-block' }}>
-                    <img
-                      src={b.avatar_url && b.avatar_url.startsWith('data:') ? b.avatar_url : `https://api.dicebear.com/7.x/identicon/svg?seed=${b.bettor_name}`}
-                      className="bolao-avatar"
-                      alt="avatar"
-                      style={{ width: '48px', height: '48px', borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--border-color)' }}
+            {(currentUserRole === 'Admin') && (
+              <div style={{
+                background: 'rgba(255,255,255,0.02)',
+                border: '1px solid var(--border-color)',
+                borderRadius: '12px',
+                padding: '1rem',
+                marginBottom: '1.5rem',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '0.75rem'
+              }}>
+                <h4 style={{ fontSize: '0.85rem', color: 'var(--accent-gold)', margin: 0, fontWeight: 'bold' }}>⚙️ Painel de Ativações do Admin</h4>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1.5rem' }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.78rem', cursor: 'pointer' }}>
+                    <input
+                      type="checkbox"
+                      checked={mataMataPublic}
+                      onChange={async (e) => {
+                        const val = e.target.checked;
+                        setMataMataPublic(val);
+                        await supabase.from('config').upsert({ key: 'mata_mata_public', value: String(val) });
+                        showToast(`Apostar Mata-Mata ${val ? 'Liberado Geral' : 'Bloqueado (Requer Pix)'}`);
+                      }}
                     />
-                    {currentUser && (
-                      <button
-                        title="Editar foto de perfil"
-                        onClick={() => { setEditPhotoModal({ bolaoId: b.id, bettorName: b.bettor_name, currentPhoto: b.avatar_url }); setNewPhotoPreview(null); setNewPhotoBase64(null); }}
-                        style={{
-                          position: 'absolute', bottom: '-2px', right: '-2px',
-                          width: '18px', height: '18px', borderRadius: '50%',
-                          background: 'var(--accent-gold)', border: 'none', cursor: 'pointer',
-                          display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          fontSize: '9px', lineHeight: 1
-                        }}
-                      >📷</button>
-                    )}
+                    <span>Ativar Apostas Mata-Mata Geral (ignorar bloqueio de Pix)</span>
+                  </label>
+                  
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.78rem', cursor: 'pointer' }}>
+                    <input
+                      type="checkbox"
+                      checked={allowRegister}
+                      onChange={async (e) => {
+                        const val = e.target.checked;
+                        setAllowRegister(val);
+                        await supabase.from('config').upsert({ key: 'allow_register', value: String(val) });
+                        showToast(`Novos cadastros ${val ? 'Ativados' : 'Desativados'}`);
+                      }}
+                    />
+                    <span>Permitir Novos Cadastros de Jogadores</span>
+                  </label>
+                </div>
+
+                <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '0.75rem', marginTop: '0.25rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                  <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--text-secondary)' }}>✏️ Editar Textos do Popup de Confirmação (Paquetá)</span>
+                  <div className="form-group" style={{ marginBottom: 0 }}>
+                    <label style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>Título do Popup</label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      style={{ fontSize: '0.8rem', padding: '0.45rem 0.6rem', marginTop: '0.2rem' }}
+                      value={paquetaTitle}
+                      onChange={(e) => setPaquetaTitle(e.target.value)}
+                    />
                   </div>
-                    <div className="bolao-details">
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                        <h4>{b.bettor_name}</h4>
-                        {currentUser && (
+                  <div className="form-group" style={{ marginBottom: 0 }}>
+                    <label style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>Mensagem (Corpo)</label>
+                    <textarea
+                      className="form-control"
+                      style={{ fontSize: '0.8rem', padding: '0.45rem 0.6rem', minHeight: '60px', marginTop: '0.2rem', fontFamily: 'inherit', resize: 'vertical' }}
+                      value={paquetaBody}
+                      onChange={(e) => setPaquetaBody(e.target.value)}
+                    />
+                  </div>
+                  <button
+                    onClick={async () => {
+                      await Promise.all([
+                        supabase.from('config').upsert({ key: 'paqueta_title', value: paquetaTitle }),
+                        supabase.from('config').upsert({ key: 'paqueta_body', value: paquetaBody })
+                      ]);
+                      showToast('Textos do popup salvos com sucesso!');
+                    }}
+                    style={{
+                      background: 'rgba(16,185,129,0.12)', border: '1px solid rgba(16,185,129,0.4)',
+                      color: 'var(--soccer-green)', padding: '0.4rem 1rem', borderRadius: '8px',
+                      fontSize: '0.75rem', fontWeight: 'bold', cursor: 'pointer', alignSelf: 'flex-start'
+                    }}
+                  >
+                    Salvar Textos do Popup
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Filtro do Tipo de Bolão */}
+            <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.25rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.75rem', marginTop: '0.5rem' }}>
+              <button
+                onClick={() => setBolaoTypeFilter('grupos')}
+                style={{
+                  flex: 1, padding: '0.5rem', borderRadius: '8px', fontSize: '0.8rem', fontWeight: 'bold',
+                  background: bolaoTypeFilter === 'grupos' ? 'var(--soccer-green)' : 'rgba(255,255,255,0.05)',
+                  color: bolaoTypeFilter === 'grupos' ? '#000' : '#cbd5e1', border: 'none', cursor: 'pointer',
+                  transition: 'all 0.2s'
+                }}
+              >
+                Fase de Grupos
+              </button>
+              <button
+                onClick={() => setBolaoTypeFilter('matamata')}
+                style={{
+                  flex: 1, padding: '0.5rem', borderRadius: '8px', fontSize: '0.8rem', fontWeight: 'bold',
+                  background: bolaoTypeFilter === 'matamata' ? 'var(--soccer-green)' : 'rgba(255,255,255,0.05)',
+                  color: bolaoTypeFilter === 'matamata' ? '#000' : '#cbd5e1', border: 'none', cursor: 'pointer',
+                  transition: 'all 0.2s'
+                }}
+              >
+                Mata-Mata
+              </button>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              {(() => {
+                const filteredBoloes = boloes.filter(b => {
+                  const isKnockout = Array.isArray(b.bets_data) && b.bets_data.some(bd => bd.match_id >= 73);
+                  return bolaoTypeFilter === 'matamata' ? isKnockout : !isKnockout;
+                });
+                
+                if (filteredBoloes.length === 0) {
+                  return (
+                    <p style={{ textAlign: 'center', color: 'var(--text-secondary)', fontSize: '0.8rem', padding: '2rem 0' }}>
+                      Nenhum bolão {bolaoTypeFilter === 'matamata' ? 'do mata-mata' : 'da fase de grupos'} cadastrado ainda.
+                    </p>
+                  );
+                }
+                
+                return filteredBoloes.map(b => (
+                  <div className="bolao-card" key={b.id}>
+                    <div className="bolao-card-top">
+                      <div style={{ position: 'relative', display: 'inline-block' }}>
+                        <img
+                          src={b.avatar_url && b.avatar_url.startsWith('data:') ? b.avatar_url : `https://api.dicebear.com/7.x/identicon/svg?seed=${b.bettor_name}`}
+                          className="bolao-avatar"
+                          alt="avatar"
+                          style={{ width: '48px', height: '48px', borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--border-color)' }}
+                        />
+                        {currentUser && currentUserRole === 'Admin' && (
                           <button
-                            title="Editar nome"
-                            onClick={() => { setEditNameModal({ bolaoId: b.id, currentName: b.bettor_name }); setEditNameInput(b.bettor_name); }}
-                            style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '0.8rem', padding: 0 }}
-                          >
-                            ✏️
-                          </button>
+                            title="Editar foto de perfil"
+                            onClick={() => { setEditPhotoModal({ bolaoId: b.id, bettorName: b.bettor_name, currentPhoto: b.avatar_url }); setNewPhotoPreview(null); setNewPhotoBase64(null); }}
+                            style={{
+                              position: 'absolute', bottom: '-2px', right: '-2px',
+                              width: '18px', height: '18px', borderRadius: '50%',
+                              background: 'var(--accent-gold)', border: 'none', cursor: 'pointer',
+                              display: 'flex', alignItems: 'center', justifyContent: 'center',
+                              fontSize: '9px', lineHeight: 1
+                            }}
+                          >📷</button>
                         )}
                       </div>
-                      <span>Registrado por: {b.username}</span>
+                      <div className="bolao-details">
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                          <h4>{b.bettor_name}</h4>
+                          {currentUser && currentUserRole === 'Admin' && (
+                            <button
+                              title="Editar nome"
+                              onClick={() => { setEditNameModal({ bolaoId: b.id, currentName: b.bettor_name }); setEditNameInput(b.bettor_name); }}
+                              style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '0.8rem', padding: 0 }}
+                            >
+                              ✏️
+                            </button>
+                          )}
+                        </div>
+                        <span>Registrado por: {b.username}</span>
+                      </div>
+                    </div>
+                    <div className="bolao-card-actions">
+                      <button className="bolao-action-btn btn-view-photo" onClick={() => setShowPhotoModal(b.photo_url)}>
+                        <Icons.Eye size={12} /> Ver Foto
+                      </button>
+                      <button className="bolao-action-btn btn-view-bets" onClick={() => setShowBetsModal(b)}>
+                        <Icons.Trophy size={12} /> Apostas
+                      </button>
+                      <button className="bolao-action-btn" style={{ background: 'rgba(99,102,241,0.12)', border: '1px solid #6366f1', color: '#818cf8' }}
+                        onClick={() => setShowHistoryModal(b)}>
+                        📊 Histórico
+                      </button>
+                      {currentUser === 'Jefferson' && (
+                        <button className="bolao-action-btn" style={{ background: 'rgba(239,68,68,0.12)', border: '1px solid #ef4444', color: '#ef4444' }}
+                          onClick={() => { setShowDeleteModal({ id: b.id, bettor_name: b.bettor_name }); setDeletePassword(''); setDeleteError(''); }}>
+                          🗑️ Excluir
+                        </button>
+                      )}
                     </div>
                   </div>
-                  <div className="bolao-card-actions">
-                    <button className="bolao-action-btn btn-view-photo" onClick={() => setShowPhotoModal(b.photo_url)}>
-                      <Icons.Eye size={12} /> Ver Foto
-                    </button>
-                    <button className="bolao-action-btn btn-view-bets" onClick={() => setShowBetsModal(b)}>
-                      <Icons.Trophy size={12} /> Apostas
-                    </button>
-                    <button className="bolao-action-btn" style={{ background: 'rgba(99,102,241,0.12)', border: '1px solid #6366f1', color: '#818cf8' }}
-                      onClick={() => setShowHistoryModal(b)}>
-                      📊 Histórico
-                    </button>
-                    {currentUser === 'Jefferson' && (
-                      <button className="bolao-action-btn" style={{ background: 'rgba(239,68,68,0.12)', border: '1px solid #ef4444', color: '#ef4444' }}
-                        onClick={() => { setShowDeleteModal({ id: b.id, bettor_name: b.bettor_name }); setDeletePassword(''); setDeleteError(''); }}>
-                        🗑️ Excluir
-                      </button>
-                    )}
-                  </div>
-                </div>
-              ))}
+                ));
+              })()}
             </div>
           </div>
           )
@@ -1440,36 +2002,61 @@ function DashboardContent() {
               <>
                 {/* Podiums */}
                 <div className="podium-container">
-                  {top3[1] && (<div className="podium-column second">
-                    <img src={top3[1].avatar} className="podium-avatar" alt="2nd" />
-                    <div className="podium-box">
-                      <span className="podium-name">{top3[1].name}</span>
-                      <span className="podium-pts">{top3[1].pts} pts</span>
-                      <span style={{ fontSize: '0.65rem', color: '#94a3b8', fontWeight: 'bold' }}>2º Lugar</span>
+                  {top3[1] && (
+                    <div 
+                      className="podium-column second" 
+                      onClick={() => { const b = boloes.find(x => x.id === top3[1].id); if (b) setShowRankingDetailsModal(b); }}
+                      style={{ cursor: 'pointer' }}
+                    >
+                      <img src={top3[1].avatar} className="podium-avatar" alt="2nd" />
+                      <div className="podium-box">
+                        <span className="podium-name">{top3[1].name}</span>
+                        <span className="podium-pts">{top3[1].pts} pts</span>
+                        <span style={{ fontSize: '0.65rem', color: '#94a3b8', fontWeight: 'bold' }}>2º Lugar</span>
+                      </div>
                     </div>
-                  </div>)}
-                  {top3[0] && (<div className="podium-column first">
-                    <span className="podium-crown">👑</span>
-                    <img src={top3[0].avatar} className="podium-avatar" alt="1st" />
-                    <div className="podium-box">
-                      <span className="podium-name">{top3[0].name}</span>
-                      <span className="podium-pts">{top3[0].pts} pts</span>
-                      <span style={{ fontSize: '0.65rem', color: 'var(--accent-gold)', fontWeight: 'bold' }}>1º Lugar</span>
+                  )}
+                  {top3[0] && (
+                    <div 
+                      className="podium-column first" 
+                      onClick={() => { const b = boloes.find(x => x.id === top3[0].id); if (b) setShowRankingDetailsModal(b); }}
+                      style={{ cursor: 'pointer' }}
+                    >
+                      <span className="podium-crown">👑</span>
+                      <img src={top3[0].avatar} className="podium-avatar" alt="1st" />
+                      <div className="podium-box">
+                        <span className="podium-name">{top3[0].name}</span>
+                        <span className="podium-pts">{top3[0].pts} pts</span>
+                        <span style={{ fontSize: '0.65rem', color: 'var(--accent-gold)', fontWeight: 'bold' }}>1º Lugar</span>
+                      </div>
                     </div>
-                  </div>)}
-                  {top3[2] && (<div className="podium-column third">
-                    <img src={top3[2].avatar} className="podium-avatar" alt="3rd" />
-                    <div className="podium-box">
-                      <span className="podium-name">{top3[2].name}</span>
-                      <span className="podium-pts">{top3[2].pts} pts</span>
-                      <span style={{ fontSize: '0.65rem', color: '#b45309', fontWeight: 'bold' }}>3º Lugar</span>
+                  )}
+                  {top3[2] && (
+                    <div 
+                      className="podium-column third" 
+                      onClick={() => { const b = boloes.find(x => x.id === top3[2].id); if (b) setShowRankingDetailsModal(b); }}
+                      style={{ cursor: 'pointer' }}
+                    >
+                      <img src={top3[2].avatar} className="podium-avatar" alt="3rd" />
+                      <div className="podium-box">
+                        <span className="podium-name">{top3[2].name}</span>
+                        <span className="podium-pts">{top3[2].pts} pts</span>
+                        <span style={{ fontSize: '0.65rem', color: '#b45309', fontWeight: 'bold' }}>3º Lugar</span>
+                      </div>
                     </div>
-                  </div>)}
+                  )}
                 </div>
                 {restRank.length > 0 && (
                   <div className="ranking-list">
                     {restRank.map(item => (
-                      <div className="ranking-item" key={item.name}>
+                      <div 
+                        className="ranking-item" 
+                        key={item.name}
+                        onClick={() => { const b = boloes.find(x => x.id === item.id); if (b) setShowRankingDetailsModal(b); }}
+                        style={{ cursor: 'pointer', transition: 'transform 0.2s' }}
+                        onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.02)'}
+                        onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                      >
                         <div className="ranking-item-left">
                           <span className="ranking-num">{item.rank}º</span>
                           <img src={item.avatar} className="ranking-avatar" alt="player" />
@@ -1513,7 +2100,12 @@ function DashboardContent() {
               const hFlag = getFlagCode(g.home_team_name_en);
               const aFlag = getFlagCode(g.away_team_name_en);
               return (
-                <div className="matchup-card" key={g.id} style={{ borderColor: '#ef4444', boxShadow: '0 0 12px rgba(239,68,68,0.25)' }}>
+                <div
+                  className="matchup-card"
+                  key={g.id}
+                  style={{ borderColor: '#ef4444', boxShadow: '0 0 12px rgba(239,68,68,0.25)', cursor: 'pointer' }}
+                  onClick={() => { setShowMatchModal(g); setMatchModalTab('palpites'); }}
+                >
                   <div className="matchup-meta">
                     <span style={{ color: '#ef4444', fontWeight: 'bold' }}>🔴 AO VIVO • Grupo {g.group}</span>
                     <span>{g.time_elapsed}</span>
@@ -1605,7 +2197,12 @@ function DashboardContent() {
                   const aFlag = getFlagCode(g.away_team_name_en);
                   const { date, time } = formatMatchDate(g.local_date);
                   return (
-                    <div className="matchup-card" key={g.id}>
+                    <div
+                      className="matchup-card"
+                      key={g.id}
+                      style={{ cursor: 'pointer' }}
+                      onClick={() => { setShowMatchModal(g); setMatchModalTab('palpites'); }}
+                    >
                       <div className="matchup-meta">
                         <span>Grupo {g.group} • Rodada {g.matchday}</span>
                         <span>{date} às {time}</span>
@@ -1889,6 +2486,391 @@ function DashboardContent() {
             </div>
           </div>
         )}
+
+        {/* 8. Gerenciar Usuários (Admin / Moderador Only) */}
+        {activeTab === 'gerenciar_usuarios' && currentUser && (currentUserRole === 'Admin' || currentUserRole === 'Moderador') && (
+          <div className="tab-pane active" style={{ animation: 'fadeIn 0.4s ease-out' }}>
+            <div style={{ marginBottom: '1.25rem' }}>
+              <h3 style={{ fontSize: '1.1rem', marginBottom: '0.2rem', color: '#fff' }}>Gerenciamento de Jogadores</h3>
+              <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                Aprove os novos cadastros dos jogadores que enviaram o comprovante PIX.
+              </p>
+            </div>
+
+            <div style={{ overflowX: 'auto', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border-color)', borderRadius: '12px' }}>
+              {(() => {
+                const stages = [
+                  { key: 'approved', label: 'Grupos', btnColor: 'linear-gradient(135deg, var(--soccer-green), #10b981)' },
+                  { key: 'approved_r32', label: '1/16 Final', btnColor: 'linear-gradient(135deg, var(--accent-gold), #b8860b)' },
+                  { key: 'approved_r16', label: 'Oitavas (1/8)', btnColor: 'linear-gradient(135deg, var(--accent-gold), #b8860b)' },
+                  { key: 'approved_qf', label: 'Quartas (1/4)', btnColor: 'linear-gradient(135deg, var(--accent-gold), #b8860b)' },
+                  { key: 'approved_sf', label: 'Semifinal', btnColor: 'linear-gradient(135deg, var(--accent-gold), #b8860b)' },
+                  { key: 'approved_final', label: 'Final', btnColor: 'linear-gradient(135deg, var(--accent-gold), #b8860b)' }
+                ];
+                
+                return (
+                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.8rem', color: '#e2e8f0' }}>
+                    <thead>
+                      <tr style={{ borderBottom: '1px solid var(--border-color)', background: 'rgba(255,255,255,0.04)' }}>
+                        <th style={{ padding: '0.75rem 1rem', textAlign: 'left', color: 'var(--text-secondary)' }}>Usuário</th>
+                        <th style={{ padding: '0.75rem 1rem', textAlign: 'left', color: 'var(--text-secondary)' }}>WhatsApp</th>
+                        <th style={{ padding: '0.75rem 1rem', textAlign: 'center', color: 'var(--text-secondary)' }}>Perfil</th>
+                        {stages.map(s => (
+                          <th key={s.key} style={{ padding: '0.75rem 1rem', textAlign: 'center', color: 'var(--text-secondary)' }}>{s.label}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {usersList.length === 0 ? (
+                        <tr>
+                          <td colSpan="9" style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-secondary)' }}>
+                            Nenhum jogador registrado no sistema.
+                          </td>
+                        </tr>
+                      ) : (
+                        usersList.map(u => (
+                          <tr key={u.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                            <td style={{ padding: '0.75rem 1rem', fontWeight: 'bold' }}>{u.username}</td>
+                            <td style={{ padding: '0.75rem 1rem' }}>
+                              {u.whatsapp ? (
+                                <a
+                                  href={`https://wa.me/${u.whatsapp.replace(/\D/g, '')}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  style={{ color: 'var(--soccer-green)', textDecoration: 'none', fontWeight: '600', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}
+                                >
+                                  💬 {u.whatsapp}
+                                </a>
+                              ) : (
+                                <span style={{ color: 'var(--text-secondary)' }}>-</span>
+                              )}
+                            </td>
+                            <td style={{ padding: '0.75rem 1rem', textAlign: 'center' }}>
+                              <span style={{
+                                padding: '0.15rem 0.5rem', borderRadius: '4px', fontSize: '0.68rem', fontWeight: 'bold',
+                                background: u.role === 'Admin' ? 'rgba(251,191,36,0.15)' : u.role === 'Moderador' ? 'rgba(96,165,250,0.15)' : 'rgba(255,255,255,0.08)',
+                                color: u.role === 'Admin' ? 'var(--accent-gold)' : u.role === 'Moderador' ? '#60a5fa' : '#cbd5e1'
+                              }}>
+                                {u.role || 'Jogador'}
+                              </span>
+                            </td>
+                            
+                            {stages.map(s => {
+                              const isApproved = u.role === 'Admin' || u.role === 'Moderador' || u[s.key];
+                              return (
+                                <td key={s.key} style={{ padding: '0.75rem 1rem', textAlign: 'center' }}>
+                                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.25rem' }}>
+                                    <span style={{
+                                      padding: '0.1rem 0.4rem', borderRadius: '999px', fontSize: '0.65rem', fontWeight: 'bold',
+                                      background: isApproved ? 'rgba(16,185,129,0.12)' : 'rgba(239,68,68,0.12)',
+                                      color: isApproved ? 'var(--soccer-green)' : '#f87171'
+                                    }}>
+                                      {isApproved ? '✔ Pago' : '⏳ Pendente'}
+                                    </span>
+                                    {u.role === 'Jogador' && (
+                                      !u[s.key] ? (
+                                        <button
+                                          onClick={() => handleApproveUser(u.id, s.key)}
+                                          style={{
+                                            padding: '0.25rem 0.5rem', borderRadius: '4px', border: 'none',
+                                            background: s.btnColor,
+                                            color: '#000', fontWeight: 'bold', cursor: 'pointer', fontSize: '0.65rem', marginTop: '0.2rem'
+                                          }}
+                                        >
+                                          Liberar
+                                        </button>
+                                      ) : (
+                                        <button
+                                          onClick={() => handleRevokeUser(u.id, s.key)}
+                                          style={{
+                                            padding: '0.25rem 0.5rem', borderRadius: '4px', border: 'none',
+                                            background: 'rgba(239,68,68,0.12)', border: '1px solid #ef4444',
+                                            color: '#f87171', cursor: 'pointer', fontSize: '0.65rem', marginTop: '0.2rem'
+                                          }}
+                                        >
+                                          Bloquear
+                                        </button>
+                                      )
+                                    )}
+                                  </div>
+                                </td>
+                              );
+                            })}
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                );
+              })()}
+            </div>
+          </div>
+        )}
+
+        {/* 9. Apostar Próxima Fase (Mata-mata) */}
+        {activeTab === 'apostas_elim' && (() => {
+          if (!currentUser) {
+            return (
+              <div style={{ textAlign: 'center', padding: '3rem 1rem' }}>
+                <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🔐</div>
+                <p style={{ fontWeight: 'bold', marginBottom: '0.5rem', fontSize: '1.05rem' }}>Login necessário</p>
+                <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '1.5rem' }}>
+                  Faça login ou crie sua conta para registrar palpites no Mata-Mata.
+                </span>
+                <button className="btn-submit" style={{ maxWidth: '220px', margin: '0 auto' }} onClick={() => router.push('/')}>
+                  Ir para Login
+                </button>
+              </div>
+            );
+          }
+
+          const stagesConfig = {
+            r32: { label: '1/16 de Final', key: 'approved_r32', text: '1/16 de Final (32 avos)', name: '1/16 de Final' },
+            r16: { label: 'Oitavas', key: 'approved_r16', text: 'Oitavas de Final', name: 'Oitavas de Final' },
+            qf: { label: 'Quartas', key: 'approved_qf', text: 'Quartas de Final', name: 'Quartas de Final' },
+            sf: { label: 'Semifinal', key: 'approved_sf', text: 'Semifinais', name: 'Semifinais' },
+            final: { label: 'Final', key: 'approved_final', text: 'Final e 3º Lugar', name: 'Finais' }
+          };
+
+          const activeStageConfig = stagesConfig[knockoutStage] || stagesConfig.r32;
+          const isApprovedForActiveStage = mataMataPublic || currentUserRole === 'Admin' || (currentUserObj && currentUserObj[activeStageConfig.key]);
+          
+          return (
+            <div className="tab-pane active" style={{ animation: 'fadeIn 0.4s ease-out' }}>
+              <div style={{ marginBottom: '1.25rem' }}>
+                <h3 style={{ fontSize: '1.1rem', marginBottom: '0.2rem', color: 'var(--accent-gold)' }}>Apostas do Mata-Mata</h3>
+                <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                  Defina seus palpites para as fases decisivas da Copa 2026. Cada fase requer liberação/pagamento individual.
+                </p>
+              </div>
+
+              {/* Seletor de Fases do Mata-Mata */}
+              <div style={{ display: 'flex', gap: '0.4rem', overflowX: 'auto', paddingBottom: '0.8rem', marginBottom: '1.25rem', scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}>
+                {Object.keys(stagesConfig).map(stageKey => {
+                  const s = stagesConfig[stageKey];
+                  const isStageApproved = currentUserRole === 'Admin' || (currentUserObj && currentUserObj[s.key]);
+                  return (
+                    <button
+                      key={stageKey}
+                      onClick={() => setKnockoutStage(stageKey)}
+                      style={{
+                        padding: '0.4rem 0.8rem',
+                        borderRadius: '999px',
+                        fontSize: '0.75rem',
+                        fontWeight: '700',
+                        border: 'none',
+                        cursor: 'pointer',
+                        whiteSpace: 'nowrap',
+                        background: knockoutStage === stageKey ? 'var(--accent-gold)' : 'rgba(255,255,255,0.08)',
+                        color: knockoutStage === stageKey ? '#000' : '#cbd5e1',
+                        transition: 'all 0.2s',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.25rem'
+                      }}
+                    >
+                      <span>{s.label}</span>
+                      <span>{isStageApproved ? '🟢' : '🔒'}</span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {!isApprovedForActiveStage ? (
+                <div style={{
+                  background: 'linear-gradient(135deg, rgba(31,41,55,0.7) 0%, rgba(17,24,39,0.9) 100%)',
+                  border: '1px solid rgba(251,191,36,0.3)',
+                  borderRadius: '20px',
+                  padding: '2.5rem 2rem',
+                  textAlign: 'center',
+                  maxWidth: '500px',
+                  margin: '2rem auto',
+                  boxShadow: '0 20px 40px rgba(0,0,0,0.6)'
+                }}>
+                  <div style={{ fontSize: '3.5rem', marginBottom: '1.25rem' }}>🔒</div>
+                  <h3 style={{ fontSize: '1.25rem', marginBottom: '0.85rem', color: 'var(--accent-gold)', fontWeight: 'bold' }}>
+                    Área Bloqueada - Taxa de Inscrição {activeStageConfig.name}
+                  </h3>
+                  <p style={{ fontSize: '0.88rem', color: '#cbd5e1', lineHeight: '1.6', marginBottom: '1rem' }}>
+                    Para liberar seus palpites para a fase de <strong>{activeStageConfig.text}</strong>, faça o pagamento da taxa adicional desta etapa e envie o comprovante Pix para o Junior.
+                  </p>
+                  <p style={{ fontSize: '0.78rem', color: 'var(--accent-gold)', background: 'rgba(251,191,36,0.08)', border: '1px dashed rgba(251,191,36,0.3)', padding: '0.75rem', borderRadius: '10px', marginTop: '0.2rem', marginBottom: '1.5rem', lineHeight: '1.4' }}>
+                    ⚠️ <strong>Nota:</strong> Cada PIX concede o direito a apenas um envio. Se você já realizou uma aposta para esta fase e deseja enviar outra, realize outro pagamento e solicite a liberação ao Administrador.
+                  </p>
+
+                  <div style={{
+                    background: 'rgba(255,255,255,0.05)',
+                    border: '1px dashed rgba(255,255,255,0.1)',
+                    borderRadius: '12px',
+                    padding: '0.75rem',
+                    fontSize: '0.8rem',
+                    color: '#9ca3af',
+                    marginBottom: '1.5rem',
+                    cursor: 'pointer'
+                  }} onClick={() => {
+                    navigator.clipboard.writeText('+55 22 99797-3476');
+                    alert('Chave Pix copiada!');
+                  }}>
+                    Chave Pix (Celular Junior):<br/>
+                    <strong style={{ color: '#fff', fontSize: '0.9rem' }}>+55 22 99797-3476 📋 (Copiar)</strong>
+                  </div>
+
+                  <a
+                    href={`https://wa.me/5522997973476?text=Ol%C3%A1%20Junior%2C%20realizei%20o%20pagamento%20da%20taxa%20para%20liberar%20minhas%20apostas%20da%20fase%20de%20${encodeURIComponent(activeStageConfig.name)}%20no%20Bol%C3%A3o%20Copa%202026.%20Meu%20usu%C3%A1rio%20%C3%A9%20%22${currentUser}%22.%20Segue%20o%20comprovante%20PIX!`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem',
+                      background: '#25D366', color: '#fff', padding: '0.85rem', borderRadius: '12px',
+                      fontWeight: 'bold', textDecoration: 'none', fontSize: '0.92rem',
+                      boxShadow: '0 4px 12px rgba(37,211,102,0.3)'
+                    }}
+                  >
+                    <span>💬 Enviar Comprovante no WhatsApp</span>
+                  </a>
+                </div>
+              ) : (() => {
+                const knockoutMatches = getMatchesForStage(knockoutStage);
+                if (knockoutMatches.length === 0) {
+                  return (
+                    <p style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '2rem' }}>
+                      Nenhum confronto disponível para esta fase no momento.
+                    </p>
+                  );
+                }
+
+                const phases = [
+                  { title: `${activeStageConfig.text} (${knockoutMatches.length} Jogos)`, matches: knockoutMatches }
+                ];
+
+                // Count total predicted so far
+                const filledCount = knockoutMatches.filter(m => {
+                  const b = knockoutBets[m.id];
+                  return b && b.home !== undefined && b.away !== undefined && b.home.trim() !== '' && b.away.trim() !== '';
+                }).length;
+
+                return (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', paddingBottom: '80px' }}>
+                    {phases.map(phase => {
+                      if (phase.matches.length === 0) return null;
+                      return (
+                        <div key={phase.title}>
+                          <h4 style={{
+                            color: '#fff', borderBottom: '1px solid rgba(255,255,255,0.1)',
+                            paddingBottom: '0.5rem', marginBottom: '1rem', fontSize: '0.9rem',
+                            fontWeight: 'bold', display: 'flex', justifyContent: 'space-between'
+                          }}>
+                            <span>⚽ {phase.title}</span>
+                            <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{phase.matches.length} Jogos</span>
+                          </h4>
+
+                          <div className="matchup-list" style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                            {phase.matches.map(match => {
+                              const bHome = knockoutBets[match.id]?.home || '';
+                              const bAway = knockoutBets[match.id]?.away || '';
+                              const homeFlag = getFlagCode(match.home_team) || 'placeholder';
+                              const awayFlag = getFlagCode(match.away_team) || 'placeholder';
+                              const saved = palpites[match.id]?.saved || false;
+
+                              return (
+                                <div className="matchup-card" key={match.id} style={{
+                                  background: saved ? 'rgba(16,185,129,0.04)' : 'rgba(255,255,255,0.02)',
+                                  border: `1px solid ${saved ? 'rgba(16,185,129,0.25)' : 'var(--border-color)'}`
+                                }}>
+                                  <div className="matchup-meta">
+                                    <span>Jogo #{match.id} • {match.stadium}</span>
+                                    <span>{new Date(match.match_date).toLocaleDateString('pt-BR')} {match.match_time.slice(0, 5)}</span>
+                                  </div>
+                                  <div className="matchup-teams-row">
+                                    <div className="matchup-team-item">
+                                      <img src={`https://flagcdn.com/w80/${homeFlag}.png`} className="team-flag" alt={match.home_team} />
+                                      <span>{match.home_team}</span>
+                                    </div>
+
+                                    <div className="matchup-scores-center">
+                                      <input
+                                        type="number"
+                                        inputMode="numeric"
+                                        pattern="[0-9]*"
+                                        min="0"
+                                        className="score-field"
+                                        value={bHome}
+                                        onChange={(e) => handleKnockoutScoreChange(match.id, 'home', e.target.value)}
+                                        placeholder="-"
+                                        style={{ width: '48px', height: '40px', fontSize: '1rem' }}
+                                      />
+                                      <span className="score-sep">x</span>
+                                      <input
+                                        type="number"
+                                        inputMode="numeric"
+                                        pattern="[0-9]*"
+                                        min="0"
+                                        className="score-field"
+                                        value={bAway}
+                                        onChange={(e) => handleKnockoutScoreChange(match.id, 'away', e.target.value)}
+                                        placeholder="-"
+                                        style={{ width: '48px', height: '40px', fontSize: '1rem' }}
+                                      />
+                                    </div>
+
+                                    <div className="matchup-team-item">
+                                      <img src={`https://flagcdn.com/w80/${awayFlag}.png`} className="team-flag" alt={match.away_team} />
+                                      <span>{match.away_team}</span>
+                                    </div>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      );
+                    })}
+
+                    {/* Sticky Footer Bar with submit button */}
+                    <div style={{
+                      position: 'fixed', bottom: 0, left: 0, right: 0,
+                      background: 'linear-gradient(0deg, #0b0f19 75%, transparent 100%)',
+                      padding: '1.25rem 1rem 1.75rem', zIndex: 100,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center'
+                    }}>
+                      <div style={{
+                        maxWidth: '500px', width: '100%',
+                        background: 'rgba(17,24,39,0.85)',
+                        backdropFilter: 'blur(12px)',
+                        border: '1px solid rgba(255,255,255,0.08)',
+                        borderRadius: '16px',
+                        padding: '0.85rem 1.25rem',
+                        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                        boxShadow: '0 10px 30px rgba(0,0,0,0.5)'
+                      }}>
+                        <div style={{ display: 'flex', flexDirection: 'column' }}>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', fontWeight: 'bold' }}>Palpites Preenchidos</span>
+                          <strong style={{ fontSize: '1rem', color: '#fff' }}>{filledCount} / {knockoutMatches.length} Jogos</strong>
+                        </div>
+
+                        <button
+                          onClick={startSaveKnockoutBets}
+                          style={{
+                            background: 'linear-gradient(135deg, var(--accent-gold), #b8860b)',
+                            border: 'none', borderRadius: '10px',
+                            color: '#000', fontWeight: '800',
+                            padding: '0.65rem 1.25rem', fontSize: '0.82rem',
+                            cursor: 'pointer', boxShadow: '0 4px 15px rgba(218,165,32,0.3)',
+                            transition: 'transform 0.2s'
+                          }}
+                          onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.03)'}
+                          onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                        >
+                          💾 SALVAR APOSTAS
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
+            </div>
+          );
+        })()}
       </main>
 
       {/* --- MODALS --- */}
@@ -2004,8 +2986,12 @@ function DashboardContent() {
                   <p style={{ fontSize: '0.75rem', fontWeight: 'bold' }}>{g.home_team_name_en}</p>
                 </div>
                 <div style={{ textAlign: 'center' }}>
-                  <div style={{ fontSize: '2rem', fontWeight: '900', color: '#fff', letterSpacing: '4px' }}>{g.home_score} — {g.away_score}</div>
-                  <span style={{ fontSize: '0.6rem', color: 'var(--soccer-green)', fontWeight: 'bold' }}>ENCERRADO • {date}</span>
+                  <div style={{ fontSize: '2rem', fontWeight: '900', color: '#fff', letterSpacing: '4px' }}>
+                    {((g.finished === 'TRUE' || g.finished === true || g.time_elapsed === 'finished' || (g.time_elapsed && g.time_elapsed !== 'notstarted')) && g.home_score !== undefined && g.home_score !== null && g.home_score !== '' && String(g.home_score) !== 'null') ? `${g.home_score} — ${g.away_score}` : 'vs'}
+                  </div>
+                  <span style={{ fontSize: '0.6rem', color: (g.finished === 'TRUE' || g.finished === true || g.time_elapsed === 'finished') ? 'var(--soccer-green)' : 'var(--accent-gold)', fontWeight: 'bold' }}>
+                    {(g.finished === 'TRUE' || g.finished === true || g.time_elapsed === 'finished') ? `ENCERRADO • ${date}` : (g.time_elapsed && g.time_elapsed !== 'notstarted') ? `AO VIVO • ${g.time_elapsed}` : `${date} às ${time}`}
+                  </span>
                 </div>
                 <div style={{ textAlign: 'center', flex: 1 }}>
                   <img src={`https://flagcdn.com/w80/${aFlag}.png`} style={{ width: '48px', marginBottom: '0.4rem' }} alt={g.away_team_name_en} />
@@ -2069,7 +3055,9 @@ function DashboardContent() {
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem' }}>
                       <span style={{ color: 'var(--text-secondary)' }}>Status</span>
-                      <span style={{ fontWeight: 'bold', color: 'var(--soccer-green)' }}>✔ Encerrado</span>
+                      <span style={{ fontWeight: 'bold', color: (g.finished === 'TRUE' || g.finished === true || g.time_elapsed === 'finished') ? 'var(--soccer-green)' : 'var(--accent-gold)' }}>
+                        {g.finished === 'TRUE' || g.finished === true || g.time_elapsed === 'finished' ? '✔ Encerrado' : (g.time_elapsed && g.time_elapsed !== 'notstarted') ? '🔴 Ao Vivo' : '⏳ Agendado'}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -2092,27 +3080,35 @@ function DashboardContent() {
                         <div key={idx} style={{
                           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                           padding: '0.65rem 0.85rem', borderRadius: '8px',
-                          background: item.exact ? 'rgba(16,185,129,0.12)' : item.correct ? 'rgba(251,191,36,0.1)' : 'rgba(255,255,255,0.04)',
-                          border: `1px solid ${item.exact ? 'rgba(16,185,129,0.4)' : item.correct ? 'rgba(251,191,36,0.3)' : 'rgba(255,255,255,0.07)'}`
+                          background: (!item.isFinished && !item.isLive) ? 'rgba(255,255,255,0.03)' : item.exact ? 'rgba(16,185,129,0.12)' : item.correct ? 'rgba(251,191,36,0.1)' : 'rgba(255,255,255,0.04)',
+                          border: `1px solid ${(!item.isFinished && !item.isLive) ? 'rgba(255,255,255,0.05)' : item.exact ? 'rgba(16,185,129,0.4)' : item.correct ? 'rgba(251,191,36,0.3)' : 'rgba(255,255,255,0.07)'}`
                         }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
                             <span style={{ fontSize: '0.7rem', fontWeight: 'bold', color: 'var(--text-secondary)', minWidth: '18px' }}>{idx + 1}º</span>
                             <img src={`https://api.dicebear.com/7.x/identicon/svg?seed=${item.name}`} style={{ width: '28px', height: '28px', borderRadius: '50%' }} alt="" />
                             <div>
                               <p style={{ fontSize: '0.8rem', fontWeight: 'bold' }}>{item.name}</p>
-                              <p style={{ fontSize: '0.65rem', color: 'var(--text-secondary)' }}>Chutou: {item.bet_home} x {item.bet_away}</p>
+                              {!item.isFinished && !item.isLive ? (
+                                <p style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>⏳ Jogo não iniciado</p>
+                              ) : item.isLive ? (
+                                <p style={{ fontSize: '0.68rem', fontWeight: '700', color: (item.exact || item.correct) ? 'var(--soccer-green)' : '#f87171' }}>
+                                  {item.exact ? '🟢 Vencendo - Exato (+5)' : item.correct ? '🟡 Vencendo - Vencedor (+3)' : '🔴 Perdendo (0 pts)'}
+                                  <span style={{ fontSize: '0.55rem', fontWeight: 'normal', color: 'rgba(255,255,255,0.4)', marginLeft: '0.2rem' }}>(parcial)</span>
+                                </p>
+                              ) : (
+                                <p style={{ fontSize: '0.68rem', fontWeight: '600', color: item.exact ? 'var(--soccer-green)' : item.correct ? 'var(--accent-gold)' : '#f87171' }}>
+                                  {item.exact ? '🎯 Exato (+5 pts)' : item.correct ? '✅ Vencedor (+3 pts)' : '❌ Errou (0 pts)'}
+                                </p>
+                              )}
                             </div>
                           </div>
                           <div style={{ textAlign: 'right' }}>
                             <span style={{
-                              fontSize: '0.85rem', fontWeight: '900',
-                              color: item.exact ? 'var(--soccer-green)' : item.correct ? 'var(--accent-gold)' : 'var(--text-muted)'
+                              fontSize: '1rem', fontWeight: '900', color: 'var(--accent-gold)'
                             }}>
-                              {item.pts > 0 ? `+${item.pts}` : '0'} pts
+                              {item.bet_home} x {item.bet_away}
                             </span>
-                            <p style={{ fontSize: '0.6rem', color: 'var(--text-secondary)' }}>
-                              {item.exact ? '🎯 Exato' : item.correct ? '✅ Vencedor' : '❌ Errou'}
-                            </p>
+                            <p style={{ fontSize: '0.58rem', color: 'var(--text-secondary)' }}>Aposta</p>
                           </div>
                         </div>
                       ))}
@@ -2161,7 +3157,12 @@ function DashboardContent() {
               />
               <div>
                 <h4 style={{ fontSize: '0.85rem' }}>{showBetsModal.bettor_name}</h4>
-                <p style={{ fontSize: '0.65rem', color: 'var(--text-secondary)' }}>Apostas extraídas com OCR da foto</p>
+                <p style={{ fontSize: '0.65rem', color: 'var(--text-secondary)' }}>
+                  {Array.isArray(showBetsModal.bets_data) && showBetsModal.bets_data.some(bd => bd.match_id >= 73)
+                    ? 'Palpites da fase eliminatória salvos diretamente'
+                    : 'Apostas extraídas com OCR da foto'
+                  }
+                </p>
               </div>
             </div>
 
@@ -2300,7 +3301,7 @@ function DashboardContent() {
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                         <span style={{ fontSize: '0.8rem', fontWeight: '900', color: ptsColor }}>{bet.pts !== null && bet.pts !== undefined ? `+${bet.pts}` : '-'}</span>
-                        {currentUser && (
+                        {currentUser && currentUserRole === 'Admin' && (
                           <button onClick={() => { setEditingBet({ bolaoId: b.id, betIndex: idx, home: bet.bet_home, away: bet.bet_away }); setEditPassword(''); setEditError(''); setShowHistoryModal(null); }}
                             style={{ fontSize: '0.65rem', padding: '0.2rem 0.45rem', background: 'rgba(99,102,241,0.15)', border: '1px solid #6366f1', color: '#818cf8', borderRadius: '6px', cursor: 'pointer' }}>
                             ✏️
@@ -2579,9 +3580,293 @@ function DashboardContent() {
         </div>
       )}
 
+      {/* Modal Detalhamento de Pontos do Ranking (Apenas jogos onde pontuou) */}
+      {showRankingDetailsModal && (() => {
+        const b = showRankingDetailsModal;
+        const calculatedBets = getCalculatedBets(b.bets_data, confrontos);
+        // Filter: only matches where user got points (pts > 0)
+        const scoredBets = calculatedBets.filter(bt => bt.pts === 3 || bt.pts === 5);
+        const totalPts = scoredBets.reduce((acc, bt) => acc + (bt.pts || 0), 0);
+
+        return (
+          <div className="modal-overlay" onClick={() => setShowRankingDetailsModal(null)}>
+            <div className="modal-container" onClick={e => e.stopPropagation()} style={{ maxHeight: '85vh', overflowY: 'auto' }}>
+              <div className="modal-header">
+                <h3>Jogos Pontuados — {b.bettor_name}</h3>
+                <div onClick={() => setShowRankingDetailsModal(null)} className="modal-close"><Icons.X size={20} /></div>
+              </div>
+
+              <div style={{ background: 'rgba(255,255,255,0.05)', borderRadius: '12px', padding: '1rem', textAlign: 'center', marginBottom: '1.25rem' }}>
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'block', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Pontuação Considerada</span>
+                <strong style={{ fontSize: '2rem', color: 'var(--accent-gold)', display: 'block', marginTop: '0.2rem' }}>{totalPts} pts</strong>
+                <span style={{ fontSize: '0.7rem', color: 'var(--soccer-green)' }}>Exibindo apenas jogos com acerto exato (+5) ou vencedor (+3)</span>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                {scoredBets.length === 0 ? (
+                  <p style={{ textAlign: 'center', color: 'var(--text-secondary)', fontSize: '0.8rem', padding: '1.5rem' }}>
+                    Nenhuma pontuação registrada ainda para este participante.
+                  </p>
+                ) : (
+                  scoredBets.map((bet, idx) => {
+                    const exact = bet.pts === 5;
+                    return (
+                      <div key={idx} style={{
+                        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                        padding: '0.65rem 0.85rem', borderRadius: '10px',
+                        background: exact ? 'rgba(16,185,129,0.06)' : 'rgba(251,191,36,0.04)',
+                        border: `1px solid ${exact ? 'rgba(16,185,129,0.2)' : 'rgba(251,191,36,0.15)'}`
+                      }}>
+                        <div style={{ flex: 1 }}>
+                          <p style={{ fontSize: '0.82rem', fontWeight: 'bold', color: '#fff' }}>{bet.home} vs {bet.away}</p>
+                          <p style={{ fontSize: '0.68rem', color: '#9ca3af', marginTop: '0.15rem' }}>
+                            Aposta: <strong style={{ color: '#fff' }}>{bet.bet_home} x {bet.bet_away}</strong> | Oficial: <strong style={{ color: '#fff' }}>{bet.real_home} x {bet.real_away}</strong>
+                          </p>
+                        </div>
+                        <div style={{ textAlign: 'right' }}>
+                          <span style={{ fontSize: '0.9rem', fontWeight: '900', color: exact ? 'var(--soccer-green)' : 'var(--accent-gold)' }}>
+                            +{bet.pts} pts
+                          </span>
+                          <p style={{ fontSize: '0.6rem', color: 'var(--text-secondary)', marginTop: '0.1rem' }}>
+                            {exact ? '🎯 Placar Exato' : '✅ Vencedor'}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* Modal Confirmação de Aposta Mata-mata */}
+      {showBetConfirmation && (
+        <div className="modal-overlay" onClick={() => setShowBetConfirmation(false)}>
+          <div className="modal-container" onClick={e => e.stopPropagation()} style={{ maxWidth: '400px' }}>
+            <div className="modal-header">
+              <h3>Confirmar Apostas</h3>
+              <div onClick={() => setShowBetConfirmation(false)} className="modal-close"><Icons.X size={20} /></div>
+            </div>
+            <p style={{ fontSize: '0.88rem', color: '#d1d5db', lineHeight: '1.5', marginBottom: '1rem' }}>
+              Deseja salvar seus palpites para a fase eliminatória? <strong style={{ color: 'var(--accent-gold)' }}>Você não poderá alterá-los após a confirmação!</strong>
+            </p>
+            <div className="form-group" style={{ marginBottom: '1.25rem' }}>
+              <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '0.4rem' }}>
+                Nome/Identificador desta Aposta (Diferencie se fizer mais de uma)
+              </label>
+              <input
+                type="text"
+                className="form-control"
+                style={{ width: '100%', fontSize: '0.85rem', padding: '0.5rem' }}
+                value={knockoutBettorName}
+                onChange={(e) => setKnockoutBettorName(e.target.value)}
+                placeholder="Ex: Pedro Silva - Jogo 1"
+                required
+              />
+            </div>
+            <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+              <button 
+                className="btn-upload-bolao" 
+                style={{ backgroundColor: 'rgba(255,255,255,0.05)', color: 'var(--text-secondary)' }}
+                onClick={() => setShowBetConfirmation(false)}
+              >
+                Revisar
+              </button>
+              <button 
+                className="btn-upload-bolao" 
+                style={{ backgroundColor: 'var(--accent-gold)', color: '#000', fontWeight: 'bold' }}
+                onClick={executeSaveKnockoutBets}
+              >
+                ✔ Confirmar e Enviar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Carregamento da Taça (Trophy Loading) */}
+      {bettingLoading && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          backgroundColor: 'rgba(11,15,25,0.85)', backdropFilter: 'blur(12px)',
+          zIndex: 2000, display: 'flex', flexDirection: 'column',
+          alignItems: 'center', justifyContent: 'center', padding: '1rem'
+        }}>
+          <style>{`
+            @keyframes modalShine {
+              0% { left: -150%; }
+              50% { left: 150%; }
+              100% { left: 150%; }
+            }
+            .premium-modal-card::before {
+              content: '';
+              position: absolute;
+              top: 0;
+              left: -150%;
+              width: 50%;
+              height: 100%;
+              background: linear-gradient(
+                90deg,
+                transparent,
+                rgba(255, 255, 255, 0.08),
+                transparent
+              );
+              transform: skewX(-25deg);
+              animation: modalShine 4s infinite;
+            }
+          `}</style>
+          
+          <div className="premium-modal-card" style={{
+            background: 'rgba(17,24,39,0.7)',
+            border: '1px solid rgba(255,255,255,0.08)',
+            borderRadius: '24px',
+            padding: '2.5rem 2rem',
+            maxWidth: '360px',
+            width: '100%',
+            textAlign: 'center',
+            boxShadow: '0 20px 50px rgba(0, 0, 0, 0.5), 0 0 40px rgba(218, 165, 32, 0.05)',
+            position: 'relative',
+            overflow: 'hidden'
+          }}>
+            {/* Ambient glowing background aura */}
+            <div style={{
+              position: 'absolute',
+              width: `${200 + (bettingProgress / 100) * 80}px`,
+              height: `${200 + (bettingProgress / 100) * 80}px`,
+              background: `radial-gradient(circle, rgba(218, 165, 32, ${0.1 + (bettingProgress / 100) * 0.3}) 0%, transparent 70%)`,
+              borderRadius: '50%',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              pointerEvents: 'none',
+              zIndex: -1,
+              transition: 'all 0.3s ease'
+            }}></div>
+
+            <h3 style={{ fontSize: '1.2rem', marginBottom: '0.5rem', color: '#fff' }}>Processando suas Apostas...</h3>
+            <p style={{ fontSize: '0.78rem', color: '#9ca3af' }}>Validando e gerando seu recibo oficial</p>
+
+            <svg viewBox="0 0 100 120" style={{ width: '120px', height: '140px', margin: '1.5rem auto', filter: 'drop-shadow(0 0 15px rgba(0,0,0,0.5))' }}>
+              <defs>
+                <linearGradient id="modalGoldLiquid" x1="0%" y1="100%" x2="0%" y2="0%">
+                  <stop offset="0%" stop-color="#8a660d" />
+                  <stop offset="50%" stop-color="#d4af37" />
+                  <stop offset="85%" stop-color="#ffd700" />
+                  <stop offset="100%" stop-color="#fffbbf" />
+                </linearGradient>
+                <linearGradient id="modalGoldHighlight" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stop-color="rgba(255,255,255,0.4)" />
+                  <stop offset="50%" stop-color="transparent" />
+                  <stop offset="100%" stop-color="rgba(0,0,0,0.3)" />
+                </linearGradient>
+                <clipPath id="modalTrophyClip">
+                  <path d="M 35,106 C 35,102 37,99 39,97 L 61,97 C 63,99 65,102 65,106 Z M 37,95 L 63,95 C 62,90 61,86 60,83 L 40,83 C 39,86 38,90 37,95 Z M 42,81 C 43,74 44,67 45,61 C 41,57 37,51 36,44 C 34,35 37,26 43,20 C 47,15 53,15 57,20 C 63,26 66,35 64,44 C 63,51 59,57 55,61 C 56,67 57,74 58,81 Z" />
+                  <circle cx="50" cy="30" r="11" />
+                </clipPath>
+              </defs>
+              <path fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.12)" strokeWidth="1.5" d="M 35,106 C 35,102 37,99 39,97 L 61,97 C 63,99 65,102 65,106 Z M 37,95 L 63,95 C 62,90 61,86 60,83 L 40,83 C 39,86 38,90 37,95 Z M 42,81 C 43,74 44,67 45,61 C 41,57 37,51 36,44 C 34,35 37,26 43,20 C 47,15 53,15 57,20 C 63,26 66,35 64,44 C 63,51 59,57 55,61 C 56,67 57,74 58,81 Z" />
+              <circle cx="50" cy="30" r="11" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.12)" strokeWidth="1.5" />
+              
+              <g clipPath="url(#modalTrophyClip)">
+                <g style={{ transform: `translateY(${120 - (120 * (bettingProgress / 100))}px)`, transition: 'transform 0.1s ease-out' }}>
+                  {/* Liquid Body */}
+                  <rect x="0" y="0" width="100" height="120" fill="url(#modalGoldLiquid)" />
+                  
+                  {/* Highlight overlay */}
+                  <rect x="0" y="0" width="100" height="120" fill="url(#modalGoldHighlight)" style={{ mixBlendMode: 'overlay' }} />
+
+                  {/* Wave Top */}
+                  <path d="M 0,0 Q 25,-4 50,0 T 100,0 L 100,10 L 0,10 Z" fill="#fffbbf" opacity="0.8">
+                    <animateTransform 
+                      attributeName="transform" 
+                      type="translate" 
+                      from="-50,0" to="0,0" 
+                      dur="1.5s" 
+                      repeatCount="indefinite" />
+                  </path>
+                </g>
+              </g>
+
+              {/* Overlaid Detail Lines (Figures contour and details) */}
+              <path d="M 45,81 C 46,71 49,63 51,54 C 47,51 43,45 42,38" fill="none" stroke="rgba(11,15,25,0.6)" strokeWidth="1.5" strokeLinecap="round" />
+              <path d="M 55,81 C 54,71 51,63 49,54 C 53,51 57,45 58,38" fill="none" stroke="rgba(11,15,25,0.6)" strokeWidth="1.5" strokeLinecap="round" />
+              
+              {/* Pedestal Green Malachite Bands (Instant recognizability) */}
+              <rect x="38" y="100" width="24" height="2.5" fill="#047857" rx="0.5" opacity="0.85" />
+              <rect x="39.5" y="89" width="21" height="2.5" fill="#047857" rx="0.5" opacity="0.85" />
+
+              {/* Bright Golden Border (Matches Fill Level) */}
+              <path d="M 35,106 C 35,102 37,99 39,97 L 61,97 C 63,99 65,102 65,106 Z M 37,95 L 63,95 C 62,90 61,86 60,83 L 40,83 C 39,86 38,90 37,95 Z M 42,81 C 43,74 44,67 45,61 C 41,57 37,51 36,44 C 34,35 37,26 43,20 C 47,15 53,15 57,20 C 63,26 66,35 64,44 C 63,51 59,57 55,61 C 56,67 57,74 58,81 Z"
+                    fill="none" 
+                    stroke="url(#modalGoldLiquid)" 
+                    strokeWidth="1.5" 
+                    style={{ opacity: bettingProgress > 10 ? (bettingProgress / 100) : 0, transition: 'opacity 0.5s' }} />
+              <circle cx="50" cy="30" r="11"
+                    fill="none" 
+                    stroke="url(#modalGoldLiquid)" 
+                    strokeWidth="1.5" 
+                    style={{ opacity: bettingProgress > 10 ? (bettingProgress / 100) : 0, transition: 'opacity 0.5s' }} />
+            </svg>
+
+            <div style={{ fontSize: '2rem', fontWeight: '700', color: 'var(--accent-gold, #ffd700)', fontFamily: 'monospace', textShadow: '0 0 10px rgba(255, 215, 0, 0.3)' }}>
+              {bettingProgress}%
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Humor do Paquetá */}
+      {showPaquetaModal && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          backgroundColor: 'rgba(0,0,0,0.85)', zIndex: 2000,
+          display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem',
+          backdropFilter: 'blur(8px)'
+        }}>
+          <div style={{
+            background: 'linear-gradient(135deg, #111827 0%, #1f2937 100%)',
+            border: '2px solid var(--accent-gold)',
+            borderRadius: '24px',
+            padding: '2.5rem 2rem',
+            maxWidth: '440px',
+            width: '100%',
+            textAlign: 'center',
+            boxShadow: '0 20px 50px rgba(0,0,0,0.6)'
+          }}>
+            <div style={{ fontSize: '3.5rem', marginBottom: '1rem' }}>🤪</div>
+            <h3 style={{ fontSize: '1.3rem', color: '#fff', fontWeight: '900', letterSpacing: '0.5px', marginBottom: '1rem', textTransform: 'uppercase' }}>
+              {paquetaTitle}
+            </h3>
+            <p style={{ fontSize: '0.88rem', color: '#d1d5db', lineHeight: '1.6', marginBottom: '1.75rem' }}>
+              {paquetaBody}
+            </p>
+            <button
+              onClick={() => setShowPaquetaModal(false)}
+              style={{
+                background: 'linear-gradient(135deg, var(--soccer-green), #10b981)',
+                border: 'none', borderRadius: '12px',
+                color: '#000', fontWeight: 'bold',
+                padding: '0.8rem 2rem', fontSize: '0.9rem',
+                cursor: 'pointer', boxShadow: '0 4px 15px rgba(16,185,129,0.3)',
+                width: '100%'
+              }}
+            >
+              FECHAR E TORCER! 🤞
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Dynamic Toast Indicator */}
       {toastMsg && (
-        <div className="toast-bar">
+        <div className="toast-bar" style={{
+          background: toastType === 'error' ? 'linear-gradient(135deg, #ef4444, #b91c1c)' : 'linear-gradient(135deg, var(--soccer-green), #10b981)',
+          color: toastType === 'error' ? '#fff' : '#000',
+          fontWeight: 'bold',
+          border: toastType === 'error' ? '1px solid rgba(239,68,68,0.4)' : '1px solid rgba(16,185,129,0.4)'
+        }}>
           {toastMsg}
         </div>
       )}
