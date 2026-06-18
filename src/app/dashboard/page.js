@@ -3870,7 +3870,31 @@ function DashboardContent() {
             textAlign: 'center',
             boxShadow: '0 20px 50px rgba(0,0,0,0.6)'
           }}>
-            <div style={{ fontSize: '3.5rem', marginBottom: '1rem' }}>🤪</div>
+            <div style={{
+              width: '200px',
+              height: '200px',
+              margin: '0 auto 1.25rem auto',
+              borderRadius: '20px',
+              overflow: 'hidden',
+              boxShadow: '0 8px 30px rgba(0,0,0,0.5)',
+              background: '#000',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}>
+              <video 
+                src="/trophy_success.mp4" 
+                autoPlay 
+                loop 
+                muted 
+                playsInline
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover'
+                }}
+              />
+            </div>
             <h3 style={{ fontSize: '1.3rem', color: '#fff', fontWeight: '900', letterSpacing: '0.5px', marginBottom: '1rem', textTransform: 'uppercase' }}>
               {paquetaTitle}
             </h3>
