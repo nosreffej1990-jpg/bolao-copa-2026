@@ -796,16 +796,43 @@ function DashboardContent() {
       const { jsPDF } = jspdfModule;
       const doc = new jsPDF();
       
+      const loadImage = (src) => {
+        return new Promise((resolve) => {
+          const img = new Image();
+          img.crossOrigin = 'anonymous';
+          img.onload = () => resolve(img);
+          img.onerror = () => resolve(null);
+          img.src = src;
+        });
+      };
+
+      // Load logo and active team flag in parallel
+      const logoUrl = '/icons/logo-transparent.png';
+      const flagUrl = activeThemeObj ? `https://flagcdn.com/w160/${activeThemeObj.flag}.png` : null;
+
+      const [logoImg, flagImg] = await Promise.all([
+        loadImage(logoUrl),
+        flagUrl ? loadImage(flagUrl) : Promise.resolve(null)
+      ]);
+
       // Header Banner
       doc.setFillColor(11, 15, 25);
       doc.rect(0, 0, 220, 40, 'F');
       
+      // Draw Images on the header
+      if (logoImg) {
+        doc.addImage(logoImg, 'PNG', 15, 8, 24, 24);
+      }
+      if (flagImg) {
+        doc.addImage(flagImg, 'PNG', 171, 12, 24, 16);
+      }
+
       doc.setTextColor(255, 215, 0);
       doc.setFontSize(22);
-      doc.text('BOLÃO COPA 2026', 15, 25);
+      doc.text('BOLÃO COPA 2026', 45, 23);
       doc.setFontSize(10);
       doc.setTextColor(255, 255, 255);
-      doc.text('COMPROVANTE OFICIAL DE PALPITES - MATA-MATA', 15, 33);
+      doc.text('COMPROVANTE OFICIAL DE PALPITES - MATA-MATA', 45, 31);
       
       // User info
       doc.setFontSize(11);
