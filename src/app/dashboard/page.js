@@ -1901,7 +1901,15 @@ function DashboardContent() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               {(() => {
                 const filteredBoloes = boloes.filter(b => {
-                  const isKnockout = Array.isArray(b.bets_data) && b.bets_data.some(bd => bd.match_id >= 73);
+                  const isKnockout = Array.isArray(b.bets_data) && b.bets_data.some(bd => 
+                     bd.match_id >= 73 && 
+                     bd.bet_home !== null && 
+                     bd.bet_home !== undefined && 
+                     String(bd.bet_home).trim() !== '' &&
+                     bd.bet_away !== null && 
+                     bd.bet_away !== undefined && 
+                     String(bd.bet_away).trim() !== ''
+                   );
                   return bolaoTypeFilter === 'matamata' ? isKnockout : !isKnockout;
                 });
                 
