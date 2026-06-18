@@ -144,11 +144,84 @@ export const defaultConfrontos = [
     { id: 104, grupo: 'FINAL', home_team: 'Winner Match 101', home_code: 'placeholder', away_team: 'Winner Match 102', away_code: 'placeholder', match_date: '2026-07-19', match_time: '15:00:00', stadium: 'A definir', home_score: null, away_score: null, finished: false }
 ];
 
+// Seed de Usuários Padrão para Banco Local
+export const defaultUsuarios = [
+  { id: 1, username: 'Jefferson', password: '060199', role: 'Admin', approved: true, approved_r32: true, approved_r16: true, approved_qf: true, approved_sf: true, approved_final: true },
+  { id: 2, username: 'Junior', password: '062026', role: 'Moderador', approved: true, approved_r32: true, approved_r16: true, approved_qf: true, approved_sf: true, approved_final: true }
+];
+
+const generateMockBetsData = (seedValue) => {
+  return defaultConfrontos.map(match => {
+    if (match.id > 72) return null; // Apenas fase de grupos (1 a 72)
+    
+    // Gerador determinístico simples de palpites
+    const homeScore = (match.id + seedValue) % 4;
+    const awayScore = (match.id * seedValue + 1) % 3;
+    
+    const isFinished = match.home_score !== null && match.home_score !== undefined;
+    const realHome = isFinished ? match.home_score : null;
+    const realAway = isFinished ? match.away_score : null;
+    
+    let pts = 0;
+    if (isFinished && realHome !== null && realAway !== null) {
+      const rHome = parseInt(realHome);
+      const rAway = parseInt(realAway);
+      if (homeScore === rHome && awayScore === rAway) {
+        pts = 3;
+      } else if ((homeScore > awayScore && rHome > rAway) || 
+                 (homeScore < awayScore && rHome < rAway) || 
+                 (homeScore === awayScore && rHome === rAway)) {
+        pts = 1;
+      }
+    }
+    
+    return {
+      match_id: match.id,
+      home: match.home_team,
+      away: match.away_team,
+      bet_home: homeScore,
+      bet_away: awayScore,
+      real_home: realHome,
+      real_away: realAway,
+      pts: pts
+    };
+  }).filter(Boolean);
+};
+
+export const defaultBoloes = [
+  {
+    id: 1,
+    username: 'Jefferson',
+    bettor_name: 'Pedro Silva',
+    photo_url: 'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?q=80&w=375&auto=format&fit=crop',
+    bets_data: generateMockBetsData(2)
+  },
+  {
+    id: 2,
+    username: 'Jefferson',
+    bettor_name: 'Lucas Souza',
+    photo_url: 'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?q=80&w=375&auto=format&fit=crop',
+    bets_data: generateMockBetsData(5)
+  },
+  {
+    id: 3,
+    username: 'Junior',
+    bettor_name: 'Mariana Costa',
+    photo_url: 'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?q=80&w=375&auto=format&fit=crop',
+    bets_data: generateMockBetsData(7)
+  }
+];
+
+export const defaultConfig = [
+  { key: 'mata_mata_public', value: 'false' },
+  { key: 'allow_register', value: 'true' },
+  { key: 'paqueta_title', value: 'ESCOLHEU TUDO CERTO OU SAIU CHUTANDO IGUAL O PAQUETÁ? 🇧🇷⚽' },
+  { key: 'paqueta_body', value: 'Seus palpites do mata-mata foram processados com sucesso no banco de dados e o seu comprovante PDF foi gerado automaticamente! Boa sorte no Bolão da Copa 2026.' }
+];
+
 // In-Memory/LocalStorage Database for instant preview
 const getLocalDB = () => {
-  if (typeof window === 'undefined') return { confrontos: [], palpites: [], boloes: [] };
-
-  const defaultBoloes = [];
+  if (typeof window === 'undefined') return { confrontos: [], palpites: [], boloes: [], usuarios: [], config: [] };
 
   // Robust migration/verification of local mock database to ensure all 104 World Cup 2026 matches are present
   let needsReset = false;
@@ -170,7 +243,9 @@ const getLocalDB = () => {
   if (needsReset) {
     localStorage.setItem('copa26_confrontos', JSON.stringify(defaultConfrontos));
     localStorage.setItem('copa26_palpites', JSON.stringify([]));
-    localStorage.setItem('copa26_boloes', JSON.stringify([]));
+    localStorage.setItem('copa26_boloes', JSON.stringify(defaultBoloes));
+    localStorage.setItem('copa26_usuarios', JSON.stringify(defaultUsuarios));
+    localStorage.setItem('copa26_config', JSON.stringify(defaultConfig));
   }
 
   if (!localStorage.getItem('copa26_palpites')) {
@@ -179,11 +254,19 @@ const getLocalDB = () => {
   if (!localStorage.getItem('copa26_boloes')) {
     localStorage.setItem('copa26_boloes', JSON.stringify(defaultBoloes));
   }
+  if (!localStorage.getItem('copa26_usuarios')) {
+    localStorage.setItem('copa26_usuarios', JSON.stringify(defaultUsuarios));
+  }
+  if (!localStorage.getItem('copa26_config')) {
+    localStorage.setItem('copa26_config', JSON.stringify(defaultConfig));
+  }
 
   return {
     confrontos: JSON.parse(localStorage.getItem('copa26_confrontos')),
     palpites: JSON.parse(localStorage.getItem('copa26_palpites')),
     boloes: JSON.parse(localStorage.getItem('copa26_boloes')),
+    usuarios: JSON.parse(localStorage.getItem('copa26_usuarios')) || defaultUsuarios,
+    config: JSON.parse(localStorage.getItem('copa26_config')) || defaultConfig,
   };
 };
 
@@ -192,6 +275,8 @@ const saveLocalDB = (db) => {
   localStorage.setItem('copa26_confrontos', JSON.stringify(db.confrontos));
   localStorage.setItem('copa26_palpites', JSON.stringify(db.palpites));
   localStorage.setItem('copa26_boloes', JSON.stringify(db.boloes));
+  localStorage.setItem('copa26_usuarios', JSON.stringify(db.usuarios || defaultUsuarios));
+  localStorage.setItem('copa26_config', JSON.stringify(db.config || defaultConfig));
 };
 
 // Custom Mock Client implementing equivalent APIs
@@ -200,14 +285,19 @@ export const supabase = isSupabaseConfigured ? supabaseClient : {
     const db = getLocalDB();
     return {
       select: () => {
-        return {
+        const result = {
           data: db[table] || [],
           error: null,
           eq: (field, val) => {
             const dataFiltered = (db[table] || []).filter(item => item[field] === val);
             return { data: dataFiltered, error: null };
+          },
+          order: (field, options) => {
+            // Keep it simple, return data
+            return { data: db[table] || [], error: null };
           }
         };
+        return result;
       },
       insert: async (newData) => {
         const list = Array.isArray(newData) ? newData : [newData];
@@ -222,11 +312,19 @@ export const supabase = isSupabaseConfigured ? supabaseClient : {
       upsert: async (upsertData) => {
         const items = Array.isArray(upsertData) ? upsertData : [upsertData];
         items.forEach(item => {
-          const idx = db[table].findIndex(x => x.username === item.username && x.match_id === item.match_id);
+          let idx = -1;
+          if (table === 'config') {
+            idx = db[table].findIndex(x => x.key === item.key);
+          } else {
+            idx = db[table].findIndex(x => x.username === item.username && x.match_id === item.match_id);
+          }
+
           if (idx !== -1) {
             db[table][idx] = { ...db[table][idx], ...item };
           } else {
-            item.id = Date.now() + Math.floor(Math.random() * 1000);
+            if (table !== 'config') {
+              item.id = Date.now() + Math.floor(Math.random() * 1000);
+            }
             db[table].push(item);
           }
         });
@@ -266,6 +364,8 @@ export const resetDatabase = async () => {
     localStorage.removeItem('copa26_confrontos');
     localStorage.removeItem('copa26_palpites');
     localStorage.removeItem('copa26_boloes');
+    localStorage.removeItem('copa26_usuarios');
+    localStorage.removeItem('copa26_config');
   }
 
   if (isSupabaseConfigured && supabaseClient) {
@@ -274,10 +374,30 @@ export const resetDatabase = async () => {
       await supabaseClient.from('palpites').delete().gt('id', 0);
       await supabaseClient.from('boloes').delete().gt('id', 0);
       await supabaseClient.from('confrontos').delete().gt('id', 0);
+      await supabaseClient.from('usuarios').delete().gt('id', 0);
+      try {
+        await supabaseClient.from('config').delete().neq('key', '');
+      } catch (err) {
+        // silently catch if config table not migrated yet
+      }
 
       // Reseed confrontos in Supabase
       const { error } = await supabaseClient.from('confrontos').insert(defaultConfrontos);
       if (error) throw error;
+
+      // Reseed config in Supabase
+      try {
+        await supabaseClient.from('config').insert(defaultConfig);
+      } catch (err) {
+        // silently catch
+      }
+
+      // Reseed users in Supabase
+      const { error: err2 } = await supabaseClient.from('usuarios').insert([
+        { username: 'Jefferson', password: '060199', role: 'Admin', approved: true, approved_r32: true, approved_r16: true, approved_qf: true, approved_sf: true, approved_final: true },
+        { username: 'Junior', password: '062026', role: 'Moderador', approved: true, approved_r32: true, approved_r16: true, approved_qf: true, approved_sf: true, approved_final: true }
+      ]);
+      if (err2) throw err2;
     } catch (e) {
       console.error('Erro ao resetar banco Supabase:', e);
       throw e;

@@ -180,3 +180,44 @@ ON CONFLICT (id) DO NOTHING;
 
 -- Migration: Adicionar coluna avatar_url na tabela boloes se não existir
 ALTER TABLE public.boloes ADD COLUMN IF NOT EXISTS avatar_url TEXT DEFAULT NULL;
+
+-- 5. Tabela de Perfis de Usuários
+CREATE TABLE IF NOT EXISTS public.usuarios (
+    id SERIAL PRIMARY KEY,
+    username VARCHAR(50) NOT NULL UNIQUE,
+    password VARCHAR(50) NOT NULL,
+    whatsapp VARCHAR(20),
+    role VARCHAR(20) DEFAULT 'Jogador', -- 'Admin', 'Moderador', 'Jogador'
+    approved BOOLEAN DEFAULT FALSE, -- Fase de Grupos
+    approved_r32 BOOLEAN DEFAULT FALSE, -- 1/16 de Final
+    approved_r16 BOOLEAN DEFAULT FALSE, -- Oitavas
+    approved_qf BOOLEAN DEFAULT FALSE, -- Quartas
+    approved_sf BOOLEAN DEFAULT FALSE, -- Semifinal
+    approved_final BOOLEAN DEFAULT FALSE, -- Final
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+);
+
+-- Seed de Usuários Administrativos Padrão
+INSERT INTO public.usuarios (username, password, role, approved, approved_r32, approved_r16, approved_qf, approved_sf, approved_final) VALUES
+('Jefferson', '060199', 'Admin', true, true, true, true, true, true),
+('Junior', '062026', 'Moderador', true, true, true, true, true, true)
+ON CONFLICT (username) DO NOTHING;
+
+ALTER TABLE public.usuarios ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Acesso total de usuarios" ON public.usuarios FOR ALL USING (true);
+
+-- 6. Tabela de Configurações Gerais
+CREATE TABLE IF NOT EXISTS public.config (
+    key VARCHAR(50) PRIMARY KEY,
+    value VARCHAR(100) NOT NULL
+);
+
+ALTER TABLE public.config ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Acesso total de config" ON public.config FOR ALL USING (true);
+
+INSERT INTO public.config (key, value) VALUES
+('mata_mata_public', 'false'),
+('allow_register', 'true')
+ON CONFLICT (key) DO NOTHING;
+
+

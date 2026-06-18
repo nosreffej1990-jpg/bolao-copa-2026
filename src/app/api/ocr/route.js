@@ -22,9 +22,9 @@ export async function POST(req) {
 
     const apiKey = process.env.GEMINI_API_KEY;
 
-    // Fallback if Gemini API Key is not configured
-    if (!apiKey) {
-      console.log('GEMINI_API_KEY não configurada. Usando simulador de OCR.');
+    // Fallback if Gemini API Key is not configured or is the default placeholder
+    if (!apiKey || apiKey === 'sua_chave_do_gemini_aqui' || apiKey.trim() === '') {
+      console.log('GEMINI_API_KEY não configurada ou com placeholder. Usando simulador de OCR.');
       
       const prefilledBets = defaultConfrontos.map(match => {
         const hasOcr = Math.random() > 0.3;
