@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Icons } from '@/components/Icons';
 import { getFlagCode } from '@/lib/worldcupApi';
-import { supabase, defaultUsuarios } from '@/lib/supabase';
+import { supabase, defaultUsuarios, isSupabaseConfigured } from '@/lib/supabase';
 import { useTheme, THEMES } from '@/components/ThemeProvider';
 
 export default function Home() {
@@ -134,6 +134,7 @@ export default function Home() {
         if (typeof window !== 'undefined') {
           localStorage.setItem('copa26_user', userObj.username);
           localStorage.setItem('copa26_role', userObj.role || 'Jogador');
+          localStorage.setItem('copa26_pass', password);
           localStorage.setItem('copa26_approved', userObj.approved ? 'true' : 'false');
         }
         router.push('/dashboard?tab=ranking');
@@ -156,28 +157,46 @@ export default function Home() {
     }
 
     try {
-      const { data: existing, error: fetchErr } = await supabase.from('usuarios').select('*');
-      if (fetchErr) throw fetchErr;
+      if (isSupabaseConfigured) {
+        const response = await fetch('/api/usuarios', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'register',
+            regUsername: formattedUsername,
+            regPassword,
+            regWhatsapp
+          })
+        });
 
-      const userExists = (existing || []).some(
-        (u) => u.username.toLowerCase() === formattedUsername.toLowerCase()
-      );
+        const resData = await response.json();
+        if (!response.ok) {
+          throw new Error(resData.error || 'Erro desconhecido ao cadastrar');
+        }
+      } else {
+        const { data: existing, error: fetchErr } = await supabase.from('usuarios').select('*');
+        if (fetchErr) throw fetchErr;
 
-      if (userExists) {
-        setRegErrorMsg('Nome de usuário já está em uso.');
-        return;
+        const userExists = (existing || []).some(
+          (u) => u.username.toLowerCase() === formattedUsername.toLowerCase()
+        );
+
+        if (userExists) {
+          setRegErrorMsg('Nome de usuário já está em uso.');
+          return;
+        }
+
+        const newUser = {
+          username: formattedUsername,
+          password: regPassword,
+          whatsapp: regWhatsapp,
+          role: 'Jogador',
+          approved: false
+        };
+
+        const { error: insertErr } = await supabase.from('usuarios').insert(newUser);
+        if (insertErr) throw insertErr;
       }
-
-      const newUser = {
-        username: formattedUsername,
-        password: regPassword,
-        whatsapp: regWhatsapp,
-        role: 'Jogador',
-        approved: false
-      };
-
-      const { error: insertErr } = await supabase.from('usuarios').insert(newUser);
-      if (insertErr) throw insertErr;
 
       setShowPixModal(true);
       setShowRegister(false);
@@ -238,7 +257,18 @@ export default function Home() {
             />
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', textAlign: 'left', marginLeft: '0.5rem', flex: 1 }}>
               <h1>BOLÃO COPA 2026</h1>
-              <p>EUA • México • Canadá</p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginTop: '0.1rem' }}>
+                <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--text-secondary)' }}>EUA • México • Canadá</p>
+                {isSupabaseConfigured ? (
+                  <span title="Conectado ao Supabase Cloud" style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', fontSize: '0.6rem', background: 'rgba(16,185,129,0.12)', color: 'var(--soccer-green)', padding: '1px 6px', borderRadius: '4px', border: '1px solid rgba(16,185,129,0.3)', fontWeight: 'bold' }}>
+                    <span style={{ width: '5px', height: '5px', borderRadius: '50%', backgroundColor: 'var(--soccer-green)' }}></span> Nuvem
+                  </span>
+                ) : (
+                  <span title="As chaves do Supabase não estão configuradas no .env.local. Os dados são salvos apenas no seu navegador (LocalStorage)." style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', fontSize: '0.6rem', background: 'rgba(251,191,36,0.12)', color: 'var(--accent-gold)', padding: '1px 6px', borderRadius: '4px', border: '1px solid rgba(251,191,36,0.3)', fontWeight: 'bold' }}>
+                    ⚠️ Demo (Local)
+                  </span>
+                )}
+              </div>
             </div>
             {activeThemeObj && (
               <img

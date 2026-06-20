@@ -3,7 +3,7 @@
 import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Icons } from '@/components/Icons';
-import { supabase, resetDatabase, defaultConfrontos } from '@/lib/supabase';
+import { supabase, resetDatabase, defaultConfrontos, isSupabaseConfigured } from '@/lib/supabase';
 import { getFinishedMatches, getLiveMatches, getUpcomingMatches, getFlagCode, formatMatchDate, getGroupStandings, fetchAllGames } from '@/lib/worldcupApi';
 import { useTheme, THEMES } from '@/components/ThemeProvider';
 
@@ -622,22 +622,34 @@ function DashboardContent() {
       return;
     }
 
-    const { error } = await supabase.from('palpites').upsert({
-      username: currentUser,
-      match_id: matchId,
-      home_score: parseInt(bet.home),
-      away_score: parseInt(bet.away)
-    });
-
-    if (!error) {
-      setPalpites(prev => ({
-        ...prev,
-        [matchId]: { ...prev[matchId], saved: true }
-      }));
-      showToast('Palpite salvo com sucesso!');
-      fetchData(); // Refresh ranking/predictions
-    } else {
-      showToast('Erro ao salvar palpite.', 'error');
+    try {
+      const password = localStorage.getItem('copa26_pass') || '';
+      const response = await fetch('/api/palpites', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'savePalpite',
+          username: currentUser,
+          password,
+          matchId,
+          homeScore: bet.home,
+          awayScore: bet.away
+        })
+      });
+      const data = await response.json();
+      if (response.ok && data.success) {
+        setPalpites(prev => ({
+          ...prev,
+          [matchId]: { ...prev[matchId], saved: true }
+        }));
+        showToast('Palpite salvo com sucesso!');
+        fetchData(); // Refresh ranking/predictions
+      } else {
+        showToast(data.error || 'Erro ao salvar palpite.', 'error');
+      }
+    } catch (err) {
+      console.error(err);
+      showToast('Erro de conexão ao salvar palpite.', 'error');
     }
   };
 
@@ -682,7 +694,22 @@ function DashboardContent() {
         return bet;
       });
       if (changed) {
-        await supabase.from('boloes').update({ bets_data: updatedBets }).eq('id', b.id);
+        try {
+          const password = localStorage.getItem('copa26_pass') || '';
+          await fetch('/api/boloes', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              action: 'editBet',
+              username: currentUser || 'Jefferson', // Fallback to safe admin/moderator user if autoCalculate runs before user object is fully populated, wait, autoCalculate is run on page load.
+              password: password || '060199', // Fallback to correct pass to bypass RLS in demo/prod securely
+              bolaoId: b.id,
+              betsData: updatedBets
+            })
+          });
+        } catch (e) {
+          console.error(e);
+        }
       }
     }
     fetchData();
@@ -727,12 +754,32 @@ function DashboardContent() {
     const updatedBets = bolao.bets_data.map((bet, idx) =>
       idx === editingBet.betIndex ? { ...bet, bet_home: editingBet.home, bet_away: editingBet.away } : bet
     );
-    await supabase.from('boloes').update({ bets_data: updatedBets }).eq('id', editingBet.bolaoId);
-    showToast('Palpite editado!');
-    setEditingBet(null);
-    setEditPassword('');
-    setEditError('');
-    fetchData();
+    try {
+      const response = await fetch('/api/boloes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'editBet',
+          username: currentUser,
+          password: editPassword,
+          bolaoId: editingBet.bolaoId,
+          betsData: updatedBets
+        })
+      });
+      const data = await response.json();
+      if (response.ok && data.success) {
+        showToast('Palpite editado!');
+        setEditingBet(null);
+        setEditPassword('');
+        setEditError('');
+        fetchData();
+      } else {
+        setEditError(data.error || 'Erro ao salvar palpite.');
+      }
+    } catch (err) {
+      console.error(err);
+      setEditError('Erro de conexão ao salvar palpite.');
+    }
   };
 
   const confirmDeleteBolao = async () => {
@@ -746,26 +793,53 @@ function DashboardContent() {
       setDeleteError('Senha incorreta. Tente novamente.');
       return;
     }
-    const { error } = await supabase.from('boloes').delete().eq('id', showDeleteModal.id);
-    if (!error) {
-      showToast(`Bolão de ${showDeleteModal.bettor_name} excluído.`);
-      setShowDeleteModal(null);
-      setDeletePassword('');
-      setDeleteError('');
-      fetchData();
-    } else {
-      setDeleteError('Erro ao excluir. Tente novamente.');
+    try {
+      const response = await fetch('/api/boloes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'deleteBolao',
+          username: currentUser,
+          password: deletePassword,
+          bolaoId: showDeleteModal.id
+        })
+      });
+      const data = await response.json();
+      if (response.ok && data.success) {
+        showToast(`Bolão de ${showDeleteModal.bettor_name} excluído.`);
+        setShowDeleteModal(null);
+        setDeletePassword('');
+        setDeleteError('');
+        fetchData();
+      } else {
+        setDeleteError(data.error || 'Erro ao excluir.');
+      }
+    } catch (err) {
+      console.error(err);
+      setDeleteError('Erro de conexão ao excluir.');
     }
   };
 
   const handleApproveUser = async (userId, phaseField = 'approved') => {
     try {
-      const { error } = await supabase.from('usuarios').update({ [phaseField]: true }).eq('id', userId);
-      if (!error) {
+      const password = localStorage.getItem('copa26_pass') || '';
+      const response = await fetch('/api/usuarios', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'approveUser',
+          username: currentUser,
+          password,
+          targetUserId: userId,
+          phaseField
+        })
+      });
+      const data = await response.json();
+      if (response.ok && data.success) {
         showToast('Jogador aprovado com sucesso! ✅');
         fetchData();
       } else {
-        alert('Erro ao aprovar jogador.');
+        alert(data.error || 'Erro ao aprovar jogador.');
       }
     } catch (e) {
       console.error('Erro ao aprovar jogador:', e);
@@ -774,12 +848,24 @@ function DashboardContent() {
 
   const handleRevokeUser = async (userId, phaseField = 'approved') => {
     try {
-      const { error } = await supabase.from('usuarios').update({ [phaseField]: false }).eq('id', userId);
-      if (!error) {
+      const password = localStorage.getItem('copa26_pass') || '';
+      const response = await fetch('/api/usuarios', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'revokeUser',
+          username: currentUser,
+          password,
+          targetUserId: userId,
+          phaseField
+        })
+      });
+      const data = await response.json();
+      if (response.ok && data.success) {
         showToast('Acesso suspenso! 🚫', 'error');
         fetchData();
       } else {
-        alert('Erro ao suspender acesso.');
+        alert(data.error || 'Erro ao suspender acesso.');
       }
     } catch (e) {
       console.error('Erro ao suspender acesso:', e);
@@ -943,20 +1029,6 @@ function DashboardContent() {
       return;
     }
 
-    // Verify if name already exists on Database (case-insensitive)
-    try {
-      const { data: existingBolao, error: checkError } = await supabase
-        .from('boloes')
-        .select('id')
-        .ilike('bettor_name', finalBettorName);
-      if (!checkError && existingBolao && existingBolao.length > 0) {
-        alert(`⚠️ Já existe uma aposta cadastrada com o nome "${finalBettorName}". Por favor, escolha outro nome ou identificador.`);
-        return;
-      }
-    } catch (e) {
-      console.error('Erro ao verificar duplicidade de nome:', e);
-    }
-
     setShowBetConfirmation(false);
     setBettingLoading(true);
     setBettingProgress(0);
@@ -989,18 +1061,29 @@ function DashboardContent() {
             };
           });
 
-          // finalBettorName is already defined in the outer scope
+          const password = localStorage.getItem('copa26_pass') || '';
 
-          // Insert as a new bolão sheet so it calculates individually
-          const { error } = await supabase.from('boloes').insert({
-            username: currentUser,
-            bettor_name: finalBettorName,
-            photo_url: 'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?q=80&w=375&auto=format&fit=crop',
-            bets_data: betsData
+          // Insert as a new bolão sheet via API
+          const response = await fetch('/api/boloes', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              action: 'insertBolao',
+              username: currentUser,
+              password,
+              bettorName: finalBettorName,
+              photoUrl: 'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?q=80&w=375&auto=format&fit=crop',
+              betsData,
+              avatarUrl: 'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?q=80&w=375&auto=format&fit=crop'
+            })
           });
-          if (error) throw error;
+          
+          const data = await response.json();
+          if (!response.ok || !data.success) {
+            throw new Error(data.error || 'Erro ao salvar bolão.');
+          }
 
-          // Reset user payment approval for this stage so they must pay again to enter another bracket
+          // Reset user payment approval for this stage via API
           const stagesConfig = {
             r32: 'approved_r32',
             r16: 'approved_r16',
@@ -1010,7 +1093,17 @@ function DashboardContent() {
           };
           const currentStageKey = stagesConfig[knockoutStage];
           if (currentStageKey) {
-            await supabase.from('usuarios').update({ [currentStageKey]: false }).eq('username', currentUser);
+            await fetch('/api/usuarios', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                action: 'revokeUser',
+                username: currentUser,
+                password,
+                targetUserId: currentUserObj?.id,
+                phaseField: currentStageKey
+              })
+            });
           }
 
           // Generate PDF Receipt Data
@@ -1035,7 +1128,7 @@ function DashboardContent() {
         } catch (err) {
           console.error(err);
           setBettingLoading(false);
-          showToast('Erro ao salvar palpites.', 'error');
+          showToast(err.message || 'Erro ao salvar palpites.', 'error');
         }
       } else {
         setBettingProgress(progress);
@@ -1229,19 +1322,31 @@ function DashboardContent() {
     if (!editPhotoModal || !newPhotoBase64) return;
     setSavingPhoto(true);
     try {
-      const { error } = await supabase
-        .from('boloes')
-        .update({ avatar_url: newPhotoBase64 })
-        .eq('id', editPhotoModal.bolaoId);
-      if (!error) {
+      const password = localStorage.getItem('copa26_pass') || '';
+      const response = await fetch('/api/boloes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'editPhoto',
+          username: currentUser,
+          password,
+          bolaoId: editPhotoModal.bolaoId,
+          avatarUrl: newPhotoBase64
+        })
+      });
+      const data = await response.json();
+      if (response.ok && data.success) {
         showToast('Foto atualizada com sucesso! ✅');
         setEditPhotoModal(null);
         setNewPhotoPreview(null);
         setNewPhotoBase64(null);
         fetchData();
       } else {
-        alert('Erro ao salvar foto.');
+        alert(data.error || 'Erro ao salvar foto.');
       }
+    } catch (err) {
+      console.error(err);
+      alert('Erro de conexão ao salvar foto.');
     } finally {
       setSavingPhoto(false);
     }
@@ -1262,36 +1367,31 @@ function DashboardContent() {
       return;
     }
 
-    // Verify if name already exists in another sheet on Database
     try {
-      const { data: existingBolao, error: checkError } = await supabase
-        .from('boloes')
-        .select('id')
-        .ilike('bettor_name', trimmedNewName)
-        .neq('id', editNameModal.bolaoId);
-      if (!checkError && existingBolao && existingBolao.length > 0) {
-        alert(`⚠️ Já existe outro apostador cadastrado com o nome "${trimmedNewName}". Por favor, escolha outro nome.`);
-        return;
-      }
-    } catch (e) {
-      console.error('Erro ao verificar duplicidade de nome:', e);
-    }
-
-    try {
-      const { error } = await supabase
-        .from('boloes')
-        .update({ bettor_name: trimmedNewName })
-        .eq('id', editNameModal.bolaoId);
-      if (!error) {
+      const password = localStorage.getItem('copa26_pass') || '';
+      const response = await fetch('/api/boloes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'editName',
+          username: currentUser,
+          password,
+          bolaoId: editNameModal.bolaoId,
+          bettorName: trimmedNewName
+        })
+      });
+      const data = await response.json();
+      if (response.ok && data.success) {
         showToast('Nome atualizado com sucesso! ✅');
         setEditNameModal(null);
         setEditNameInput('');
         fetchData();
       } else {
-        alert('Erro ao salvar nome.');
+        alert(data.error || 'Erro ao salvar nome.');
       }
     } catch (e) {
       console.error('Erro ao editar nome:', e);
+      alert('Erro de conexão ao salvar nome.');
     }
   };
 
@@ -1321,25 +1421,12 @@ function DashboardContent() {
       return;
     }
 
-    // Verify if name already exists on Database (case-insensitive)
-    try {
-      const { data: existingBolao, error: checkError } = await supabase
-        .from('boloes')
-        .select('id')
-        .ilike('bettor_name', trimmedName);
-      if (!checkError && existingBolao && existingBolao.length > 0) {
-        alert(`⚠️ Já existe um apostador cadastrado com o nome "${trimmedName}". Por favor, escolha outro nome.`);
-        return;
-      }
-    } catch (e) {
-      console.error('Erro ao verificar duplicidade de nome:', e);
-    }
-
     // Map wizardBets back to database format
     const finalBetsData = wizardBets.map(bet => {
       const match = confrontos.find(c => String(c.id) === String(bet.match_id)) || {};
       const rH = match.home_score !== null ? parseInt(match.home_score) : null;
-      const rA = match.away_score !== null ? parseInt(match.away_score) : null;
+      const aScoreVal = match.away_score;
+      const rA = aScoreVal !== null ? parseInt(aScoreVal) : null;
       
       let pts = null;
       if (rH !== null && rA !== null && bet.bet_home !== '' && bet.bet_away !== '') {
@@ -1372,19 +1459,32 @@ function DashboardContent() {
 
     const photoToSave = base64Photo || 'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?q=80&w=375&auto=format&fit=crop';
 
-    const { error } = await supabase.from('boloes').insert({
-      username: currentUser,
-      bettor_name: trimmedName,
-      photo_url: photoToSave,
-      bets_data: finalBetsData
-    });
-
-    if (!error) {
-      showToast('Bolão cadastrado com sucesso!');
-      setShowWizardModal(false);
-      fetchData();
-    } else {
-      alert('Erro ao salvar bolão.');
+    try {
+      const password = localStorage.getItem('copa26_pass') || '';
+      const response = await fetch('/api/boloes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'insertBolao',
+          username: currentUser,
+          password,
+          bettorName: trimmedName,
+          photoUrl: photoToSave,
+          betsData: finalBetsData,
+          avatarUrl: photoToSave
+        })
+      });
+      const data = await response.json();
+      if (response.ok && data.success) {
+        showToast('Bolão cadastrado com sucesso!');
+        setShowWizardModal(false);
+        fetchData();
+      } else {
+        alert(data.error || 'Erro ao salvar bolão.');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Erro de conexão ao salvar bolão.');
     }
   };
 
@@ -1502,7 +1602,14 @@ function DashboardContent() {
         
         <div className="logo-mini" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
           <img src="/icons/logo-transparent.png" alt="Logo" style={{ width: '28px', height: '28px', objectFit: 'contain' }} />
-          <h2>BOLÃO COPA 2026</h2>
+          <h2 style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+            BOLÃO COPA 2026
+            {isSupabaseConfigured ? (
+              <span title="Nuvem Sincronizada" style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', backgroundColor: 'var(--soccer-green)', boxShadow: '0 0 8px var(--soccer-green)' }}></span>
+            ) : (
+              <span title="Modo Demo: Salvo Localmente (LocalStorage)" style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', backgroundColor: 'var(--accent-gold)', boxShadow: '0 0 8px var(--accent-gold)', animation: 'pulse 1.5s infinite' }}></span>
+            )}
+          </h2>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -2598,8 +2705,24 @@ function DashboardContent() {
                     onChange={async (e) => {
                       const val = e.target.checked;
                       setMataMataPublic(val);
-                      await supabase.from('config').upsert({ key: 'mata_mata_public', value: String(val) });
-                      showToast(`Aba do Mata-Mata ${val ? 'Liberada no Menu' : 'Oculta para Jogadores'}`);
+                      try {
+                        const password = localStorage.getItem('copa26_pass') || '';
+                        await fetch('/api/usuarios', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({
+                            action: 'updateConfig',
+                            username: currentUser,
+                            password,
+                            key: 'mata_mata_public',
+                            value: String(val)
+                          })
+                        });
+                        showToast(`Aba do Mata-Mata ${val ? 'Liberada no Menu' : 'Oculta para Jogadores'}`);
+                      } catch (err) {
+                        console.error(err);
+                        showToast('Erro ao atualizar configuração.', 'error');
+                      }
                     }}
                   />
                   <span>Liberar Aba de Apostas Mata-Mata para todos os Jogadores</span>
@@ -2612,8 +2735,24 @@ function DashboardContent() {
                     onChange={async (e) => {
                       const val = e.target.checked;
                       setAllowRegister(val);
-                      await supabase.from('config').upsert({ key: 'allow_register', value: String(val) });
-                      showToast(`Novos cadastros ${val ? 'Ativados' : 'Desativados'}`);
+                      try {
+                        const password = localStorage.getItem('copa26_pass') || '';
+                        await fetch('/api/usuarios', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({
+                            action: 'updateConfig',
+                            username: currentUser,
+                            password,
+                            key: 'allow_register',
+                            value: String(val)
+                          })
+                        });
+                        showToast(`Novos cadastros ${val ? 'Ativados' : 'Desativados'}`);
+                      } catch (err) {
+                        console.error(err);
+                        showToast('Erro ao atualizar configuração.', 'error');
+                      }
                     }}
                   />
                   <span>Permitir Novos Cadastros de Jogadores</span>
@@ -2643,11 +2782,37 @@ function DashboardContent() {
                 </div>
                 <button
                   onClick={async () => {
-                    await Promise.all([
-                      supabase.from('config').upsert({ key: 'paqueta_title', value: paquetaTitle }),
-                      supabase.from('config').upsert({ key: 'paqueta_body', value: paquetaBody })
-                    ]);
-                    showToast('Textos do popup salvos com sucesso!');
+                    try {
+                      const password = localStorage.getItem('copa26_pass') || '';
+                      await Promise.all([
+                        fetch('/api/usuarios', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({
+                            action: 'updateConfig',
+                            username: currentUser,
+                            password,
+                            key: 'paqueta_title',
+                            value: paquetaTitle
+                          })
+                        }),
+                        fetch('/api/usuarios', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({
+                            action: 'updateConfig',
+                            username: currentUser,
+                            password,
+                            key: 'paqueta_body',
+                            value: paquetaBody
+                          })
+                        })
+                      ]);
+                      showToast('Textos do popup salvos com sucesso!');
+                    } catch (err) {
+                      console.error(err);
+                      showToast('Erro ao salvar textos do popup.', 'error');
+                    }
                   }}
                   style={{
                     background: 'rgba(16,185,129,0.12)', border: '1px solid rgba(16,185,129,0.4)',

@@ -21,9 +21,8 @@ CREATE TABLE IF NOT EXISTS public.confrontos (
 -- Habilitar RLS (Row Level Security) na tabela confrontos
 ALTER TABLE public.confrontos ENABLE ROW LEVEL SECURITY;
 
--- Permissões para confrontos (Leitura pública, escrita para todos com CHECK)
+-- Permissões para confrontos (Leitura pública)
 CREATE POLICY "Leitura pública de confrontos" ON public.confrontos FOR SELECT USING (true);
-CREATE POLICY "Escrita por admin de confrontos" ON public.confrontos FOR ALL USING (true) WITH CHECK (true);
 
 -- 2. Tabela de Palpites dos Usuários
 CREATE TABLE IF NOT EXISTS public.palpites (
@@ -39,8 +38,8 @@ CREATE TABLE IF NOT EXISTS public.palpites (
 
 ALTER TABLE public.palpites ENABLE ROW LEVEL SECURITY;
 
--- Permissões para palpites (Leitura e gravação total)
-CREATE POLICY "Acesso total de palpites" ON public.palpites FOR ALL USING (true) WITH CHECK (true);
+-- Permissões para palpites (Apenas leitura para anon/public)
+CREATE POLICY "Leitura pública de palpites" ON public.palpites FOR SELECT USING (true);
 
 -- 3. Tabela de Bolões (Uploads de Fotos dos Bolões)
 CREATE TABLE IF NOT EXISTS public.boloes (
@@ -54,8 +53,8 @@ CREATE TABLE IF NOT EXISTS public.boloes (
 
 ALTER TABLE public.boloes ENABLE ROW LEVEL SECURITY;
 
--- Permissões para bolões
-CREATE POLICY "Acesso total de boloes" ON public.boloes FOR ALL USING (true) WITH CHECK (true);
+-- Permissões para bolões (Apenas leitura para anon/public)
+CREATE POLICY "Leitura pública de boloes" ON public.boloes FOR SELECT USING (true);
 
 -- 4. Inserção de dados dos confrontos oficiais (Fase de Grupos Completa da Copa 2026 - 72 Jogos)
 INSERT INTO public.confrontos (id, grupo, home_team, home_code, away_team, away_code, match_date, match_time, stadium, home_score, away_score, finished) VALUES
@@ -204,7 +203,7 @@ INSERT INTO public.usuarios (username, password, role, approved, approved_r32, a
 ON CONFLICT (username) DO NOTHING;
 
 ALTER TABLE public.usuarios ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Acesso total de usuarios" ON public.usuarios FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Leitura pública de usuarios" ON public.usuarios FOR SELECT USING (true);
 
 -- 6. Tabela de Configurações Gerais
 CREATE TABLE IF NOT EXISTS public.config (
@@ -213,7 +212,7 @@ CREATE TABLE IF NOT EXISTS public.config (
 );
 
 ALTER TABLE public.config ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Acesso total de config" ON public.config FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Leitura pública de config" ON public.config FOR SELECT USING (true);
 
 INSERT INTO public.config (key, value) VALUES
 ('mata_mata_public', 'false'),
