@@ -578,11 +578,16 @@ function DashboardContent() {
         setKnockoutBets(koBets);
       }
 
-      // Load registered users if Admin or Moderador
-      if (user && (role === 'Admin' || role === 'Moderador')) {
-        const { data: users, error: listErr } = await supabase.from('usuarios').select('*').order('username', { ascending: true });
+      // Load registered users
+      if (user) {
+        const isAdminOrMod = role === 'Admin' || role === 'Moderador';
+        const query = isAdminOrMod 
+          ? supabase.from('usuarios').select('*').order('username', { ascending: true })
+          : supabase.from('usuarios').select('id, username, role, campeao').order('username', { ascending: true });
+        
+        const { data: users, error: listErr } = await query;
         if (listErr) {
-          console.error('Erro ao carregar lista de usuarios (admin/mod):', listErr);
+          console.error('Erro ao carregar lista de usuarios:', listErr);
         }
         if (!listErr && users) {
           console.log('Usuarios carregados com sucesso:', users.length);
@@ -1594,7 +1599,7 @@ function DashboardContent() {
   const groupsList = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L'];
 
   return (
-    <div className="dashboard-container">
+    <div className="dashboard-container" style={{ paddingBottom: '5.5rem' }}>
       {/* Header */}
       <header className="dashboard-header" style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div className="back-btn" onClick={() => router.push('/')}>
@@ -3106,6 +3111,98 @@ function DashboardContent() {
             </div>
           );
         })()}
+
+        {activeTab === 'jogadores' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+            <div style={{ textAlign: 'center', marginBottom: '0.5rem' }}>
+              <h2 style={{ fontSize: '1.4rem', fontWeight: '800', color: 'var(--accent-gold)', margin: '0 0 0.25rem 0' }}>🏃 JOGADORES CADASTRADOS</h2>
+              <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', margin: 0 }}>
+                Toque em um jogador para ver seus palpites e a seleção campeã escolhida.
+              </p>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              {usersList.map((player) => {
+                // Find if the player has a bolão
+                const playerBolao = boloes.find(b => b.username.toLowerCase() === player.username.toLowerCase());
+                return (
+                  <div
+                    key={player.id}
+                    onClick={() => {
+                      if (playerBolao) {
+                        setShowRankingDetailsModal(playerBolao);
+                      } else {
+                        alert(`O jogador ${player.username} ainda não enviou palpites ou os palpites não foram aprovados.`);
+                      }
+                    }}
+                    style={{
+                      background: 'rgba(255, 255, 255, 0.02)',
+                      border: '1px solid var(--border-color)',
+                      borderRadius: '16px',
+                      padding: '1.25rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)';
+                      e.currentTarget.style.borderColor = 'rgba(255,255,255,0.15)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = 'rgba(255, 255, 255, 0.02)';
+                      e.currentTarget.style.borderColor = 'var(--border-color)';
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+                      <div style={{
+                        background: 'rgba(251, 191, 36, 0.06)',
+                        borderRadius: '50%',
+                        width: '42px',
+                        height: '42px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                      }}>
+                        <Icons.User size={20} style={{ color: 'var(--accent-gold)' }} />
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
+                        <span style={{ fontSize: '0.9rem', fontWeight: 'bold', color: '#fff' }}>{player.username}</span>
+                        {player.campeao ? (
+                          <span style={{ fontSize: '0.7rem', color: 'var(--accent-gold)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            🏆 Campeão: <strong>{player.campeao}</strong>
+                          </span>
+                        ) : (
+                          <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>Sem palpite de campeão</span>
+                        )}
+                      </div>
+                    </div>
+                    
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      {playerBolao ? (
+                        <span style={{ fontSize: '0.68rem', background: 'rgba(16,185,129,0.1)', color: 'var(--soccer-green)', padding: '2px 8px', borderRadius: '999px', fontWeight: 'bold' }}>
+                          Palpites Ativos
+                        </span>
+                      ) : (
+                        <span style={{ fontSize: '0.68rem', background: 'rgba(255,255,255,0.05)', color: 'var(--text-secondary)', padding: '2px 8px', borderRadius: '999px' }}>
+                          Sem Palpites
+                        </span>
+                      )}
+                      <Icons.ChevronRight size={18} style={{ color: 'var(--text-secondary)' }} />
+                    </div>
+                  </div>
+                );
+              })}
+
+              {usersList.length === 0 && (
+                <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
+                  Carregando lista de jogadores...
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </main>
 
       {/* --- MODALS --- */}
@@ -4129,6 +4226,62 @@ function DashboardContent() {
           {toastMsg}
         </div>
       )}
+      {/* Bottom Tab Bar (Post-Login) */}
+      <div style={{
+        position: 'fixed',
+        bottom: 0,
+        left: '50%',
+        transform: 'translateX(-50%)',
+        width: '100%',
+        maxWidth: '480px',
+        background: 'rgba(10, 20, 15, 0.95)',
+        backdropFilter: 'blur(10px)',
+        borderTop: '1px solid rgba(255, 255, 255, 0.08)',
+        display: 'flex',
+        justifyContent: 'space-around',
+        padding: '0.65rem 0.5rem',
+        boxSizing: 'border-box',
+        zIndex: 100,
+        borderTopLeftRadius: '16px',
+        borderTopRightRadius: '16px'
+      }}>
+        <div 
+          onClick={() => setActiveTab('boloes')}
+          style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.2rem', cursor: 'pointer', flex: 1 }}
+        >
+          <Icons.Home size={20} style={{ color: activeTab === 'boloes' ? 'var(--accent-gold)' : 'var(--text-secondary)' }} />
+          <span style={{ fontSize: '0.65rem', fontWeight: 'bold', color: activeTab === 'boloes' ? 'var(--accent-gold)' : 'var(--text-secondary)' }}>Inicio</span>
+        </div>
+        <div 
+          onClick={() => setActiveTab('placares')}
+          style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.2rem', cursor: 'pointer', flex: 1 }}
+        >
+          <Icons.List size={20} style={{ color: activeTab === 'placares' ? 'var(--accent-gold)' : 'var(--text-secondary)' }} />
+          <span style={{ fontSize: '0.65rem', fontWeight: 'bold', color: activeTab === 'placares' ? 'var(--accent-gold)' : 'var(--text-secondary)' }}>Palpites</span>
+        </div>
+        <div 
+          onClick={() => setActiveTab('ranking')}
+          style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.2rem', cursor: 'pointer', flex: 1 }}
+        >
+          <Icons.Trophy size={20} style={{ color: activeTab === 'ranking' ? 'var(--accent-gold)' : 'var(--text-secondary)' }} />
+          <span style={{ fontSize: '0.65rem', fontWeight: 'bold', color: activeTab === 'ranking' ? 'var(--accent-gold)' : 'var(--text-secondary)' }}>Classificação</span>
+        </div>
+        <div 
+          onClick={() => setActiveTab('jogadores')}
+          style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.2rem', cursor: 'pointer', flex: 1 }}
+        >
+          <Icons.User size={20} style={{ color: activeTab === 'jogadores' ? 'var(--accent-gold)' : 'var(--text-secondary)' }} />
+          <span style={{ fontSize: '0.65rem', fontWeight: 'bold', color: activeTab === 'jogadores' ? 'var(--accent-gold)' : 'var(--text-secondary)' }}>Jogadores</span>
+        </div>
+        <div 
+          onClick={handleLogout}
+          style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.2rem', cursor: 'pointer', flex: 1 }}
+        >
+          <Icons.LogOut size={20} style={{ color: 'var(--text-secondary)' }} />
+          <span style={{ fontSize: '0.65rem', fontWeight: 'bold', color: 'var(--text-secondary)' }}>Logout</span>
+        </div>
+      </div>
+
       <FirstLaunchOverlay />
     </div>
   );

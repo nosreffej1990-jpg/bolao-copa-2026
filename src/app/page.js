@@ -849,35 +849,21 @@ export default function Home() {
                 style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.2rem', cursor: 'pointer', flex: 1 }}
               >
                 <Icons.Home size={20} style={{ color: (!showLogin && !showRegister) ? 'var(--accent-gold)' : 'var(--text-secondary)' }} />
-                <span style={{ fontSize: '0.65rem', fontWeight: 'bold', color: (!showLogin && !showRegister) ? 'var(--accent-gold)' : 'var(--text-secondary)' }}>Início</span>
+                <span style={{ fontSize: '0.65rem', fontWeight: 'bold', color: (!showLogin && !showRegister) ? 'var(--accent-gold)' : 'var(--text-secondary)' }}>INÍCIO</span>
               </div>
               <div 
-                onClick={() => { setShowLogin(true); setShowRegister(false); }}
-                style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.2rem', cursor: 'pointer', flex: 1 }}
-              >
-                <Icons.List size={20} style={{ color: (showLogin || showRegister) ? 'var(--accent-gold)' : 'var(--text-secondary)' }} />
-                <span style={{ fontSize: '0.65rem', fontWeight: 'bold', color: 'var(--text-secondary)' }}>Palpites</span>
-              </div>
-              <div 
-                onClick={() => { setShowLogin(true); setShowRegister(false); }}
+                onClick={() => handleDirectNavigate('ranking')}
                 style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.2rem', cursor: 'pointer', flex: 1 }}
               >
                 <Icons.Trophy size={20} style={{ color: 'var(--text-secondary)' }} />
-                <span style={{ fontSize: '0.65rem', fontWeight: 'bold', color: 'var(--text-secondary)' }}>Ranking</span>
+                <span style={{ fontSize: '0.65rem', fontWeight: 'bold', color: 'var(--text-secondary)' }}>Classificação</span>
               </div>
               <div 
                 onClick={() => { setShowLogin(true); setShowRegister(false); }}
                 style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.2rem', cursor: 'pointer', flex: 1 }}
               >
-                <Icons.FileText size={20} style={{ color: 'var(--text-secondary)' }} />
-                <span style={{ fontSize: '0.65rem', fontWeight: 'bold', color: 'var(--text-secondary)' }}>Notícias</span>
-              </div>
-              <div 
-                onClick={() => { setShowLogin(true); setShowRegister(false); }}
-                style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.2rem', cursor: 'pointer', flex: 1 }}
-              >
-                <Icons.User size={20} style={{ color: 'var(--text-secondary)' }} />
-                <span style={{ fontSize: '0.65rem', fontWeight: 'bold', color: 'var(--text-secondary)' }}>Conta</span>
+                <Icons.LogIn size={20} style={{ color: (showLogin || showRegister) ? 'var(--accent-gold)' : 'var(--text-secondary)' }} />
+                <span style={{ fontSize: '0.65rem', fontWeight: 'bold', color: (showLogin || showRegister) ? 'var(--accent-gold)' : 'var(--text-secondary)' }}>Login</span>
               </div>
             </div>
           </div>
