@@ -136,7 +136,7 @@ export default function Home() {
           localStorage.setItem('copa26_role', userObj.role || 'Jogador');
           localStorage.setItem('copa26_approved', userObj.approved ? 'true' : 'false');
         }
-        router.push('/dashboard?tab=boloes');
+        router.push('/dashboard?tab=ranking');
       } else {
         setErrorMsg('Usuário ou senha incorretos!');
       }
