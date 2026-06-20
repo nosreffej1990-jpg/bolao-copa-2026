@@ -1,8 +1,6 @@
 import './globals.css';
 import ServiceWorkerRegistrar from '@/components/ServiceWorkerRegistrar';
 import { ThemeProvider } from '@/components/ThemeProvider';
-import ThemeSelector from '@/components/ThemeSelector';
-import FirstLaunchOverlay from '@/components/FirstLaunchOverlay';
 
 export const metadata = {
   title: 'BOLÃO COPA 2026',
@@ -40,8 +38,6 @@ export default function RootLayout({ children }) {
           <ServiceWorkerRegistrar />
           <div className="phone-viewport">
             {children}
-            <FirstLaunchOverlay />
-            <ThemeSelector />
           </div>
         </ThemeProvider>
       </body>

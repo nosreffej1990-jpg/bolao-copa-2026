@@ -6,6 +6,7 @@ import { Icons } from '@/components/Icons';
 import { supabase, resetDatabase, defaultConfrontos, isSupabaseConfigured } from '@/lib/supabase';
 import { getFinishedMatches, getLiveMatches, getUpcomingMatches, getFlagCode, formatMatchDate, getGroupStandings, fetchAllGames } from '@/lib/worldcupApi';
 import { useTheme, THEMES } from '@/components/ThemeProvider';
+import FirstLaunchOverlay from '@/components/FirstLaunchOverlay';
 
 // Helper to compress and resize images on client-side before sending to API
 const compressImage = (file, maxWidth = 1024, maxHeight = 1024) => {
@@ -4128,6 +4129,7 @@ function DashboardContent() {
           {toastMsg}
         </div>
       )}
+      <FirstLaunchOverlay />
     </div>
   );
 }

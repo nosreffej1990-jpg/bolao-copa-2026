@@ -294,7 +294,7 @@ export default function Home() {
             )}
           </header>
 
-          <div className="home-container">
+          <div className="home-container" style={{ paddingBottom: '5.5rem' }}>
             {/* Live Match Banner */}
             {liveMatches.length > 0 && (
               <div
@@ -825,6 +825,61 @@ export default function Home() {
                 </div>
               </div>
             )}
+            {/* Bottom Tab Bar */}
+            <div style={{
+              position: 'fixed',
+              bottom: 0,
+              left: '50%',
+              transform: 'translateX(-50%)',
+              width: '100%',
+              maxWidth: '480px',
+              background: 'rgba(10, 20, 15, 0.95)',
+              backdropFilter: 'blur(10px)',
+              borderTop: '1px solid rgba(255, 255, 255, 0.08)',
+              display: 'flex',
+              justifyContent: 'space-around',
+              padding: '0.65rem 0.5rem',
+              boxSizing: 'border-box',
+              zIndex: 100,
+              borderTopLeftRadius: '16px',
+              borderTopRightRadius: '16px'
+            }}>
+              <div 
+                onClick={() => { setShowLogin(false); setShowRegister(false); }}
+                style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.2rem', cursor: 'pointer', flex: 1 }}
+              >
+                <Icons.Home size={20} style={{ color: (!showLogin && !showRegister) ? 'var(--accent-gold)' : 'var(--text-secondary)' }} />
+                <span style={{ fontSize: '0.65rem', fontWeight: 'bold', color: (!showLogin && !showRegister) ? 'var(--accent-gold)' : 'var(--text-secondary)' }}>Início</span>
+              </div>
+              <div 
+                onClick={() => { setShowLogin(true); setShowRegister(false); }}
+                style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.2rem', cursor: 'pointer', flex: 1 }}
+              >
+                <Icons.List size={20} style={{ color: (showLogin || showRegister) ? 'var(--accent-gold)' : 'var(--text-secondary)' }} />
+                <span style={{ fontSize: '0.65rem', fontWeight: 'bold', color: 'var(--text-secondary)' }}>Palpites</span>
+              </div>
+              <div 
+                onClick={() => { setShowLogin(true); setShowRegister(false); }}
+                style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.2rem', cursor: 'pointer', flex: 1 }}
+              >
+                <Icons.Trophy size={20} style={{ color: 'var(--text-secondary)' }} />
+                <span style={{ fontSize: '0.65rem', fontWeight: 'bold', color: 'var(--text-secondary)' }}>Ranking</span>
+              </div>
+              <div 
+                onClick={() => { setShowLogin(true); setShowRegister(false); }}
+                style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.2rem', cursor: 'pointer', flex: 1 }}
+              >
+                <Icons.FileText size={20} style={{ color: 'var(--text-secondary)' }} />
+                <span style={{ fontSize: '0.65rem', fontWeight: 'bold', color: 'var(--text-secondary)' }}>Notícias</span>
+              </div>
+              <div 
+                onClick={() => { setShowLogin(true); setShowRegister(false); }}
+                style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.2rem', cursor: 'pointer', flex: 1 }}
+              >
+                <Icons.User size={20} style={{ color: 'var(--text-secondary)' }} />
+                <span style={{ fontSize: '0.65rem', fontWeight: 'bold', color: 'var(--text-secondary)' }}>Conta</span>
+              </div>
+            </div>
           </div>
         </div>
       )}

@@ -1,20 +1,29 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useTheme, THEMES } from './ThemeProvider';
+import { THEMES } from './ThemeProvider';
 
 export default function FirstLaunchOverlay() {
-  const { setTheme } = useTheme();
   const [show, setShow] = useState(false);
   const [selectedTeam, setSelectedTeam] = useState(null);
   const [confirmModal, setConfirmModal] = useState(false);
 
   useEffect(() => {
-    // Check if user has already chosen their champion
-    const chosen = localStorage.getItem('copa26_champion_chosen');
-    if (!chosen) {
-      setShow(true);
-    }
+    // Show only if user is logged in but has not chosen their tournament champion prediction yet
+    const checkStatus = () => {
+      const user = localStorage.getItem('copa26_user');
+      const chosen = localStorage.getItem('copa26_champion_chosen');
+      if (user && !chosen) {
+        setShow(true);
+      } else {
+        setShow(false);
+      }
+    };
+
+    // Check periodically or run immediately
+    checkStatus();
+    const interval = setInterval(checkStatus, 1500);
+    return () => clearInterval(interval);
   }, []);
 
   if (!show) return null;
@@ -24,9 +33,29 @@ export default function FirstLaunchOverlay() {
     setConfirmModal(true);
   };
 
-  const handleConfirm = () => {
-    localStorage.setItem('copa26_champion_chosen', selectedTeam.id);
-    setTheme(selectedTeam.id);
+  const handleConfirm = async () => {
+    const user = localStorage.getItem('copa26_user');
+    const pass = localStorage.getItem('copa26_pass');
+    
+    localStorage.setItem('copa26_champion_chosen', selectedTeam.nome);
+
+    if (user && pass) {
+      try {
+        await fetch('/api/usuarios', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'updateChampion',
+            username: user,
+            password: pass,
+            champion: selectedTeam.nome
+          })
+        });
+      } catch (e) {
+        console.error('Erro ao salvar palpite no banco de dados:', e);
+      }
+    }
+
     setConfirmModal(false);
     setShow(false);
   };
@@ -58,10 +87,10 @@ export default function FirstLaunchOverlay() {
         {/* Message */}
         <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '16px', padding: '1rem', marginBottom: '1.5rem' }}>
           <h3 style={{ fontSize: '0.98rem', fontWeight: 'bold', color: '#fff', margin: '0 0 0.4rem 0' }}>
-            🏆 Escolha a sua Seleção Campeã!
+            🏆 Quem será a Campeã da Copa?
           </h3>
           <p style={{ fontSize: '0.78rem', color: '#cbd5e1', lineHeight: '1.5', margin: 0 }}>
-            Selecione o país que você acredita que levantará a taça em 2026. As cores da seleção escolhida servirão como tema para o seu aplicativo!
+            Selecione a seleção que você acredita que levantará a taça em 2026! Seu palpite ficará registrado no seu perfil do bolão.
           </p>
         </div>
 
@@ -145,12 +174,12 @@ export default function FirstLaunchOverlay() {
               }}
             />
             <h3 style={{ fontSize: '1.15rem', color: '#fff', fontWeight: 'bold', marginBottom: '0.75rem' }}>
-              Confirmar Escolha: {selectedTeam.nome}
+              Confirmar Palpite: {selectedTeam.nome}
             </h3>
             <p style={{ fontSize: '0.82rem', color: '#d1d5db', lineHeight: '1.5', marginBottom: '1.5rem' }}>
-              Esta escolha será salva! As cores da seleção do <strong>{selectedTeam.nome}</strong> servirão como o tema oficial para o seu aplicativo. 
+              Você confirma que o <strong>{selectedTeam.nome}</strong> será o grande campeão da Copa do Mundo de 2026? 
               <br/><br/>
-              A escolha fica salva, mas caso queira, você poderá alterar o tema a qualquer momento usando o botão de artes (🎨) no canto da tela.
+              Esse palpite de campeão será registrado na sua conta e não poderá ser alterado posteriormente.
             </p>
             <div style={{ display: 'flex', gap: '0.5rem' }}>
               <button
@@ -170,7 +199,7 @@ export default function FirstLaunchOverlay() {
                   boxShadow: '0 4px 12px rgba(59,130,246,0.3)'
                 }}
               >
-                Salvar e Entrar! 🏆
+                Confirmar Palpite! 🏆
               </button>
             </div>
           </div>
