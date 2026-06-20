@@ -359,177 +359,350 @@ export default function Home() {
                 <span>Toque no menu <span style={{ color: 'var(--accent-gold)', fontWeight: 'bold' }}>⋮</span> do Chrome e depois em <span style={{ color: 'var(--accent-gold)', fontWeight: 'bold' }}>Adicionar à tela inicial</span>.</span>
               </div>
             )}
-
-            {!showLogin && !showRegister ? (
-              <div className="home-menu-grid">
-                {/* Android/Chrome Install Button (when prompt is available) */}
+             {!showLogin && !showRegister && (
+              <div className="home-menu-grid" style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '0.5rem' }}>
+                
+                {/* Android/Chrome Install Banner / Button */}
                 {showInstallBtn && (
-                  <button
-                    id="install-btn"
-                    className="home-btn install-btn"
+                  <div 
                     onClick={handleInstallClick}
                     style={{
-                      gridColumn: 'span 2',
-                      background: 'linear-gradient(135deg, var(--soccer-green), #10b981)',
-                      color: '#000', fontWeight: 'bold',
-                      border: '1px solid rgba(255,255,255,0.1)'
+                      background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(5, 150, 105, 0.05) 100%)',
+                      border: '1px solid rgba(16, 185, 129, 0.4)',
+                      borderRadius: '16px',
+                      padding: '1.25rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '1rem',
+                      cursor: 'pointer',
+                      boxShadow: '0 8px 32px rgba(16, 185, 129, 0.1)',
+                      transition: 'transform 0.2s',
+                      position: 'relative',
+                      overflow: 'hidden'
                     }}
+                    onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
+                    onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
                   >
-                    <Icons.Plus size={24} style={{ color: '#000' }} />
-                    <span>Adicionar à Tela Inicial</span>
-                  </button>
+                    <div style={{
+                      background: 'var(--soccer-green)',
+                      borderRadius: '12px',
+                      width: '42px',
+                      height: '42px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: '#000'
+                    }}>
+                      <Icons.Plus size={20} />
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', textAlign: 'left' }}>
+                      <span style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#fff' }}>Adicionar à Tela Inicial</span>
+                      <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>Instale o app e acesse mais rápido</span>
+                    </div>
+                    <Icons.ChevronRight size={18} style={{ marginLeft: 'auto', color: 'var(--text-secondary)' }} />
+                  </div>
                 )}
 
-                <button className="home-btn" onClick={() => handleDirectNavigate('ranking')}>
-                  <Icons.Trophy size={28} />
-                  <span>Ranking</span>
-                </button>
-                <button className="home-btn" onClick={() => handleDirectNavigate('placares_geral')}>
-                  <Icons.Check size={28} />
-                  <span>Resultados</span>
-                </button>
-                <button className="home-btn" onClick={() => handleDirectNavigate('confrontos_geral')}>
-                  <Icons.Calendar size={28} />
-                  <span>Confrontos</span>
-                </button>
-                <button className="home-btn" onClick={() => handleDirectNavigate('grupos')}>
-                  <Icons.List size={28} />
-                  <span>Grupos</span>
-                </button>
-                
-                <button className="home-btn" onClick={() => { setShowLogin(true); setShowRegister(false); setErrorMsg(''); }} style={{ gridColumn: 'span 2' }}>
-                  <Icons.LogIn size={28} />
-                  <span>Upar Bolão / Entrar</span>
-                </button>
-              </div>
-            ) : showRegister ? (
-              <div className="login-container">
-                <div style={{ textAlign: 'center', marginBottom: '1.25rem' }}>
-                  <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>📝</div>
-                  <h3 style={{ fontSize: '1.1rem', marginBottom: '0.25rem', color: '#fff' }}>Cadastro de Jogador</h3>
-                  <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                    Crie sua conta para apostar nas próximas fases (mata-mata)
-                  </p>
+                {/* Primary Action Card: Login & Upload */}
+                <div 
+                  onClick={() => { setShowLogin(true); setShowRegister(false); setErrorMsg(''); }}
+                  style={{
+                    background: 'linear-gradient(135deg, rgba(251, 191, 36, 0.2) 0%, rgba(184, 134, 11, 0.05) 100%)',
+                    border: '1px solid rgba(251, 191, 36, 0.4)',
+                    borderRadius: '20px',
+                    padding: '1.5rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '1.25rem',
+                    cursor: 'pointer',
+                    boxShadow: '0 10px 30px rgba(251, 191, 36, 0.08)',
+                    transition: 'transform 0.2s'
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-3px)'}
+                  onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+                >
+                  <div style={{
+                    background: 'linear-gradient(135deg, var(--accent-gold), #b8860b)',
+                    borderRadius: '16px',
+                    width: '54px',
+                    height: '54px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: '#000',
+                    boxShadow: '0 8px 20px rgba(251, 191, 36, 0.25)'
+                  }}>
+                    <Icons.LogIn size={26} style={{ color: '#000' }} />
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', textAlign: 'left' }}>
+                    <span style={{ fontSize: '1.05rem', fontWeight: '800', color: '#fff', letterSpacing: '0.01em' }}>Entrar</span>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Acesse seus palpites e área logada</span>
+                  </div>
+                  <Icons.ChevronRight size={20} style={{ marginLeft: 'auto', color: 'var(--accent-gold)' }} />
                 </div>
 
-                <form onSubmit={handleRegisterSubmit}>
-                  <div className="form-group">
-                    <label>Nome de Usuário</label>
-                    <input
-                      type="text"
-                      className="form-control"
-                      placeholder="Ex: joao_silva"
-                      value={regUsername}
-                      onChange={(e) => setRegUsername(e.target.value)}
-                      required
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label>Senha de Acesso</label>
-                    <input
-                      type="password"
-                      className="form-control"
-                      placeholder="Escolha sua senha"
-                      value={regPassword}
-                      onChange={(e) => setRegPassword(e.target.value)}
-                      required
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label>WhatsApp (com DDD)</label>
-                    <input
-                      type="text"
-                      className="form-control"
-                      placeholder="Ex: 22997973476"
-                      value={regWhatsapp}
-                      onChange={(e) => setRegWhatsapp(e.target.value)}
-                      required
-                    />
-                  </div>
-                  {regErrorMsg && (
-                    <p style={{ color: '#ef4444', fontSize: '0.8rem', marginBottom: '0.75rem', textAlign: 'center' }}>
-                      ⚠️ {regErrorMsg}
-                    </p>
-                  )}
-                  <button type="submit" className="btn-submit" style={{ background: 'linear-gradient(135deg, var(--soccer-green), #10b981)', color: '#000', fontWeight: 'bold' }}>FINALIZAR CADASTRO</button>
-                  <button
-                    type="button"
-                    onClick={() => { setShowRegister(false); setShowLogin(true); setRegErrorMsg(''); }}
-                    style={{ width: '100%', marginTop: '0.75rem', background: 'transparent', border: 'none', color: 'var(--text-secondary)', fontSize: '0.8rem', cursor: 'pointer' }}
+                {/* 2x2 Grid for standard features */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.85rem' }}>
+                  <div 
+                    onClick={() => handleDirectNavigate('ranking')}
+                    className="home-btn"
+                    style={{
+                      background: 'rgba(255, 255, 255, 0.02)',
+                      border: '1px solid var(--border-color)',
+                      borderRadius: '16px',
+                      padding: '1.25rem 1rem',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      gap: '0.6rem',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s'
+                    }}
                   >
-                    Já tem conta? Fazer Login
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => { setShowRegister(false); setShowLogin(false); setRegErrorMsg(''); }}
-                    style={{ width: '100%', marginTop: '0.25rem', background: 'transparent', border: 'none', color: 'var(--text-secondary)', fontSize: '0.8rem', cursor: 'pointer' }}
-                  >
-                    ← Voltar
-                  </button>
-                </form>
-              </div>
-            ) : (
-              <div className="login-container">
-                <div style={{ textAlign: 'center', marginBottom: '1.25rem' }}>
-                  <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>🔐</div>
-                  <h3 style={{ fontSize: '1.1rem', marginBottom: '0.25rem', color: '#fff' }}>Acesso Restrito</h3>
-                  <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                    Faça login para gerenciar ou lançar seus palpites
-                  </p>
-                </div>
-
-                <form onSubmit={handleLoginSubmit}>
-                  <div className="form-group">
-                    <label>Usuário</label>
-                    <input
-                      type="text"
-                      className="form-control"
-                      placeholder="Ex: Jefferson"
-                      value={username}
-                      onChange={(e) => setUsername(e.target.value)}
-                      required
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label>Senha</label>
-                    <input
-                      type="password"
-                      className="form-control"
-                      placeholder="Sua senha"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      required
-                    />
-                  </div>
-                  {errorMsg && (
-                    <p style={{ color: '#ef4444', fontSize: '0.8rem', marginBottom: '0.75rem', textAlign: 'center' }}>
-                      ⚠️ {errorMsg}
-                    </p>
-                  )}
-                  <button type="submit" className="btn-submit">ENTRAR NO BOLÃO</button>
-                  {allowRegister ? (
-                    <button
-                      type="button"
-                      onClick={() => { setShowRegister(true); setShowLogin(false); setErrorMsg(''); }}
-                      style={{ width: '100%', marginTop: '0.75rem', background: 'transparent', border: 'none', color: 'var(--accent-gold)', fontWeight: 'bold', fontSize: '0.8rem', cursor: 'pointer' }}
-                    >
-                      Criar Nova Conta (Jogador)
-                    </button>
-                  ) : (
-                    <div style={{ margin: '0.75rem 0', fontSize: '0.72rem', color: 'rgba(239, 68, 68, 0.8)', fontWeight: 'bold', textAlign: 'center' }}>
-                      🔒 Novos cadastros suspensos pelo Admin
+                    <div style={{
+                      background: 'rgba(251, 191, 36, 0.06)',
+                      borderRadius: '50%',
+                      width: '46px',
+                      height: '46px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      marginBottom: '0.2rem'
+                    }}>
+                      <Icons.Trophy size={22} style={{ color: 'var(--accent-gold)' }} />
                     </div>
-                  )}
-                  <button
-                    type="button"
-                    onClick={() => { setShowLogin(false); setErrorMsg(''); }}
-                    style={{ width: '100%', marginTop: '0.25rem', background: 'transparent', border: 'none', color: 'var(--text-secondary)', fontSize: '0.8rem', cursor: 'pointer' }}
+                    <span style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#fff' }}>Classificação</span>
+                    <span style={{ fontSize: '0.65rem', color: 'var(--text-secondary)' }}>Ver líderes e pontos</span>
+                  </div>
+
+                  <div 
+                    onClick={() => handleDirectNavigate('placares_geral')}
+                    className="home-btn"
+                    style={{
+                      background: 'rgba(255, 255, 255, 0.02)',
+                      border: '1px solid var(--border-color)',
+                      borderRadius: '16px',
+                      padding: '1.25rem 1rem',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      gap: '0.6rem',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s'
+                    }}
                   >
-                    ← Voltar
-                  </button>
-                </form>
+                    <div style={{
+                      background: 'rgba(16, 185, 129, 0.06)',
+                      borderRadius: '50%',
+                      width: '46px',
+                      height: '46px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      marginBottom: '0.2rem'
+                    }}>
+                      <Icons.Check size={22} style={{ color: 'var(--soccer-green)' }} />
+                    </div>
+                    <span style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#fff' }}>Resultados</span>
+                    <span style={{ fontSize: '0.65rem', color: 'var(--text-secondary)' }}>Jogos finalizados</span>
+                  </div>
+
+                  <div 
+                    onClick={() => handleDirectNavigate('confrontos_geral')}
+                    className="home-btn"
+                    style={{
+                      background: 'rgba(255, 255, 255, 0.02)',
+                      border: '1px solid var(--border-color)',
+                      borderRadius: '16px',
+                      padding: '1.25rem 1rem',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      gap: '0.6rem',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s'
+                    }}
+                  >
+                    <div style={{
+                      background: 'rgba(96, 165, 250, 0.06)',
+                      borderRadius: '50%',
+                      width: '46px',
+                      height: '46px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      marginBottom: '0.2rem'
+                    }}>
+                      <Icons.Calendar size={22} style={{ color: '#60a5fa' }} />
+                    </div>
+                    <span style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#fff' }}>Confrontos</span>
+                    <span style={{ fontSize: '0.65rem', color: 'var(--text-secondary)' }}>Agenda de jogos</span>
+                  </div>
+
+                  <div 
+                    onClick={() => handleDirectNavigate('grupos')}
+                    className="home-btn"
+                    style={{
+                      background: 'rgba(255, 255, 255, 0.02)',
+                      border: '1px solid var(--border-color)',
+                      borderRadius: '16px',
+                      padding: '1.25rem 1rem',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      gap: '0.6rem',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s'
+                    }}
+                  >
+                    <div style={{
+                      background: 'rgba(236, 72, 153, 0.06)',
+                      borderRadius: '50%',
+                      width: '46px',
+                      height: '46px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      marginBottom: '0.2rem'
+                    }}>
+                      <Icons.List size={22} style={{ color: '#ec4899' }} />
+                    </div>
+                    <span style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#fff' }}>Grupos</span>
+                  </div>
+                </div>
               </div>
             )}
+
+             {showRegister && (
+               <div className="login-container">
+                 <div style={{ textAlign: 'center', marginBottom: '1.25rem' }}>
+                   <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>📝</div>
+                   <h3 style={{ fontSize: '1.1rem', marginBottom: '0.25rem', color: '#fff' }}>Cadastro de Jogador</h3>
+                   <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                     Crie sua conta para apostar nas próximas fases (mata-mata)
+                   </p>
+                 </div>
+
+                 <form onSubmit={handleRegisterSubmit}>
+                   <div className="form-group">
+                     <label>Nome de Usuário</label>
+                     <input
+                       type="text"
+                       className="form-control"
+                       placeholder="Ex: joao_silva"
+                       value={regUsername}
+                       onChange={(e) => setRegUsername(e.target.value)}
+                       required
+                     />
+                   </div>
+                   <div className="form-group">
+                     <label>Senha de Acesso</label>
+                     <input
+                       type="password"
+                       className="form-control"
+                       placeholder="Escolha sua senha"
+                       value={regPassword}
+                       onChange={(e) => setRegPassword(e.target.value)}
+                       required
+                     />
+                   </div>
+                   <div className="form-group">
+                     <label>WhatsApp (com DDD)</label>
+                     <input
+                       type="text"
+                       className="form-control"
+                       placeholder="Ex: 22997973476"
+                       value={regWhatsapp}
+                       onChange={(e) => setRegWhatsapp(e.target.value)}
+                       required
+                     />
+                   </div>
+                   {regErrorMsg && (
+                     <p style={{ color: '#ef4444', fontSize: '0.8rem', marginBottom: '0.75rem', textAlign: 'center' }}>
+                       ⚠️ {regErrorMsg}
+                     </p>
+                   )}
+                   <button type="submit" className="btn-submit" style={{ background: 'linear-gradient(135deg, var(--soccer-green), #10b981)', color: '#000', fontWeight: 'bold' }}>FINALIZAR CADASTRO</button>
+                   <button
+                     type="button"
+                     onClick={() => { setShowRegister(false); setShowLogin(true); setRegErrorMsg(''); }}
+                     style={{ width: '100%', marginTop: '0.75rem', background: 'transparent', border: 'none', color: 'var(--text-secondary)', fontSize: '0.8rem', cursor: 'pointer' }}
+                   >
+                     Já tem conta? Fazer Login
+                   </button>
+                   <button
+                     type="button"
+                     onClick={() => { setShowRegister(false); setShowLogin(false); setRegErrorMsg(''); }}
+                     style={{ width: '100%', marginTop: '0.25rem', background: 'transparent', border: 'none', color: 'var(--text-secondary)', fontSize: '0.8rem', cursor: 'pointer' }}
+                   >
+                     ← Voltar
+                   </button>
+                 </form>
+               </div>
+             )}
+
+             {showLogin && (
+               <div className="login-container">
+                 <div style={{ textAlign: 'center', marginBottom: '1.25rem' }}>
+                   <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>🔐</div>
+                   <h3 style={{ fontSize: '1.1rem', marginBottom: '0.25rem', color: '#fff' }}>Acesso Restrito</h3>
+                   <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                     Faça login para gerenciar ou lançar seus palpites
+                   </p>
+                 </div>
+
+                 <form onSubmit={handleLoginSubmit}>
+                   <div className="form-group">
+                     <label>Usuário</label>
+                     <input
+                       type="text"
+                       className="form-control"
+                       placeholder="Ex: Jefferson"
+                       value={username}
+                       onChange={(e) => setUsername(e.target.value)}
+                       required
+                     />
+                   </div>
+                   <div className="form-group">
+                     <label>Senha</label>
+                     <input
+                       type="password"
+                       className="form-control"
+                       placeholder="Sua senha"
+                       value={password}
+                       onChange={(e) => setPassword(e.target.value)}
+                       required
+                     />
+                   </div>
+                   {errorMsg && (
+                     <p style={{ color: '#ef4444', fontSize: '0.8rem', marginBottom: '0.75rem', textAlign: 'center' }}>
+                       ⚠️ {errorMsg}
+                     </p>
+                   )}
+                   <button type="submit" className="btn-submit">ENTRAR NO BOLÃO</button>
+                   {allowRegister ? (
+                     <button
+                       type="button"
+                       onClick={() => { setShowRegister(true); setShowLogin(false); setErrorMsg(''); }}
+                       style={{ width: '100%', marginTop: '0.75rem', background: 'transparent', border: 'none', color: 'var(--accent-gold)', fontWeight: 'bold', fontSize: '0.8rem', cursor: 'pointer' }}
+                     >
+                       Criar Nova Conta (Jogador)
+                     </button>
+                   ) : (
+                     <div style={{ margin: '0.75rem 0', fontSize: '0.72rem', color: 'rgba(239, 68, 68, 0.8)', fontWeight: 'bold', textAlign: 'center' }}>
+                       🔒 Novos cadastros suspensos pelo Admin
+                     </div>
+                   )}
+                   <button
+                     type="button"
+                     onClick={() => { setShowLogin(false); setErrorMsg(''); }}
+                     style={{ width: '100%', marginTop: '0.25rem', background: 'transparent', border: 'none', color: 'var(--text-secondary)', fontSize: '0.8rem', cursor: 'pointer' }}
+                   >
+                     ← Voltar
+                   </button>
+                 </form>
+               </div>
+             )}
 
             {/* PIX / Whatsapp Verification Modal */}
             {showPixModal && (
