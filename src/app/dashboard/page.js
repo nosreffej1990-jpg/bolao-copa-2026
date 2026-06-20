@@ -227,6 +227,8 @@ function DashboardContent() {
   const [palpites, setPalpites] = useState({}); // key: match_id -> { home, away, saved }
   const [boloes, setBoloes] = useState([]);
   const [usersList, setUsersList] = useState([]);
+  const [selectedPlayerDetails, setSelectedPlayerDetails] = useState(null);
+  const [expandedSection, setExpandedSection] = useState(null); // 'grupos', 'matamata'
 
   // API worldcup26.ir states
   const [apiFinished, setApiFinished] = useState([]);
@@ -272,6 +274,9 @@ function DashboardContent() {
   const [bettingLoading, setBettingLoading] = useState(false);
   const [bettingProgress, setBettingProgress] = useState(0);
   const [showPaquetaModal, setShowPaquetaModal] = useState(false);
+  const [showProfileModal, setShowProfileModal] = useState(false);
+  const [tempAvatar, setTempAvatar] = useState('');
+  const [tempStatus, setTempStatus] = useState('');
 
   // Grupos da Copa
   const [apiGroups, setApiGroups] = useState([]);
@@ -583,7 +588,7 @@ function DashboardContent() {
         const isAdminOrMod = role === 'Admin' || role === 'Moderador';
         const query = isAdminOrMod 
           ? supabase.from('usuarios').select('*').order('username', { ascending: true })
-          : supabase.from('usuarios').select('id, username, role, campeao').order('username', { ascending: true });
+          : supabase.from('usuarios').select('id, username, role, campeao, avatar_url, status').order('username', { ascending: true });
         
         const { data: users, error: listErr } = await query;
         if (listErr) {
@@ -1619,6 +1624,39 @@ function DashboardContent() {
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          {currentUser && (
+            <div 
+              onClick={() => {
+                setTempAvatar(currentUserObj?.avatar_url || '');
+                setTempStatus(currentUserObj?.status || '');
+                setShowProfileModal(true);
+              }}
+              style={{
+                cursor: 'pointer',
+                width: '30px',
+                height: '30px',
+                borderRadius: '50%',
+                overflow: 'hidden',
+                border: '2px solid var(--accent-gold)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: 'rgba(255,255,255,0.05)',
+                marginRight: '0.25rem'
+              }}
+              title="Meu Perfil"
+            >
+              {currentUserObj?.avatar_url ? (
+                <img 
+                  src={currentUserObj.avatar_url} 
+                  alt="Avatar" 
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                />
+              ) : (
+                <Icons.User size={16} style={{ color: 'var(--accent-gold)' }} />
+              )}
+            </div>
+          )}
           {activeThemeObj && (
             <img
               src={`https://flagcdn.com/w40/${activeThemeObj.flag}.png`}
@@ -2679,6 +2717,82 @@ function DashboardContent() {
                 );
               })()}
             </div>
+
+            {/* Seção de Conciliação de Bolões */}
+            <div style={{ marginTop: '2.5rem', borderTop: '1px solid var(--border-color)', paddingTop: '1.5rem' }}>
+              <h3 style={{ fontSize: '1.1rem', marginBottom: '0.2rem', color: '#fff' }}>Conciliar Bolões com Usuários</h3>
+              <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '1.25rem' }}>
+                Associe as cartelas de bolão digitalizadas aos usuários jogadores cadastrados para que as apostas apareçam no perfil deles.
+              </p>
+              
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+                {boloes.map((b) => (
+                  <div key={b.id} style={{
+                    background: 'rgba(255,255,255,0.02)',
+                    border: '1px solid var(--border-color)',
+                    borderRadius: '12px',
+                    padding: '1rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    flexWrap: 'wrap',
+                    gap: '1rem'
+                  }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem', textAlign: 'left' }}>
+                      <span style={{ fontWeight: 'bold', color: '#fff', fontSize: '0.85rem' }}>{b.bettor_name}</span>
+                      <span style={{ fontSize: '0.72rem', color: 'var(--text-secondary)' }}>
+                        Associado ao perfil: <strong style={{ color: 'var(--accent-gold)' }}>{b.username || 'Nenhum'}</strong>
+                      </span>
+                    </div>
+                    
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <select
+                        value={b.username || ''}
+                        onChange={async (e) => {
+                          const target = e.target.value;
+                          try {
+                            const res = await fetch('/api/usuarios', {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({
+                                action: 'linkBolao',
+                                username: currentUser,
+                                password: localStorage.getItem('copa26_pass'),
+                                bolaoId: b.id,
+                                targetUsername: target
+                              })
+                            });
+                            if (res.ok) {
+                              setToastMsg(`Bolão de ${b.bettor_name} associado a ${target || 'Ninguém'}!`);
+                              setToastType('success');
+                              fetchInitialData();
+                            } else {
+                              const err = await res.json();
+                              alert('Erro ao associar: ' + err.error);
+                            }
+                          } catch (err) {
+                            console.error(err);
+                          }
+                        }}
+                        style={{
+                          background: '#111827',
+                          color: '#fff',
+                          border: '1px solid var(--border-color)',
+                          borderRadius: '8px',
+                          padding: '0.45rem 0.75rem',
+                          fontSize: '0.78rem'
+                        }}
+                      >
+                        <option value="">-- Sem Jogador --</option>
+                        {usersList.map((u) => (
+                          <option key={u.id} value={u.username}>{u.username}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         )}
 
@@ -2691,6 +2805,14 @@ function DashboardContent() {
                 Gerencie o comportamento do bolão, restaures e edições de textos do sistema.
               </p>
             </div>
+
+            <button 
+              className="btn-upload-bolao" 
+              style={{ backgroundColor: 'rgba(251,191,36,0.12)', color: 'var(--accent-gold)', border: '1px solid rgba(251,191,36,0.3)', marginBottom: '1.25rem', width: '100%', cursor: 'pointer', fontWeight: 'bold' }}
+              onClick={() => setActiveTab('gerenciar_usuarios')}
+            >
+              👥 Ir para o Gerenciador de Usuários
+            </button>
 
             <div style={{
               background: 'rgba(255,255,255,0.02)',
@@ -2874,7 +2996,32 @@ function DashboardContent() {
 
           const activeStageConfig = stagesConfig[knockoutStage] || stagesConfig.r32;
           const isApprovedForActiveStage = currentUserRole === 'Admin' || (currentUserObj && currentUserObj[activeStageConfig.key]);
-          
+          const isUserAdminOrMod = currentUserRole === 'Admin' || currentUserRole === 'Moderador';
+          if (!mataMataPublic && !isUserAdminOrMod) {
+            return (
+              <div className="tab-pane active" style={{ animation: 'fadeIn 0.4s ease-out' }}>
+                <div style={{
+                  background: 'linear-gradient(135deg, rgba(31,41,55,0.7) 0%, rgba(17,24,39,0.9) 100%)',
+                  border: '1px solid rgba(251,191,36,0.3)',
+                  borderRadius: '20px',
+                  padding: '3rem 2rem',
+                  textAlign: 'center',
+                  maxWidth: '500px',
+                  margin: '3rem auto',
+                  boxShadow: '0 20px 40px rgba(0,0,0,0.6)'
+                }}>
+                  <div style={{ fontSize: '4rem', marginBottom: '1.25rem' }}>⏳</div>
+                  <h3 style={{ fontSize: '1.3rem', marginBottom: '0.85rem', color: 'var(--accent-gold)', fontWeight: 'bold' }}>
+                    Fase de Grupos em Andamento
+                  </h3>
+                  <p style={{ fontSize: '0.9rem', color: '#cbd5e1', lineHeight: '1.6', margin: 0 }}>
+                    Ainda estamos na Fase de Grupos. Os palpites do Mata-Mata serão liberados em breve pelo Administrador!
+                  </p>
+                </div>
+              </div>
+            );
+          }
+
           return (
             <div className="tab-pane active" style={{ animation: 'fadeIn 0.4s ease-out' }}>
               <div style={{ marginBottom: '1.25rem' }}>
@@ -3129,11 +3276,8 @@ function DashboardContent() {
                   <div
                     key={player.id}
                     onClick={() => {
-                      if (playerBolao) {
-                        setShowRankingDetailsModal(playerBolao);
-                      } else {
-                        alert(`O jogador ${player.username} ainda não enviou palpites ou os palpites não foram aprovados.`);
-                      }
+                      setSelectedPlayerDetails(player);
+                      setActiveTab('detalhes_jogador');
                     }}
                     style={{
                       background: 'rgba(255, 255, 255, 0.02)',
@@ -3203,9 +3347,340 @@ function DashboardContent() {
             </div>
           </div>
         )}
+        {activeTab === 'detalhes_jogador' && selectedPlayerDetails && (() => {
+          const player = selectedPlayerDetails;
+          // Find all bolões linked to this player
+          const playerBoloes = boloes.filter(b => b.username && b.username.toLowerCase() === player.username.toLowerCase());
+          
+          return (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', animation: 'fadeIn 0.4s ease-out' }}>
+              
+              {/* Top back button header */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <button
+                  onClick={() => { setActiveTab('jogadores'); setSelectedPlayerDetails(null); }}
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.05)',
+                    border: '1px solid var(--border-color)',
+                    borderRadius: '50%',
+                    width: '36px',
+                    height: '36px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: '#fff',
+                    cursor: 'pointer'
+                  }}
+                >
+                  <Icons.ChevronLeft size={20} />
+                </button>
+                <span style={{ fontSize: '1rem', fontWeight: 'bold', color: '#fff' }}>Voltar para Jogadores</span>
+              </div>
+
+              {/* Profile Card */}
+              <div style={{
+                background: 'linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)',
+                border: '1px solid var(--border-color)',
+                borderRadius: '20px',
+                padding: '1.5rem',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: '1rem',
+                textAlign: 'center'
+              }}>
+                <div style={{ position: 'relative' }}>
+                  {player.avatar_url ? (
+                    <img src={player.avatar_url} style={{ width: '80px', height: '80px', borderRadius: '50%', objectFit: 'cover', border: '3px solid var(--accent-gold)' }} alt="" />
+                  ) : (
+                    <div style={{
+                      background: 'linear-gradient(135deg, var(--accent-gold), #b8860b)',
+                      borderRadius: '50%',
+                      width: '80px',
+                      height: '80px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '2rem',
+                      color: '#000',
+                      fontWeight: 'bold',
+                      border: '3px solid rgba(255,255,255,0.1)'
+                    }}>
+                      {player.username.charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
+                  <h3 style={{ fontSize: '1.25rem', fontWeight: '800', color: '#fff', margin: 0 }}>{player.username}</h3>
+                  <span style={{ fontSize: '0.72rem', color: 'var(--text-secondary)' }}>{player.role || 'Jogador'}</span>
+                </div>
+
+                {player.status && (
+                  <p style={{ fontSize: '0.8rem', color: '#cbd5e1', fontStyle: 'italic', background: 'rgba(255,255,255,0.04)', padding: '0.5rem 1rem', borderRadius: '10px', margin: 0, maxWidth: '280px' }}>
+                    "{player.status}"
+                  </p>
+                )}
+
+                {player.campeao ? (
+                  <div style={{
+                    background: 'linear-gradient(135deg, rgba(251,191,36,0.15), rgba(184,134,11,0.05))',
+                    border: '1px solid rgba(251,191,36,0.3)',
+                    borderRadius: '12px',
+                    padding: '0.6rem 1.25rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    marginTop: '0.25rem'
+                  }}>
+                    <span style={{ fontSize: '1.1rem' }}>🏆</span>
+                    <span style={{ fontSize: '0.78rem', fontWeight: 'bold', color: 'var(--accent-gold)' }}>
+                      Campeão Escolhido: <strong style={{ color: '#fff' }}>{player.campeao}</strong>
+                    </span>
+                  </div>
+                ) : (
+                  <span style={{ fontSize: '0.72rem', color: 'var(--text-secondary)' }}>Sem palpite de Campeão ainda</span>
+                )}
+              </div>
+
+              {/* Accordion Sections */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                
+                {/* 1. FASE DE GRUPOS */}
+                <div style={{ border: '1px solid var(--border-color)', borderRadius: '16px', overflow: 'hidden' }}>
+                  <div
+                    onClick={() => setExpandedSection(expandedSection === 'grupos' ? null : 'grupos')}
+                    style={{
+                      background: 'rgba(255,255,255,0.03)',
+                      padding: '1rem 1.25rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    <span style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#fff', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      ⚽ FASE DE GRUPOS 
+                      <span style={{ fontSize: '0.7rem', padding: '1px 6px', background: 'rgba(255,255,255,0.1)', borderRadius: '10px', color: 'var(--text-secondary)' }}>
+                        {playerBoloes.length} cartela(s)
+                      </span>
+                    </span>
+                    <Icons.ChevronRight size={18} style={{ color: 'var(--text-secondary)', transform: expandedSection === 'grupos' ? 'rotate(90deg)' : 'none', transition: 'transform 0.2s' }} />
+                  </div>
+
+                  {expandedSection === 'grupos' && (
+                    <div style={{ background: 'rgba(0,0,0,0.15)', padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.85rem', borderTop: '1px solid var(--border-color)' }}>
+                      {playerBoloes.map((bol, bIdx) => {
+                        const calcBets = getCalculatedBets(bol.bets_data, confrontos);
+                        return (
+                          <div key={bol.id} style={{ borderBottom: bIdx < playerBoloes.length - 1 ? '1px solid rgba(255,255,255,0.08)' : 'none', paddingBottom: '1rem' }}>
+                            <div style={{ fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--accent-gold)', marginBottom: '0.5rem' }}>
+                              Cartela: {bol.bettor_name}
+                            </div>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                              {calcBets.map((bet, idx) => (
+                                <div key={idx} style={{
+                                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                                  padding: '0.5rem 0.75rem', borderRadius: '8px',
+                                  background: 'rgba(255,255,255,0.01)', border: '1px solid rgba(255,255,255,0.03)'
+                                }}>
+                                  <span style={{ fontSize: '0.78rem', color: '#fff' }}>{bet.home} x {bet.away}</span>
+                                  <div style={{ textAlign: 'right' }}>
+                                    <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--accent-gold)' }}>
+                                      Aposta: {bet.bet_home} - {bet.bet_away}
+                                    </span>
+                                    {bet.real_home !== null && (
+                                      <span style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', display: 'block' }}>
+                                        Oficial: {bet.real_home} - {bet.real_away} (+{bet.pts} pts)
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      })}
+
+                      {playerBoloes.length === 0 && (
+                        <p style={{ textAlign: 'center', color: 'var(--text-secondary)', fontSize: '0.8rem', margin: 0, padding: '1rem' }}>
+                          Nenhuma cartela da Fase de Grupos conciliada com este jogador.
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* 2. MATA-MATA */}
+                <div style={{ border: '1px solid var(--border-color)', borderRadius: '16px', overflow: 'hidden' }}>
+                  <div
+                    onClick={() => setExpandedSection(expandedSection === 'matamata' ? null : 'matamata')}
+                    style={{
+                      background: 'rgba(255,255,255,0.03)',
+                      padding: '1rem 1.25rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    <span style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#fff', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      🏆 PALPITES DO MATA-MATA
+                    </span>
+                    <Icons.ChevronRight size={18} style={{ color: 'var(--text-secondary)', transform: expandedSection === 'matamata' ? 'rotate(90deg)' : 'none', transition: 'transform 0.2s' }} />
+                  </div>
+
+                  {expandedSection === 'matamata' && (
+                    <div style={{ background: 'rgba(0,0,0,0.15)', padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.75rem', borderTop: '1px solid var(--border-color)' }}>
+                      {(() => {
+                        const koConfs = confrontos.filter(c => c.grupo === 'R32' || c.grupo === 'R16' || c.grupo === 'QF' || c.grupo === 'SF' || c.grupo === 'FINAL' || c.grupo === 'THIRD');
+                        return (
+                          <KnockoutBetsList playerUsername={player.username} koConfs={koConfs} />
+                        );
+                      })()}
+                    </div>
+                  )}
+                </div>
+
+              </div>
+
+            </div>
+          );
+        })()}
       </main>
 
       {/* --- MODALS --- */}
+
+      {/* Modal de Editar Perfil */}
+      {showProfileModal && (
+        <div className="modal-overlay" onClick={() => setShowProfileModal(false)}>
+          <div className="modal-container" onClick={e => e.stopPropagation()} style={{ maxWidth: '400px' }}>
+            <div className="modal-header">
+              <h3>Editar Meu Perfil</h3>
+              <div onClick={() => setShowProfileModal(false)} className="modal-close">
+                <Icons.X size={20} />
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', marginTop: '0.5rem' }}>
+              
+              {/* Avatar Preview & Upload */}
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem' }}>
+                <div style={{ position: 'relative' }}>
+                  {tempAvatar ? (
+                    <img 
+                      src={tempAvatar} 
+                      style={{ width: '90px', height: '90px', borderRadius: '50%', objectFit: 'cover', border: '3px solid var(--accent-gold)' }} 
+                      alt="Preview" 
+                    />
+                  ) : (
+                    <div style={{
+                      background: 'linear-gradient(135deg, var(--accent-gold), #b8860b)',
+                      borderRadius: '50%',
+                      width: '90px',
+                      height: '90px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '2.5rem',
+                      color: '#000',
+                      fontWeight: 'bold',
+                      border: '3px solid rgba(255,255,255,0.1)'
+                    }}>
+                      {currentUser?.charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                </div>
+
+                <label htmlFor="avatar-upload" style={{
+                  display: 'inline-flex', alignItems: 'center', gap: '0.5rem',
+                  padding: '0.5rem 1rem', background: 'rgba(255,255,255,0.05)',
+                  border: '1px solid var(--border-color)', borderRadius: '8px',
+                  color: '#fff', fontSize: '0.78rem', fontWeight: 'bold', cursor: 'pointer'
+                }}>
+                  📷 Alterar Foto de Perfil
+                </label>
+                <input 
+                  id="avatar-upload"
+                  type="file"
+                  accept="image/*"
+                  style={{ display: 'none' }}
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      try {
+                        const compressed = await compressImage(file, 256, 256);
+                        setTempAvatar(compressed);
+                      } catch (err) {
+                        setToastMsg('Erro ao processar imagem.');
+                        setToastType('error');
+                      }
+                    }
+                  }}
+                />
+              </div>
+
+              {/* Status input */}
+              <div className="form-group">
+                <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Status / Frase Marcante</label>
+                <input 
+                  type="text"
+                  className="form-control"
+                  placeholder="O que você está pensando?"
+                  maxLength={150}
+                  value={tempStatus}
+                  onChange={(e) => setTempStatus(e.target.value)}
+                />
+              </div>
+
+              {/* Action Buttons */}
+              <button 
+                className="btn-submit"
+                onClick={async () => {
+                  try {
+                    const userPass = localStorage.getItem('copa26_pass');
+                    const res = await fetch('/api/usuarios', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        action: 'updateProfile',
+                        username: currentUser,
+                        password: userPass,
+                        avatarUrl: tempAvatar,
+                        statusMsg: tempStatus
+                      })
+                    });
+                    const data = await res.json();
+                    if (!res.ok) {
+                      throw new Error(data.error || 'Erro ao atualizar perfil');
+                    }
+                    
+                    // Update local state
+                    if (currentUserObj) {
+                      setCurrentUserObj({
+                        ...currentUserObj,
+                        avatar_url: tempAvatar,
+                        status: tempStatus
+                      });
+                    }
+                    
+                    setToastMsg('Perfil atualizado com sucesso!');
+                    setToastType('success');
+                    setShowProfileModal(false);
+                    fetchData(); // Reload list to update other parts of page
+                  } catch (err) {
+                    setToastMsg(err.message || 'Erro ao salvar alterações.');
+                    setToastType('error');
+                  }
+                }}
+              >
+                Salvar Perfil
+              </button>
+
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* 1. Camera / Upar bolão Simulation Modal */}
       {showCameraModal && (
@@ -4253,11 +4728,11 @@ function DashboardContent() {
           <span style={{ fontSize: '0.65rem', fontWeight: 'bold', color: activeTab === 'boloes' ? 'var(--accent-gold)' : 'var(--text-secondary)' }}>Inicio</span>
         </div>
         <div 
-          onClick={() => setActiveTab('placares')}
+          onClick={() => setActiveTab('apostas_elim')}
           style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.2rem', cursor: 'pointer', flex: 1 }}
         >
-          <Icons.List size={20} style={{ color: activeTab === 'placares' ? 'var(--accent-gold)' : 'var(--text-secondary)' }} />
-          <span style={{ fontSize: '0.65rem', fontWeight: 'bold', color: activeTab === 'placares' ? 'var(--accent-gold)' : 'var(--text-secondary)' }}>Palpites</span>
+          <Icons.List size={20} style={{ color: activeTab === 'apostas_elim' ? 'var(--accent-gold)' : 'var(--text-secondary)' }} />
+          <span style={{ fontSize: '0.65rem', fontWeight: 'bold', color: activeTab === 'apostas_elim' ? 'var(--accent-gold)' : 'var(--text-secondary)' }}>Palpites</span>
         </div>
         <div 
           onClick={() => setActiveTab('ranking')}
@@ -4273,6 +4748,21 @@ function DashboardContent() {
           <Icons.User size={20} style={{ color: activeTab === 'jogadores' ? 'var(--accent-gold)' : 'var(--text-secondary)' }} />
           <span style={{ fontSize: '0.65rem', fontWeight: 'bold', color: activeTab === 'jogadores' ? 'var(--accent-gold)' : 'var(--text-secondary)' }}>Jogadores</span>
         </div>
+        {(currentUserRole === 'Admin' || currentUserRole === 'Moderador') && (
+          <div 
+            onClick={() => {
+              if (currentUserRole === 'Admin') {
+                setActiveTab('configuracoes');
+              } else {
+                setActiveTab('gerenciar_usuarios');
+              }
+            }}
+            style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.2rem', cursor: 'pointer', flex: 1 }}
+          >
+            <Icons.Settings size={20} style={{ color: (activeTab === 'configuracoes' || activeTab === 'gerenciar_usuarios') ? 'var(--accent-gold)' : 'var(--text-secondary)' }} />
+            <span style={{ fontSize: '0.65rem', fontWeight: 'bold', color: (activeTab === 'configuracoes' || activeTab === 'gerenciar_usuarios') ? 'var(--accent-gold)' : 'var(--text-secondary)' }}>Config</span>
+          </div>
+        )}
         <div 
           onClick={handleLogout}
           style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.2rem', cursor: 'pointer', flex: 1 }}

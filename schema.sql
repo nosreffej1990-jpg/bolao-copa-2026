@@ -193,6 +193,9 @@ CREATE TABLE IF NOT EXISTS public.usuarios (
     approved_qf BOOLEAN DEFAULT FALSE, -- Quartas
     approved_sf BOOLEAN DEFAULT FALSE, -- Semifinal
     approved_final BOOLEAN DEFAULT FALSE, -- Final
+    campeao VARCHAR(50) DEFAULT NULL, -- Palpite de campeão da Copa
+    avatar_url TEXT DEFAULT NULL, -- Foto de perfil em Base64 ou URL
+    status VARCHAR(150) DEFAULT NULL, -- Mensagem de status
     created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
 );
 
