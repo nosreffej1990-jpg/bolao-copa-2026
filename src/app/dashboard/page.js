@@ -545,13 +545,19 @@ function DashboardContent() {
       
       if (user) {
         // Fetch current user details object for stage validation checks
-        const { data: userData } = await supabase.from('usuarios').select('*');
+        const { data: userData, error: userFetchErr } = await supabase.from('usuarios').select('*');
+        if (userFetchErr) {
+          console.error('Erro ao buscar perfil do usuario logado:', userFetchErr);
+        }
         const loggedInUserObj = (userData || []).find(u => u.username.toLowerCase() === user.toLowerCase());
         if (loggedInUserObj) {
           setCurrentUserObj(loggedInUserObj);
         }
 
-        const { data: palps } = await supabase.from('palpites').select('*').eq('username', user);
+        const { data: palps, error: palpsErr } = await supabase.from('palpites').select('*').eq('username', user);
+        if (palpsErr) {
+          console.error('Erro ao buscar palpites do usuario:', palpsErr);
+        }
         const palpsMap = {};
         const koBets = {};
         (palps || []).forEach(p => {
@@ -573,8 +579,12 @@ function DashboardContent() {
 
       // Load registered users if Admin or Moderador
       if (user && (role === 'Admin' || role === 'Moderador')) {
-        const { data: users, error } = await supabase.from('usuarios').select('*').order('username', { ascending: true });
-        if (!error && users) {
+        const { data: users, error: listErr } = await supabase.from('usuarios').select('*').order('username', { ascending: true });
+        if (listErr) {
+          console.error('Erro ao carregar lista de usuarios (admin/mod):', listErr);
+        }
+        if (!listErr && users) {
+          console.log('Usuarios carregados com sucesso:', users.length);
           setUsersList(users);
         }
       }
