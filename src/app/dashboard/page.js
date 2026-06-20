@@ -1560,41 +1560,83 @@ function DashboardContent() {
 
   // Generate ranking purely from real bolões in the database
   const getSortedRanking = (stage = 'all') => {
-    // Build player scores from real boloes data
-    const scoreMap = {};
-    boloes.forEach(b => {
-      const key = String(b.id);
-      if (!scoreMap[key]) {
-        scoreMap[key] = {
-          id: b.id,
-          name: b.bettor_name,
-          avatar: b.avatar_url && b.avatar_url.startsWith('data:') ? b.avatar_url : `https://api.dicebear.com/7.x/identicon/svg?seed=${b.id}`,
-          pts: 0
-        };
-      }
-      // Sum up points dynamically from bets_data mapped to confrontos
-      const calculatedBets = getCalculatedBets(b.bets_data, confrontos);
-      calculatedBets.forEach(bet => {
-        if (bet.pts !== null && bet.pts !== undefined) {
-          const matchId = parseInt(bet.match_id);
-          let include = false;
-          if (stage === 'all') include = true;
-          else if (stage === 'groups' && matchId <= 72) include = true;
-          else if (stage === 'r32' && matchId >= 73 && matchId <= 88) include = true;
-          else if (stage === 'r16' && matchId >= 89 && matchId <= 96) include = true;
-          else if (stage === 'qf' && matchId >= 97 && matchId <= 100) include = true;
-          else if (stage === 'sf' && matchId >= 101 && matchId <= 102) include = true;
-          else if (stage === 'final' && matchId >= 103 && matchId <= 104) include = true;
-
-          if (include) {
-            scoreMap[key].pts += bet.pts;
-          }
+    if (stage === 'groups') {
+      // Group stage is purely by Bolão card (cartelas individualizadas)
+      const scoreMap = {};
+      boloes.forEach(b => {
+        const key = String(b.id);
+        if (!scoreMap[key]) {
+          scoreMap[key] = {
+            id: b.id,
+            name: b.bettor_name,
+            avatar: b.avatar_url && b.avatar_url.startsWith('data:') ? b.avatar_url : `https://api.dicebear.com/7.x/identicon/svg?seed=${b.id}`,
+            pts: 0
+          };
         }
+        const calculatedBets = getCalculatedBets(b.bets_data, confrontos);
+        calculatedBets.forEach(bet => {
+          if (bet.pts !== null && bet.pts !== undefined) {
+            const matchId = parseInt(bet.match_id);
+            if (matchId <= 72) {
+              scoreMap[key].pts += bet.pts;
+            }
+          }
+        });
       });
-    });
+      const players = Object.values(scoreMap);
+      return players.sort((a, b) => b.pts - a.pts).map((p, idx) => ({ ...p, rank: idx + 1 }));
+    } else {
+      // General and Knockout stages are calculated BY JOGADOR (registered users)
+      const scoreMap = {};
+      usersList.forEach(u => {
+        const key = u.username.toLowerCase();
+        if (!scoreMap[key]) {
+          scoreMap[key] = {
+            id: u.id,
+            name: u.username,
+            avatar: u.avatar_url && u.avatar_url.startsWith('data:') ? u.avatar_url : `https://api.dicebear.com/7.x/identicon/svg?seed=${u.username}`,
+            pts: 0
+          };
+        }
+        
+        // Find all bolões associated with this username
+        const userBoloes = boloes.filter(b => b.username && b.username.toLowerCase() === key);
+        userBoloes.forEach(b => {
+          const calculatedBets = getCalculatedBets(b.bets_data, confrontos);
+          calculatedBets.forEach(bet => {
+            if (bet.pts !== null && bet.pts !== undefined) {
+              const matchId = parseInt(bet.match_id);
+              let include = false;
+              if (stage === 'all') include = true;
+              else if (stage === 'r32' && matchId >= 73 && matchId <= 88) include = true;
+              else if (stage === 'r16' && matchId >= 89 && matchId <= 96) include = true;
+              else if (stage === 'qf' && matchId >= 97 && matchId <= 100) include = true;
+              else if (stage === 'sf' && matchId >= 101 && matchId <= 102) include = true;
+              else if (stage === 'final' && matchId >= 103 && matchId <= 104) include = true;
 
-    const players = Object.values(scoreMap);
-    return players.sort((a, b) => b.pts - a.pts).map((p, idx) => ({ ...p, rank: idx + 1 }));
+              if (include) {
+                scoreMap[key].pts += bet.pts;
+              }
+            }
+          });
+        });
+      });
+      const players = Object.values(scoreMap);
+      return players.sort((a, b) => b.pts - a.pts).map((p, idx) => ({ ...p, rank: idx + 1 }));
+    }
+  };
+
+  const handleRankingClick = (item) => {
+    if (rankingStage === 'groups') {
+      const b = boloes.find(x => x.id === item.id);
+      if (b) setShowRankingDetailsModal(b);
+    } else {
+      const u = usersList.find(x => x.id === item.id || x.username.toLowerCase() === item.name.toLowerCase());
+      if (u) {
+        setSelectedPlayerDetails(u);
+        setActiveTab('detalhes_jogador');
+      }
+    }
   };
 
   const ranking = getSortedRanking(rankingStage);
@@ -2118,7 +2160,7 @@ function DashboardContent() {
                   {top3[1] && (
                     <div 
                       className="podium-column second" 
-                      onClick={() => { const b = boloes.find(x => x.id === top3[1].id); if (b) setShowRankingDetailsModal(b); }}
+                      onClick={() => handleRankingClick(top3[1])}
                       style={{ cursor: 'pointer' }}
                     >
                       <img src={top3[1].avatar} className="podium-avatar" alt="2nd" />
@@ -2132,7 +2174,7 @@ function DashboardContent() {
                   {top3[0] && (
                     <div 
                       className="podium-column first" 
-                      onClick={() => { const b = boloes.find(x => x.id === top3[0].id); if (b) setShowRankingDetailsModal(b); }}
+                      onClick={() => handleRankingClick(top3[0])}
                       style={{ cursor: 'pointer' }}
                     >
                       <span className="podium-crown">👑</span>
@@ -2147,7 +2189,7 @@ function DashboardContent() {
                   {top3[2] && (
                     <div 
                       className="podium-column third" 
-                      onClick={() => { const b = boloes.find(x => x.id === top3[2].id); if (b) setShowRankingDetailsModal(b); }}
+                      onClick={() => handleRankingClick(top3[2])}
                       style={{ cursor: 'pointer' }}
                     >
                       <img src={top3[2].avatar} className="podium-avatar" alt="3rd" />
@@ -2165,7 +2207,7 @@ function DashboardContent() {
                       <div 
                         className="ranking-item" 
                         key={item.name}
-                        onClick={() => { const b = boloes.find(x => x.id === item.id); if (b) setShowRankingDetailsModal(b); }}
+                        onClick={() => handleRankingClick(item)}
                         style={{ cursor: 'pointer', transition: 'transform 0.2s' }}
                         onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.02)'}
                         onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}

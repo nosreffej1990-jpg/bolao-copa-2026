@@ -449,7 +449,8 @@ export default function Home() {
                     onClick={() => handleDirectNavigate('ranking')}
                     className="home-btn"
                     style={{
-                      background: 'rgba(255, 255, 255, 0.02)',
+                      background: 'var(--bg-card)',
+                      backdropFilter: 'blur(10px)',
                       border: '1px solid var(--border-color)',
                       borderRadius: '16px',
                       padding: '1.25rem 1rem',
@@ -481,7 +482,8 @@ export default function Home() {
                     onClick={() => handleDirectNavigate('placares_geral')}
                     className="home-btn"
                     style={{
-                      background: 'rgba(255, 255, 255, 0.02)',
+                      background: 'var(--bg-card)',
+                      backdropFilter: 'blur(10px)',
                       border: '1px solid var(--border-color)',
                       borderRadius: '16px',
                       padding: '1.25rem 1rem',
@@ -513,7 +515,8 @@ export default function Home() {
                     onClick={() => handleDirectNavigate('confrontos_geral')}
                     className="home-btn"
                     style={{
-                      background: 'rgba(255, 255, 255, 0.02)',
+                      background: 'var(--bg-card)',
+                      backdropFilter: 'blur(10px)',
                       border: '1px solid var(--border-color)',
                       borderRadius: '16px',
                       padding: '1.25rem 1rem',
@@ -545,7 +548,8 @@ export default function Home() {
                     onClick={() => handleDirectNavigate('grupos')}
                     className="home-btn"
                     style={{
-                      background: 'rgba(255, 255, 255, 0.02)',
+                      background: 'var(--bg-card)',
+                      backdropFilter: 'blur(10px)',
                       border: '1px solid var(--border-color)',
                       borderRadius: '16px',
                       padding: '1.25rem 1rem',
