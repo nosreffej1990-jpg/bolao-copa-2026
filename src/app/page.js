@@ -27,6 +27,7 @@ export default function Home() {
   const [isAndroid, setIsAndroid] = useState(false);
   const [isInstalled, setIsInstalled] = useState(false);
   const [liveMatches, setLiveMatches] = useState([]);
+  const [upcomingMatches, setUpcomingMatches] = useState([]);
   const [allowRegister, setAllowRegister] = useState(true);
   const router = useRouter();
 
@@ -89,6 +90,12 @@ export default function Home() {
         g.time_elapsed !== 'finished'
       );
       setLiveMatches(live);
+
+      const upcoming = games.filter(g =>
+        g.finished === 'FALSE' &&
+        (g.time_elapsed === 'notstarted' || !g.time_elapsed)
+      );
+      setUpcomingMatches(upcoming.slice(0, 3));
     } catch (e) {
       // silently fail - live scores are optional
     }
@@ -407,38 +414,33 @@ export default function Home() {
                 <div 
                   onClick={() => { setShowLogin(true); setShowRegister(false); setErrorMsg(''); }}
                   style={{
-                    background: 'linear-gradient(135deg, rgba(251, 191, 36, 0.2) 0%, rgba(184, 134, 11, 0.05) 100%)',
+                    background: 'linear-gradient(90deg, #FBBF24 0%, #D97706 100%)',
                     border: '1px solid rgba(251, 191, 36, 0.4)',
                     borderRadius: '20px',
-                    padding: '1.5rem',
+                    padding: '1.25rem 1.5rem',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '1.25rem',
+                    justifyContent: 'space-between',
                     cursor: 'pointer',
-                    boxShadow: '0 10px 30px rgba(251, 191, 36, 0.08)',
-                    transition: 'transform 0.2s'
+                    boxShadow: '0 8px 30px rgba(251, 191, 36, 0.3)',
+                    transition: 'all 0.2s',
+                    width: '100%',
+                    boxSizing: 'border-box'
                   }}
-                  onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-3px)'}
-                  onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = 'translateY(-2px)';
+                    e.currentTarget.style.boxShadow = '0 12px 35px rgba(251, 191, 36, 0.45)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'translateY(0)';
+                    e.currentTarget.style.boxShadow = '0 8px 30px rgba(251, 191, 36, 0.3)';
+                  }}
                 >
-                  <div style={{
-                    background: 'linear-gradient(135deg, var(--accent-gold), #b8860b)',
-                    borderRadius: '16px',
-                    width: '54px',
-                    height: '54px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: '#000',
-                    boxShadow: '0 8px 20px rgba(251, 191, 36, 0.25)'
-                  }}>
-                    <Icons.LogIn size={26} style={{ color: '#000' }} />
+                  <div style={{ display: 'flex', flexDirection: 'column', textAlign: 'left', gap: '0.15rem' }}>
+                    <span style={{ fontSize: '1.2rem', fontWeight: '900', color: '#000', letterSpacing: '0.02em', textTransform: 'uppercase' }}>Entrar</span>
+                    <span style={{ fontSize: '0.7rem', fontWeight: 'bold', color: 'rgba(0,0,0,0.65)' }}>ACESSE SEUS PALPITES E ÁREA LOGADA</span>
                   </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', textAlign: 'left' }}>
-                    <span style={{ fontSize: '1.05rem', fontWeight: '800', color: '#fff', letterSpacing: '0.01em' }}>Entrar</span>
-                    <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Acesse seus palpites e área logada</span>
-                  </div>
-                  <Icons.ChevronRight size={20} style={{ marginLeft: 'auto', color: 'var(--accent-gold)' }} />
+                  <Icons.ChevronRight size={22} style={{ color: '#000' }} />
                 </div>
 
                 {/* 2x2 Grid for standard features */}
@@ -568,6 +570,55 @@ export default function Home() {
                       <Icons.List size={22} style={{ color: '#ec4899' }} />
                     </div>
                     <span style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#fff' }}>Grupos</span>
+                    <span style={{ fontSize: '0.65rem', color: 'var(--text-secondary)' }}>Classificação oficial</span>
+                  </div>
+                </div>
+
+                {/* Próximos Jogos Section */}
+                <div style={{ marginTop: '0.5rem', width: '100%', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 0.25rem' }}>
+                    <span style={{ fontSize: '0.9rem', fontWeight: '900', color: 'var(--accent-gold)', letterSpacing: '0.05em' }}>PRÓXIMOS JOGOS</span>
+                    <Icons.ChevronRight size={18} style={{ color: 'var(--accent-gold)', cursor: 'pointer' }} onClick={() => handleDirectNavigate('confrontos_geral')} />
+                  </div>
+                  <div style={{ display: 'flex', gap: '0.85rem', overflowX: 'auto', paddingBottom: '0.5rem', width: '100%', scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}>
+                    {upcomingMatches.map((g, idx) => (
+                      <div key={idx} style={{
+                        minWidth: '200px',
+                        background: 'linear-gradient(135deg, rgba(251, 191, 36, 0.1) 0%, rgba(184, 134, 11, 0.03) 100%)',
+                        border: '1px solid rgba(251, 191, 36, 0.2)',
+                        borderRadius: '16px',
+                        padding: '0.85rem',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        gap: '0.5rem',
+                        boxSizing: 'border-box'
+                      }}>
+                        <span style={{ fontSize: '0.65rem', fontWeight: 'bold', color: 'var(--accent-gold)' }}>
+                          {new Date(g.match_date).toLocaleDateString('pt-BR')} {g.match_time ? g.match_time.slice(0, 5) : ''}
+                        </span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'center', width: '100%' }}>
+                          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1, gap: '0.2rem' }}>
+                            <img src={`https://flagcdn.com/w40/${getFlagCode(g.home_team_name_en)}.png`} style={{ width: '22px', height: '14px', objectFit: 'cover', borderRadius: '2px' }} alt="" />
+                            <span style={{ fontSize: '0.68rem', fontWeight: 'bold', color: '#fff', textAlign: 'center', maxWidth: '65px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                              {g.home_team_name_en}
+                            </span>
+                          </div>
+                          <span style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', fontWeight: 'bold' }}>VS</span>
+                          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1, gap: '0.2rem' }}>
+                            <img src={`https://flagcdn.com/w40/${getFlagCode(g.away_team_name_en)}.png`} style={{ width: '22px', height: '14px', objectFit: 'cover', borderRadius: '2px' }} alt="" />
+                            <span style={{ fontSize: '0.68rem', fontWeight: 'bold', color: '#fff', textAlign: 'center', maxWidth: '65px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                              {g.away_team_name_en}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                    {upcomingMatches.length === 0 && (
+                      <div style={{ color: 'var(--text-secondary)', fontSize: '0.75rem', width: '100%', textAlign: 'center', padding: '1rem' }}>
+                        Nenhum jogo próximo agendado
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
