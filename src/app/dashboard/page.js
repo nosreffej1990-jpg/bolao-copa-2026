@@ -733,6 +733,14 @@ function DashboardContent() {
     fetchData();
   };
 
+  const handleRecalcular = async () => {
+    setToastMsg('Recalculando pontuação...');
+    setToastType('success');
+    await fetchData();
+    setToastMsg('Pontuação atualizada com sucesso!');
+    setTimeout(() => setToastMsg(''), 3000);
+  };
+
   // Compartilhar ranking via Web Share API (com fallback WhatsApp)
   const shareRanking = async () => {
     const text = ranking.map((r, i) => {
@@ -2256,7 +2264,17 @@ function DashboardContent() {
                     ))}
                   </div>
                 )}
-                {/* Compartilhar Ranking */}
+                {/* Recalcular Pontuação */}
+                  <button onClick={handleRecalcular} style={{
+                    width: '100%', marginTop: '1.25rem', padding: '0.85rem',
+                    background: 'transparent',
+                    border: '1px solid var(--accent-gold)', borderRadius: '10px', color: 'var(--accent-gold)', fontWeight: '700', fontSize: '0.9rem', cursor: 'pointer',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem'
+                  }}>
+                    <Icons.RefreshCw size={18} /> Recalcular Pontuação
+                  </button>
+
+                  {/* Compartilhar Ranking */}
                 <button onClick={shareRanking} style={{
                   width: '100%', marginTop: '1.25rem', padding: '0.85rem',
                   background: 'var(--btn-primary-bg)',
