@@ -4766,14 +4766,14 @@ function DashboardContent() {
           style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.2rem', cursor: 'pointer', flex: 1 }}
         >
           <Icons.Home size={20} style={{ color: activeTab === 'boloes' ? 'var(--accent-gold)' : 'var(--text-secondary)' }} />
-          <span style={{ fontSize: '0.65rem', fontWeight: 'bold', color: activeTab === 'boloes' ? 'var(--accent-gold)' : 'var(--text-secondary)' }}>Inicio</span>
+          <span style={{ fontSize: '0.65rem', fontWeight: 'bold', color: activeTab === 'boloes' ? 'var(--accent-gold)' : 'var(--text-secondary)' }}>Palpites</span>
         </div>
         <div 
           onClick={() => setActiveTab('apostas_elim')}
           style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.2rem', cursor: 'pointer', flex: 1 }}
         >
           <Icons.List size={20} style={{ color: activeTab === 'apostas_elim' ? 'var(--accent-gold)' : 'var(--text-secondary)' }} />
-          <span style={{ fontSize: '0.65rem', fontWeight: 'bold', color: activeTab === 'apostas_elim' ? 'var(--accent-gold)' : 'var(--text-secondary)' }}>Palpites</span>
+          <span style={{ fontSize: '0.65rem', fontWeight: 'bold', color: activeTab === 'apostas_elim' ? 'var(--accent-gold)' : 'var(--text-secondary)' }}>Apostar</span>
         </div>
         <div 
           onClick={() => setActiveTab('ranking')}

@@ -438,8 +438,7 @@ export default function Home() {
                   }}
                 >
                   <div style={{ display: 'flex', flexDirection: 'column', textAlign: 'left', gap: '0.15rem' }}>
-                    <span style={{ fontSize: '1.15rem', fontWeight: '900', color: '#1a0f00', letterSpacing: '0.04em', textTransform: 'uppercase' }}>Entrar / Enviar Bolão</span>
-                    <span style={{ fontSize: '0.68rem', fontWeight: 'bold', color: 'rgba(30,15,0,0.6)', letterSpacing: '0.08em' }}>PALPITE AGORA</span>
+                    <span style={{ fontSize: '1.15rem', fontWeight: '900', color: '#1a0f00', letterSpacing: '0.04em', textTransform: 'uppercase' }}>Login</span>
                   </div>
                   <Icons.ChevronRight size={22} style={{ color: '#000' }} />
                 </div>
@@ -450,7 +449,7 @@ export default function Home() {
                     onClick={() => handleDirectNavigate('ranking')}
                     className="home-btn"
                     style={{
-                      background: 'rgba(10, 25, 15, 0.7)',
+                      background: 'rgba(22, 22, 22, 0.75)',
                       backdropFilter: 'blur(10px)',
                       border: '1px solid rgba(251, 191, 36, 0.15)',
                       borderRadius: '16px',
@@ -476,14 +475,14 @@ export default function Home() {
                       <Icons.Trophy size={24} style={{ color: '#FBBF24' }} />
                     </div>
                     <span style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#fff' }}>Classificação</span>
-                    <span style={{ fontSize: '0.65rem', color: 'var(--text-secondary)' }}>Ver líderes e pontos</span>
+                    <span style={{ fontSize: '0.65rem', color: 'rgba(251, 191, 36, 0.7)' }}>Ver líderes e pontos</span>
                   </div>
 
                   <div 
                     onClick={() => handleDirectNavigate('placares_geral')}
                     className="home-btn"
                     style={{
-                      background: 'rgba(10, 25, 15, 0.7)',
+                      background: 'rgba(22, 22, 22, 0.75)',
                       backdropFilter: 'blur(10px)',
                       border: '1px solid rgba(251, 191, 36, 0.15)',
                       borderRadius: '16px',
@@ -509,14 +508,14 @@ export default function Home() {
                       <Icons.Check size={24} style={{ color: '#FBBF24' }} />
                     </div>
                     <span style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#fff' }}>Resultados</span>
-                    <span style={{ fontSize: '0.65rem', color: 'var(--text-secondary)' }}>Jogos finalizados</span>
+                    <span style={{ fontSize: '0.65rem', color: 'rgba(251, 191, 36, 0.7)' }}>Jogos finalizados</span>
                   </div>
 
                   <div 
                     onClick={() => handleDirectNavigate('confrontos_geral')}
                     className="home-btn"
                     style={{
-                      background: 'rgba(10, 25, 15, 0.7)',
+                      background: 'rgba(22, 22, 22, 0.75)',
                       backdropFilter: 'blur(10px)',
                       border: '1px solid rgba(251, 191, 36, 0.15)',
                       borderRadius: '16px',
@@ -542,14 +541,14 @@ export default function Home() {
                       <Icons.Calendar size={24} style={{ color: '#FBBF24' }} />
                     </div>
                     <span style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#fff' }}>Confrontos</span>
-                    <span style={{ fontSize: '0.65rem', color: 'var(--text-secondary)' }}>Agenda de jogos</span>
+                    <span style={{ fontSize: '0.65rem', color: 'rgba(251, 191, 36, 0.7)' }}>Agenda de jogos</span>
                   </div>
 
                   <div 
                     onClick={() => handleDirectNavigate('grupos')}
                     className="home-btn"
                     style={{
-                      background: 'rgba(10, 25, 15, 0.7)',
+                      background: 'rgba(22, 22, 22, 0.75)',
                       backdropFilter: 'blur(10px)',
                       border: '1px solid rgba(251, 191, 36, 0.15)',
                       borderRadius: '16px',
@@ -575,7 +574,7 @@ export default function Home() {
                       <Icons.List size={24} style={{ color: '#FBBF24' }} />
                     </div>
                     <span style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#fff' }}>Grupos</span>
-                    <span style={{ fontSize: '0.65rem', color: 'var(--text-secondary)' }}>Classificação oficial</span>
+                    <span style={{ fontSize: '0.65rem', color: 'rgba(251, 191, 36, 0.7)' }}>Classificação oficial</span>
                   </div>
                 </div>
 
