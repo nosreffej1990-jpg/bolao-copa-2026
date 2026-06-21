@@ -1,0 +1,163 @@
+import React from 'react';
+
+export default function MatchesTab({
+  mode, // 'results' | 'upcoming'
+  apiLive,
+  apiFinished,
+  apiUpcoming,
+  apiLoading,
+  getFlagCode,
+  formatMatchDate,
+  setShowMatchModal,
+  setMatchModalTab
+}) {
+  if (mode === 'results') {
+    return (
+      <div>
+        <div style={{ marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <div>
+            <h3 style={{ fontSize: '1.05rem', marginBottom: '0.2rem' }}>Resultados dos Jogos</h3>
+            <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Placares oficiais • Atualizado a cada 60s</p>
+          </div>
+          {apiLive.length > 0 && (
+            <span style={{ background: '#ef4444', color: 'var(--text-primary)', fontSize: '0.65rem', fontWeight: 'bold', padding: '0.2rem 0.5rem', borderRadius: '999px', animation: 'pulse 1.5s infinite' }}>🔴 AO VIVO</span>
+          )}
+        </div>
+
+        {/* Ao vivo */}
+        {apiLive.map(g => {
+          const hFlag = getFlagCode(g.home_team_name_en);
+          const aFlag = getFlagCode(g.away_team_name_en);
+          return (
+            <div
+              className="matchup-card"
+              key={g.id}
+              style={{ borderColor: '#ef4444', boxShadow: '0 0 12px rgba(239,68,68,0.25)', cursor: 'pointer' }}
+              onClick={() => { setShowMatchModal(g); setMatchModalTab('palpites'); }}
+            >
+              <div className="matchup-meta">
+                <span style={{ color: '#ef4444', fontWeight: 'bold' }}>🔴 AO VIVO • Grupo {g.group}</span>
+                <span>{g.time_elapsed}</span>
+              </div>
+              <div className="matchup-teams-row">
+                <div className="matchup-team-item">
+                  <img src={`https://flagcdn.com/w80/${hFlag}.png`} className="team-flag" alt={g.home_team_name_en} />
+                  <span>{g.home_team_name_en}</span>
+                </div>
+                <div className="matchup-scores-center">
+                  <input type="number" className="score-field" value={g.home_score} readOnly />
+                  <span className="score-sep">x</span>
+                  <input type="number" className="score-field" value={g.away_score} readOnly />
+                </div>
+                <div className="matchup-team-item">
+                  <img src={`https://flagcdn.com/w80/${aFlag}.png`} className="team-flag" alt={g.away_team_name_en} />
+                  <span>{g.away_team_name_en}</span>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+
+        {/* Finalizados */}
+        {apiLoading && apiFinished.length === 0 ? (
+          <p style={{ textAlign: 'center', color: 'var(--text-secondary)', fontSize: '0.8rem', padding: '2rem' }}>Carregando resultados...</p>
+        ) : apiFinished.length === 0 ? (
+          <p style={{ textAlign: 'center', color: 'var(--text-secondary)', fontSize: '0.8rem', padding: '2rem' }}>Nenhum jogo finalizado ainda.</p>
+        ) : (
+          <div className="matchup-list">
+            {apiFinished.map(g => {
+              const hFlag = getFlagCode(g.home_team_name_en);
+              const aFlag = getFlagCode(g.away_team_name_en);
+              const { date, time } = formatMatchDate(g.local_date);
+              return (
+                <div
+                  className="matchup-card"
+                  key={g.id}
+                  style={{ borderColor: 'rgba(16,185,129,0.3)', cursor: 'pointer', position: 'relative' }}
+                  onClick={() => { setShowMatchModal(g); setMatchModalTab('detalhes'); }}
+                >
+                  <div className="matchup-meta">
+                    <span>Grupo {g.group} • Encerrado</span>
+                    <span>{date} {time}</span>
+                  </div>
+                  <div className="matchup-teams-row">
+                    <div className="matchup-team-item">
+                      <img src={`https://flagcdn.com/w80/${hFlag}.png`} className="team-flag" alt={g.home_team_name_en} />
+                      <span>{g.home_team_name_en}</span>
+                    </div>
+                    <div className="matchup-scores-center">
+                      <input type="number" className="score-field" value={g.home_score} readOnly />
+                      <span className="score-sep">x</span>
+                      <input type="number" className="score-field" value={g.away_score} readOnly />
+                    </div>
+                    <div className="matchup-team-item">
+                      <img src={`https://flagcdn.com/w80/${aFlag}.png`} className="team-flag" alt={g.away_team_name_en} />
+                      <span>{g.away_team_name_en}</span>
+                    </div>
+                  </div>
+                  {g.home_scorers && g.home_scorers !== 'null' && (
+                    <p style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', marginTop: '0.5rem', textAlign: 'center' }}>⚽ {g.home_scorers.replace(/[{}"]/g, '')}</p>
+                  )}
+                  <div style={{ display: 'flex', justifyContent: 'center', gap: '0.5rem', marginTop: '0.75rem' }}>
+                    <span style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', background: 'rgba(255,255,255,0.06)', padding: '0.2rem 0.6rem', borderRadius: '999px' }}>Toque para ver detalhes</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  if (mode === 'upcoming') {
+    return (
+      <div>
+        <div style={{ marginBottom: '1.25rem' }}>
+          <h3 style={{ fontSize: '1.05rem', marginBottom: '0.2rem' }}>Próximos Confrontos</h3>
+          <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Partidas oficiais da Copa 2026 • worldcup26.ir</p>
+        </div>
+
+        {apiLoading && apiUpcoming.length === 0 ? (
+          <p style={{ textAlign: 'center', color: 'var(--text-secondary)', fontSize: '0.8rem', padding: '2rem' }}>Carregando calendário...</p>
+        ) : (
+          <div className="matchup-list">
+            {apiUpcoming.map(g => {
+              const hFlag = getFlagCode(g.home_team_name_en);
+              const aFlag = getFlagCode(g.away_team_name_en);
+              const { date, time } = formatMatchDate(g.local_date);
+              return (
+                <div
+                  className="matchup-card"
+                  key={g.id}
+                  style={{ cursor: 'pointer' }}
+                  onClick={() => { setShowMatchModal(g); setMatchModalTab('palpites'); }}
+                >
+                  <div className="matchup-meta">
+                    <span>Grupo {g.group} • Rodada {g.matchday}</span>
+                    <span>{date} às {time}</span>
+                  </div>
+                  <div className="matchup-teams-row">
+                    <div className="matchup-team-item">
+                      <img src={`https://flagcdn.com/w80/${hFlag}.png`} className="team-flag" alt={g.home_team_name_en} />
+                      <span>{g.home_team_name_en}</span>
+                    </div>
+                    <div className="matchup-scores-center">
+                      <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: 'bold' }}>vs</span>
+                    </div>
+                    <div className="matchup-team-item">
+                      <img src={`https://flagcdn.com/w80/${aFlag}.png`} className="team-flag" alt={g.away_team_name_en} />
+                      <span>{g.away_team_name_en}</span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  return null;
+}

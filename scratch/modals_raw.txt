@@ -1,0 +1,1213 @@
+{showMatchModal && (() => {
+        const g = showMatchModal;
+        const hFlag = getFlagCode(g.home_team_name_en);
+        const aFlag = getFlagCode(g.away_team_name_en);
+        const { date, time } = formatMatchDate(g.local_date);
+        const betStats = getMatchBetStats(g);
+        const parseScorers = (raw) => {
+          if (!raw || raw === 'null') return [];
+          return raw.replace(/[{}"]/g, '').split(',').map(s => s.trim()).filter(Boolean);
+        };
+        const homeScorers = parseScorers(g.home_scorers);
+        const awayScorers = parseScorers(g.away_scorers);
+
+        return (
+          <div className="modal-overlay" onClick={() => setShowMatchModal(null)}>
+            <div className="modal-container" onClick={e => e.stopPropagation()} style={{ maxHeight: '90vh', overflowY: 'auto' }}>
+              {/* Header */}
+              <div className="modal-header">
+                <h3 style={{ fontSize: '0.95rem' }}>Grupo {g.group} • Rodada {g.matchday}</h3>
+                <div onClick={() => setShowMatchModal(null)} className="modal-close"><Icons.X size={20} /></div>
+              </div>
+
+              {/* Placar principal */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1rem', padding: '1rem 0', borderBottom: '1px solid var(--border-color)', marginBottom: '1rem' }}>
+                <div style={{ textAlign: 'center', flex: 1 }}>
+                  <img src={`https://flagcdn.com/w80/${hFlag}.png`} style={{ width: '48px', marginBottom: '0.4rem' }} alt={g.home_team_name_en} />
+                  <p style={{ fontSize: '0.75rem', fontWeight: 'bold' }}>{g.home_team_name_en}</p>
+                </div>
+                <div style={{ textAlign: 'center' }}>
+                  <div style={{ fontSize: '2rem', fontWeight: '900', color: 'var(--text-primary)', letterSpacing: '4px' }}>
+                    {((g.finished === 'TRUE' || g.finished === true || g.time_elapsed === 'finished' || (g.time_elapsed && g.time_elapsed !== 'notstarted')) && g.home_score !== undefined && g.home_score !== null && g.home_score !== '' && String(g.home_score) !== 'null') ? `${g.home_score} — ${g.away_score}` : 'vs'}
+                  </div>
+                  <span style={{ fontSize: '0.6rem', color: (g.finished === 'TRUE' || g.finished === true || g.time_elapsed === 'finished') ? 'var(--accent-gold)' : 'var(--accent-gold)', fontWeight: 'bold' }}>
+                    {(g.finished === 'TRUE' || g.finished === true || g.time_elapsed === 'finished') ? `ENCERRADO • ${date}` : (g.time_elapsed && g.time_elapsed !== 'notstarted') ? `AO VIVO • ${g.time_elapsed}` : `${date} às ${time}`}
+                  </span>
+                </div>
+                <div style={{ textAlign: 'center', flex: 1 }}>
+                  <img src={`https://flagcdn.com/w80/${aFlag}.png`} style={{ width: '48px', marginBottom: '0.4rem' }} alt={g.away_team_name_en} />
+                  <p style={{ fontSize: '0.75rem', fontWeight: 'bold' }}>{g.away_team_name_en}</p>
+                </div>
+              </div>
+
+              {/* Tabs */}
+              <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
+                <button
+                  onClick={() => setMatchModalTab('detalhes')}
+                  style={{ flex: 1, padding: '0.6rem', borderRadius: '8px', fontWeight: '700', fontSize: '0.8rem', cursor: 'pointer', border: 'none',
+                    background: matchModalTab === 'detalhes' ? 'var(--accent-gold)' : 'rgba(255,255,255,0.07)',
+                    color: matchModalTab === 'detalhes' ? '#000' : '#cbd5e1' }}
+                >⚽ Detalhes</button>
+                <button
+                  onClick={() => setMatchModalTab('palpites')}
+                  style={{ flex: 1, padding: '0.6rem', borderRadius: '8px', fontWeight: '700', fontSize: '0.8rem', cursor: 'pointer', border: 'none',
+                    background: matchModalTab === 'palpites' ? 'var(--accent-gold)' : 'rgba(255,255,255,0.07)',
+                    color: matchModalTab === 'palpites' ? '#000' : '#cbd5e1' }}
+                >🏆 Palpites ({betStats.length})</button>
+              </div>
+
+              {/* Tab: Detalhes */}
+              {matchModalTab === 'detalhes' && (
+                <div>
+                  {/* Artilheiros */}
+                  {(homeScorers.length > 0 || awayScorers.length > 0) ? (
+                    <div style={{ marginBottom: '1rem' }}>
+                      <p style={{ fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--text-secondary)', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>⚽ Gols</p>
+                      <div style={{ display: 'flex', gap: '1rem' }}>
+                        <div style={{ flex: 1 }}>
+                          {homeScorers.map((s, i) => (
+                            <div key={i} style={{ fontSize: '0.78rem', padding: '0.35rem 0', borderBottom: '1px solid var(--border-color)', color: '#e2e8f0' }}>⚽ {s}</div>
+                          ))}
+                        </div>
+                        <div style={{ flex: 1, textAlign: 'right' }}>
+                          {awayScorers.map((s, i) => (
+                            <div key={i} style={{ fontSize: '0.78rem', padding: '0.35rem 0', borderBottom: '1px solid var(--border-color)', color: '#e2e8f0' }}>{s} ⚽</div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', textAlign: 'center', marginBottom: '1rem' }}>Detalhes de gols não disponíveis.</p>
+                  )}
+
+                  {/* Info do jogo */}
+                  <div style={{ background: 'var(--bg-card)', borderRadius: '8px', padding: '0.75rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem' }}>
+                      <span style={{ color: 'var(--text-secondary)' }}>Data</span>
+                      <span style={{ fontWeight: 'bold' }}>{date} às {time}</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem' }}>
+                      <span style={{ color: 'var(--text-secondary)' }}>Grupo</span>
+                      <span style={{ fontWeight: 'bold' }}>Grupo {g.group}</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem' }}>
+                      <span style={{ color: 'var(--text-secondary)' }}>Rodada</span>
+                      <span style={{ fontWeight: 'bold' }}>{g.matchday}ª Rodada</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem' }}>
+                      <span style={{ color: 'var(--text-secondary)' }}>Status</span>
+                      <span style={{ fontWeight: 'bold', color: (g.finished === 'TRUE' || g.finished === true || g.time_elapsed === 'finished') ? 'var(--accent-gold)' : 'var(--accent-gold)' }}>
+                        {g.finished === 'TRUE' || g.finished === true || g.time_elapsed === 'finished' ? '✔ Encerrado' : (g.time_elapsed && g.time_elapsed !== 'notstarted') ? '🔴 Ao Vivo' : '⏳ Agendado'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Tab: Palpites */}
+              {matchModalTab === 'palpites' && (
+                <div>
+                  <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '0.75rem' }}>
+                    Quem apostou neste jogo e quantos pontos ganhou:
+                  </p>
+                  {betStats.length === 0 ? (
+                    <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-secondary)', fontSize: '0.8rem' }}>
+                      <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>🎯</div>
+                      Nenhum bolão cadastrado com palpite para este jogo.
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                      {betStats.map((item, idx) => (
+                        <div key={idx} style={{
+                          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                          padding: '0.65rem 0.85rem', borderRadius: '8px',
+                          background: (!item.isFinished && !item.isLive) ? 'rgba(255,255,255,0.03)' : item.exact ? 'rgba(16,185,129,0.12)' : item.correct ? 'rgba(251,191,36,0.1)' : 'rgba(255,255,255,0.04)',
+                          border: `1px solid ${(!item.isFinished && !item.isLive) ? 'rgba(255,255,255,0.05)' : item.exact ? 'rgba(16,185,129,0.4)' : item.correct ? 'rgba(251,191,36,0.3)' : 'rgba(255,255,255,0.07)'}`
+                        }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                            <span style={{ fontSize: '0.7rem', fontWeight: 'bold', color: 'var(--text-secondary)', minWidth: '18px' }}>{idx + 1}º</span>
+                            <img src={`https://api.dicebear.com/7.x/identicon/svg?seed=${item.name}`} style={{ width: '28px', height: '28px', borderRadius: '50%' }} alt="" />
+                            <div>
+                              <p style={{ fontSize: '0.8rem', fontWeight: 'bold' }}>{item.name}</p>
+                              {!item.isFinished && !item.isLive ? (
+                                <p style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>⏳ Jogo não iniciado</p>
+                              ) : item.isLive ? (
+                                <p style={{ fontSize: '0.68rem', fontWeight: '700', color: (item.exact || item.correct) ? 'var(--accent-gold)' : '#f87171' }}>
+                                  {item.exact ? '🟢 Vencendo - Exato (+5)' : item.correct ? '🟡 Vencendo - Vencedor (+3)' : '🔴 Perdendo (0 pts)'}
+                                  <span style={{ fontSize: '0.55rem', fontWeight: 'normal', color: 'rgba(255,255,255,0.4)', marginLeft: '0.2rem' }}>(parcial)</span>
+                                </p>
+                              ) : (
+                                <p style={{ fontSize: '0.68rem', fontWeight: '600', color: item.exact ? 'var(--accent-gold)' : item.correct ? 'var(--accent-gold)' : '#f87171' }}>
+                                  {item.exact ? '🎯 Exato (+5 pts)' : item.correct ? '✅ Vencedor (+3 pts)' : '❌ Errou (0 pts)'}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                          <div style={{ textAlign: 'right' }}>
+                            <span style={{
+                              fontSize: '1rem', fontWeight: '900', color: '#D2A74F'
+                            }}>
+                              {item.bet_home} x {item.bet_away}
+                            </span>
+                            <p style={{ fontSize: '0.58rem', color: 'var(--text-secondary)' }}>Aposta</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* 2. Ver Foto Modal */}
+
+      {showPhotoModal && (
+        <div className="modal-overlay" onClick={() => setShowPhotoModal(null)}>
+          <div className="modal-container" onClick={(e) => e.stopPropagation()} style={{ padding: '0.5rem' }}>
+            <div className="modal-header" style={{ padding: '0.5rem', marginBottom: '0.5rem' }}>
+              <h4 style={{ fontSize: '0.85rem' }}>Foto do Bolão Original</h4>
+              <div onClick={() => setShowPhotoModal(null)} className="modal-close">
+                <Icons.X size={18} />
+              </div>
+            </div>
+            <img src={showPhotoModal} style={{ width: '100%', borderRadius: '8px', objectFit: 'contain' }} alt="Bolão" />
+          </div>
+        </div>
+      )}
+
+      {/* 3. Ver Apostas Lidas Modal */}
+      {showBetsModal && (
+        <div className="modal-overlay" onClick={() => setShowBetsModal(null)}>
+          <div className="modal-container" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>Palpites Lidos</h3>
+              <div onClick={() => setShowBetsModal(null)} className="modal-close">
+                <Icons.X size={20} />
+              </div>
+            </div>
+
+            <div className="bets-header-meta">
+              <img
+                src={showBetsModal.avatar_url && showBetsModal.avatar_url.startsWith('data:') ? showBetsModal.avatar_url : `https://api.dicebear.com/7.x/identicon/svg?seed=${showBetsModal.bettor_name}`}
+                className="bolao-avatar"
+                style={{ width: '30px', height: '30px', borderRadius: '50%', objectFit: 'cover' }}
+                alt="avatar"
+              />
+              <div>
+                <h4 style={{ fontSize: '0.85rem' }}>{showBetsModal.bettor_name}</h4>
+                <p style={{ fontSize: '0.65rem', color: 'var(--text-secondary)' }}>
+                  {Array.isArray(showBetsModal.bets_data) && showBetsModal.bets_data.some(bd => bd.match_id >= 73)
+                    ? 'Palpites da fase eliminatória salvos diretamente'
+                    : 'Apostas extraídas com OCR da foto'
+                  }
+                </p>
+              </div>
+            </div>
+
+            <div className="bets-legend">
+              <div className="legend-item">
+                <div className="legend-color exact"></div>
+                <span>Placar Exato (+5)</span>
+              </div>
+              <div className="legend-item">
+                <div className="legend-color winner"></div>
+                <span>Vencedor (+3)</span>
+              </div>
+              <div className="legend-item">
+                <div className="legend-color wrong"></div>
+                <span>Erro / Pendente (0)</span>
+              </div>
+            </div>
+
+            <div style={{ overflowX: 'auto' }}>
+              <table className="bets-table">
+                <thead>
+                  <tr>
+                    <th>Jogo</th>
+                    <th>Resultado</th>
+                    <th>Aposta</th>
+                    <th>Pts</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {getCalculatedBets(showBetsModal.bets_data, confrontos).map((bet, idx) => {
+                    const badgeClass = bet.pts === 5 
+                      ? 'exact' 
+                      : bet.pts === 3 
+                      ? 'winner' 
+                      : bet.pts === 0 
+                      ? 'wrong' 
+                      : 'pending';
+                    
+                    return (
+                      <tr key={idx}>
+                        <td>{bet.home} x {bet.away}</td>
+                        <td style={{ fontWeight: 'bold' }}>
+                          {bet.real_home !== null ? `${bet.real_home}x${bet.real_away}` : '-'}
+                        </td>
+                        <td>
+                          <span className={`bet-badge ${badgeClass}`}>
+                            {bet.bet_home}x{bet.bet_away}
+                          </span>
+                        </td>
+                        <td style={{ fontWeight: 'bold', color: bet.pts > 0 ? 'var(--accent-gold)' : 'var(--text-muted)' }}>
+                          {bet.pts !== null ? `+${bet.pts}` : '-'}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Exclusão de Bolão */}
+      {showDeleteModal && (
+        <div className="modal-overlay">
+          <div className="modal-container">
+            <div className="modal-header">
+              <h3>Excluir Bolão</h3>
+              <div onClick={() => { setShowDeleteModal(null); setDeletePassword(''); setDeleteError(''); }} className="modal-close">
+                <Icons.X size={20} />
+              </div>
+            </div>
+            <p style={{ fontSize: '0.85rem', marginBottom: '1rem', color: 'var(--text-secondary)' }}>
+              Você está excluindo o bolão de <strong style={{ color: 'var(--text-primary)' }}>{showDeleteModal.bettor_name}</strong>. Esta ação é irreversível e zerará os pontos deste participante.
+            </p>
+            <div className="form-group">
+              <label>Confirme sua senha para continuar</label>
+              <input
+                type="password"
+                className="form-control"
+                placeholder="Sua senha de login"
+                value={deletePassword}
+                onChange={(e) => { setDeletePassword(e.target.value); setDeleteError(''); }}
+              />
+            </div>
+            {deleteError && <p style={{ color: '#ef4444', fontSize: '0.75rem', marginBottom: '0.75rem' }}>{deleteError}</p>}
+            <button
+              className="btn-submit"
+              style={{ background: 'linear-gradient(135deg, #ef4444, #b91c1c)' }}
+              onClick={confirmDeleteBolao}
+            >
+              CONFIRMAR EXCLUSÃO
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Histórico de Palpites */}
+      {showHistoryModal && (() => {
+        const b = showHistoryModal;
+        const calculatedBets = getCalculatedBets(b.bets_data, confrontos);
+        const total = calculatedBets.length;
+        const finalizados = calculatedBets.filter(bt => bt.pts !== null && bt.pts !== undefined);
+        const exatos = finalizados.filter(bt => bt.pts === 5).length;
+        const corretos = finalizados.filter(bt => bt.pts === 3).length;
+        const erros = finalizados.filter(bt => bt.pts === 0).length;
+        const totalPts = finalizados.reduce((acc, bt) => acc + (bt.pts || 0), 0);
+        return (
+          <div className="modal-overlay" onClick={() => setShowHistoryModal(null)}>
+            <div className="modal-container" onClick={e => e.stopPropagation()} style={{ maxHeight: '90vh', overflowY: 'auto' }}>
+              <div className="modal-header">
+                <h3>Histórico — {b.bettor_name}</h3>
+                <div onClick={() => setShowHistoryModal(null)} className="modal-close"><Icons.X size={20} /></div>
+              </div>
+              {/* Stats resumo */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '0.5rem', marginBottom: '1rem' }}>
+                {[{ label: 'Total Pts', val: totalPts, color: '#D2A74F' },
+                  { label: '🎯 Exatos', val: exatos, color: '#D2A74F' },
+                  { label: '✅ Vencedor', val: corretos, color: '#60a5fa' },
+                  { label: '❌ Erros', val: erros, color: '#f87171' }].map(s => (
+                  <div key={s.label} style={{ background: 'var(--bg-card)', borderRadius: '8px', padding: '0.5rem', textAlign: 'center' }}>
+                    <div style={{ fontSize: '1.1rem', fontWeight: '900', color: s.color }}>{s.val}</div>
+                    <div style={{ fontSize: '0.6rem', color: 'var(--text-secondary)' }}>{s.label}</div>
+                  </div>
+                ))}
+              </div>
+              {/* Lista de palpites */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                {calculatedBets.map((bet, idx) => {
+                  const ptsColor = bet.pts === 5 ? 'var(--accent-gold)' : bet.pts === 3 ? 'var(--accent-gold)' : bet.pts === 0 ? '#f87171' : 'var(--text-muted)';
+                  return (
+                    <div key={idx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.5rem 0.6rem', borderRadius: '8px', background: 'var(--bg-card)' }}>
+                      <div style={{ flex: 1 }}>
+                        <p style={{ fontSize: '0.78rem', fontWeight: '600' }}>{bet.home} vs {bet.away}</p>
+                        <p style={{ fontSize: '0.65rem', color: 'var(--text-secondary)' }}>Chutou: {bet.bet_home} x {bet.bet_away}{bet.real_home !== null && bet.real_home !== undefined ? ` | Real: ${bet.real_home} x ${bet.real_away}` : ' | Pendente'}</p>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                        <span style={{ fontSize: '0.8rem', fontWeight: '900', color: ptsColor }}>{bet.pts !== null && bet.pts !== undefined ? `+${bet.pts}` : '-'}</span>
+                        {currentUser && currentUserRole === 'Admin' && (
+                          <button onClick={() => { setEditingBet({ bolaoId: b.id, betIndex: idx, home: bet.bet_home, away: bet.bet_away }); setEditPassword(''); setEditError(''); setShowHistoryModal(null); }}
+                            style={{ fontSize: '0.65rem', padding: '0.2rem 0.45rem', background: 'rgba(99,102,241,0.15)', border: '1px solid #6366f1', color: '#818cf8', borderRadius: '6px', cursor: 'pointer' }}>
+                            ✏️
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* Modal Editar Palpite (Admin) */}
+      {editingBet && (
+        <div className="modal-overlay">
+          <div className="modal-container">
+            <div className="modal-header">
+              <h3>Editar Palpite</h3>
+              <div onClick={() => setEditingBet(null)} className="modal-close"><Icons.X size={20} /></div>
+            </div>
+            <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', marginBottom: '1rem' }}>Corrija o placar apostado:</p>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem', justifyContent: 'center' }}>
+              <input type="number" inputMode="numeric" pattern="[0-9]*" min="0" max="20" value={editingBet.home}
+                onChange={e => setEditingBet(prev => ({ ...prev, home: parseInt(e.target.value) || 0 }))}
+                className="score-field" style={{ fontSize: '1.5rem', width: '60px', height: '60px', textAlign: 'center' }} />
+              <span style={{ fontSize: '1.2rem', color: 'var(--text-secondary)' }}>x</span>
+              <input type="number" inputMode="numeric" pattern="[0-9]*" min="0" max="20" value={editingBet.away}
+                onChange={e => setEditingBet(prev => ({ ...prev, away: parseInt(e.target.value) || 0 }))}
+                className="score-field" style={{ fontSize: '1.5rem', width: '60px', height: '60px', textAlign: 'center' }} />
+            </div>
+            <div className="form-group">
+              <label>Confirme sua senha</label>
+              <input type="password" className="form-control" placeholder="Sua senha de login"
+                value={editPassword} onChange={e => { setEditPassword(e.target.value); setEditError(''); }} />
+            </div>
+            {editError && <p style={{ color: '#ef4444', fontSize: '0.75rem', marginBottom: '0.75rem' }}>{editError}</p>}
+            <button className="btn-submit" onClick={saveEditedBet}>SALVAR CORREÇÃO</button>
+          </div>
+        </div>
+      )}
+
+      {/* 5. Cadastro/Revisão Wizard Modal */}
+      {showWizardModal && (
+        <div className="modal-overlay">
+          <div className="modal-container" style={{ maxWidth: '650px', width: '100%' }}>
+            <div className="modal-header">
+              <h3>Revisar / Cadastrar Bolão</h3>
+              <div onClick={() => setShowWizardModal(false)} className="modal-close">
+                <Icons.X size={20} />
+              </div>
+            </div>
+
+            <div className="form-group" style={{ marginBottom: '1rem' }}>
+              <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: 'bold' }}>Nome do Apostador</label>
+              <input
+                type="text"
+                className="form-control"
+                placeholder="Ex: Maria Clara"
+                value={wizardBettorName}
+                onChange={(e) => setWizardBettorName(e.target.value)}
+                style={{ fontSize: '0.9rem', padding: '0.6rem 0.75rem' }}
+              />
+            </div>
+
+            {/* Groups Select Tabs */}
+            <div className="group-tabs" style={{ display: 'flex', gap: '0.4rem', overflowX: 'auto', paddingBottom: '0.5rem', marginBottom: '1.25rem', borderBottom: '1px solid var(--border-color)' }}>
+              {groupsList.map(g => {
+                const groupBets = wizardBets.filter(b => b.grupo === g);
+                const filledCount = groupBets.filter(b => b.bet_home !== '' && b.bet_away !== '' && b.bet_home !== null && b.bet_away !== null).length;
+                const isActive = wizardActiveGroup === g;
+                return (
+                  <button
+                    key={g}
+                    className={`group-tab-btn ${isActive ? 'active' : ''}`}
+                    onClick={() => setWizardActiveGroup(g)}
+                    style={{
+                      flexShrink: 0,
+                      padding: '0.4rem 0.8rem',
+                      fontSize: '0.75rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.25rem',
+                      background: isActive ? 'var(--accent-gold)' : 'rgba(255,255,255,0.03)',
+                      color: isActive ? '#000' : 'var(--text-secondary)',
+                      border: 'none',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      fontWeight: 'bold'
+                    }}
+                  >
+                    Grupo {g}
+                    <span style={{
+                      fontSize: '0.65rem',
+                      padding: '0.1rem 0.3rem',
+                      borderRadius: '10px',
+                      background: isActive ? 'rgba(0,0,0,0.2)' : 'rgba(255,255,255,0.1)',
+                      color: isActive ? '#000' : 'var(--text-muted)'
+                    }}>
+                      {filledCount}/6
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* 6 Confrontos do Grupo Selecionado */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1.5rem', maxHeight: '45vh', overflowY: 'auto', paddingRight: '0.25rem' }}>
+              {wizardBets.map((bet, idx) => {
+                if (bet.grupo !== wizardActiveGroup) return null;
+                const hFlag = getFlagCode(bet.home);
+                const aFlag = getFlagCode(bet.away);
+                return (
+                  <div key={bet.match_id} style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    padding: '0.75rem',
+                    background: 'var(--bg-card)',
+                    border: '1px solid var(--border-color)',
+                    borderRadius: '10px',
+                    gap: '0.5rem'
+                  }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.65rem', color: 'var(--text-secondary)' }}>
+                      <span>Jogo #{bet.match_id}</span>
+                      <span>Grupo {bet.grupo}</span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flex: 1, minWidth: 0 }}>
+                        <img src={`https://flagcdn.com/w80/${hFlag}.png`} style={{ width: '28px', height: '20px', borderRadius: '4px', objectFit: 'cover', border: '1px solid var(--border-color)' }} alt={bet.home} />
+                        <span style={{ fontSize: '0.8rem', fontWeight: 'bold', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{bet.home}</span>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', justifyContent: 'center' }}>
+                        <input
+                          type="number"
+                          inputMode="numeric"
+                          pattern="[0-9]*"
+                          min="0"
+                          placeholder="-"
+                          className="score-field"
+                          style={{ width: '45px', height: '40px', fontSize: '1.1rem', textAlign: 'center', borderRadius: '6px' }}
+                          value={bet.bet_home}
+                          onChange={(e) => handleWizardScoreChange(idx, 'bet_home', e.target.value)}
+                        />
+                        <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>x</span>
+                        <input
+                          type="number"
+                          inputMode="numeric"
+                          pattern="[0-9]*"
+                          min="0"
+                          placeholder="-"
+                          className="score-field"
+                          style={{ width: '45px', height: '40px', fontSize: '1.1rem', textAlign: 'center', borderRadius: '6px' }}
+                          value={bet.bet_away}
+                          onChange={(e) => handleWizardScoreChange(idx, 'bet_away', e.target.value)}
+                        />
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flex: 1, minWidth: 0, justifyContent: 'flex-end', textAlign: 'right' }}>
+                        <span style={{ fontSize: '0.8rem', fontWeight: 'bold', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{bet.away}</span>
+                        <img src={`https://flagcdn.com/w80/${aFlag}.png`} style={{ width: '28px', height: '20px', borderRadius: '4px', objectFit: 'cover', border: '1px solid var(--border-color)' }} alt={bet.away} />
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Footer / Salvar */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px solid var(--border-color)', paddingTop: '1rem', marginTop: '1rem' }}>
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                Progresso: <strong>{wizardBets.filter(b => b.bet_home !== '' && b.bet_away !== '' && b.bet_home !== null && b.bet_away !== null).length}/72</strong> jogos
+              </span>
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <button className="btn-upload-bolao" style={{ backgroundColor: 'var(--bg-card)', color: 'var(--text-secondary)' }} onClick={() => setShowWizardModal(false)}>
+                  Cancelar
+                </button>
+                <button className="btn-upload-bolao" style={{ backgroundColor: 'var(--accent-gold)', color: '#000' }} onClick={saveWizardBolao}>
+                  Salvar Bolão
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Editar Foto do Apostador */}
+      {editPhotoModal && (
+        <div className="modal-overlay" onClick={() => setEditPhotoModal(null)}>
+          <div className="modal-container" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>Editar Foto — {editPhotoModal.bettorName}</h3>
+              <div onClick={() => setEditPhotoModal(null)} className="modal-close"><Icons.X size={20} /></div>
+            </div>
+            
+            {/* Current / Preview Photo */}
+            <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
+              <img
+                src={newPhotoPreview || (editPhotoModal.currentPhoto && editPhotoModal.currentPhoto.startsWith('data:') ? editPhotoModal.currentPhoto : `https://api.dicebear.com/7.x/identicon/svg?seed=${editPhotoModal.bettorName}`)}
+                alt="foto atual"
+                style={{ width: '100px', height: '100px', borderRadius: '50%', objectFit: 'cover', border: '3px solid var(--accent-gold)', marginBottom: '0.5rem' }}
+              />
+              <p style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>{newPhotoPreview ? 'Nova foto selecionada' : 'Foto atual'}</p>
+            </div>
+
+            {/* File Input */}
+            <label htmlFor="edit-photo-upload" style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem',
+              width: '100%', padding: '0.75rem', marginBottom: '0.75rem',
+              background: 'rgba(59,130,246,0.1)', border: '1px solid #3b82f6',
+              borderRadius: '8px', color: '#D2A74F', fontWeight: '700', fontSize: '0.85rem', cursor: 'pointer'
+            }}>
+              📁 Escolher Nova Foto
+            </label>
+            <input
+              id="edit-photo-upload"
+              type="file"
+              accept="image/*"
+              style={{ display: 'none' }}
+              onChange={handlePhotoFileSelect}
+            />
+
+            <button
+              className="btn-submit"
+              onClick={saveEditedPhoto}
+              disabled={!newPhotoBase64 || savingPhoto}
+              style={{ opacity: (!newPhotoBase64 || savingPhoto) ? 0.5 : 1 }}
+            >
+              {savingPhoto ? 'Salvando...' : 'SALVAR FOTO'}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Editar Nome do Apostador */}
+      {editNameModal && (
+        <div className="modal-overlay" onClick={() => setEditNameModal(null)}>
+          <div className="modal-container" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>Editar Nome</h3>
+              <div onClick={() => setEditNameModal(null)} className="modal-close"><Icons.X size={20} /></div>
+            </div>
+            
+            <div style={{ marginBottom: '1.5rem' }}>
+              <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                Nome do Apostador
+              </label>
+              <input
+                type="text"
+                className="score-field"
+                style={{ width: '100%', padding: '0.75rem', fontSize: '1rem', borderRadius: '8px', color: 'var(--text-primary)', backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-color)' }}
+                value={editNameInput}
+                onChange={e => setEditNameInput(e.target.value)}
+                placeholder="Nome do apostador"
+              />
+            </div>
+
+            <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+              <button 
+                className="btn-upload-bolao" 
+                style={{ backgroundColor: 'var(--bg-card)', color: 'var(--text-secondary)', padding: '0.5rem 1rem', borderRadius: '6px', border: 'none', cursor: 'pointer' }} 
+                onClick={() => setEditNameModal(null)}
+              >
+                Cancelar
+              </button>
+              <button 
+                className="btn-upload-bolao" 
+                style={{ backgroundColor: 'var(--accent-gold, #ffc107)', color: '#000', padding: '0.5rem 1rem', borderRadius: '6px', border: 'none', cursor: 'pointer', fontWeight: 'bold' }} 
+                onClick={saveEditedName}
+                disabled={!editNameInput.trim()}
+              >
+                Salvar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Detalhamento de Pontos do Ranking (Apenas jogos onde pontuou) */}
+      {showRankingDetailsModal && (() => {
+        const b = showRankingDetailsModal;
+        const calculatedBets = getCalculatedBets(b.bets_data, confrontos);
+        // Filter: only matches where user got points (pts > 0)
+        const scoredBets = calculatedBets.filter(bt => bt.pts === 3 || bt.pts === 5);
+        const totalPts = scoredBets.reduce((acc, bt) => acc + (bt.pts || 0), 0);
+
+        return (
+          <div className="modal-overlay" onClick={() => setShowRankingDetailsModal(null)}>
+            <div className="modal-container" onClick={e => e.stopPropagation()} style={{ maxHeight: '85vh', overflowY: 'auto' }}>
+              <div className="modal-header">
+                <h3>Jogos Pontuados — {b.bettor_name}</h3>
+                <div onClick={() => setShowRankingDetailsModal(null)} className="modal-close"><Icons.X size={20} /></div>
+              </div>
+
+               <div style={{ background: 'var(--bg-card)', borderRadius: '12px', padding: '1rem', textAlign: 'center', marginBottom: '1.25rem' }}>
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'block', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Pontuação Considerada</span>
+                <strong style={{ fontSize: '2rem', color: '#D2A74F', display: 'block', marginTop: '0.2rem' }}>{totalPts} pts</strong>
+                <span style={{ fontSize: '0.7rem', color: '#D2A74F' }}>Exibindo apenas jogos com acerto exato (+5) ou vencedor (+3)</span>
+                
+                <button
+                  onClick={() => {
+                    const headerText = `*Resumo de Jogos Pontuados - ${b.bettor_name}*\n🏆 *Pontuação Total:* ${totalPts} pts\n\n`;
+                    const gamesText = scoredBets.map(bet => {
+                      const badge = bet.pts === 5 ? '🎯 Placar Exato' : '✅ Vencedor';
+                      return `⚽ *${bet.home} vs ${bet.away}*\n• Aposta: ${bet.bet_home} x ${bet.bet_away} | Oficial: ${bet.real_home} x ${bet.real_away}\n• Pontos: +${bet.pts} (${badge})\n`;
+                    }).join('\n');
+                    
+                    const fullText = encodeURIComponent(headerText + (scoredBets.length > 0 ? gamesText : 'Nenhum jogo pontuado ainda.'));
+                    window.open(`https://api.whatsapp.com/send?text=${fullText}`, '_blank');
+                  }}
+                  style={{
+                    marginTop: '0.85rem',
+                    width: '100%',
+                    padding: '0.65rem',
+                    background: '#25D366',
+                    color: 'var(--text-primary)',
+                    border: 'none',
+                    borderRadius: '10px',
+                    fontWeight: 'bold',
+                    fontSize: '0.78rem',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.5rem',
+                    boxShadow: '0 4px 12px rgba(37,211,102,0.25)',
+                    transition: 'all 0.2s'
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.filter = 'brightness(1.08)'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.filter = 'brightness(1)'; }}
+                >
+                  <span style={{ fontSize: '0.9rem' }}>💬</span> Enviar Resumo via WhatsApp
+                </button>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                {scoredBets.length === 0 ? (
+                  <p style={{ textAlign: 'center', color: 'var(--text-secondary)', fontSize: '0.8rem', padding: '1.5rem' }}>
+                    Nenhuma pontuação registrada ainda para este participante.
+                  </p>
+                ) : (
+                  scoredBets.map((bet, idx) => {
+                    const exact = bet.pts === 5;
+                    return (
+                      <div key={idx} style={{
+                        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                        padding: '0.65rem 0.85rem', borderRadius: '10px',
+                        background: exact ? 'rgba(16,185,129,0.06)' : 'rgba(251,191,36,0.04)',
+                        border: `1px solid ${exact ? 'rgba(16,185,129,0.2)' : 'rgba(251,191,36,0.15)'}`
+                      }}>
+                        <div style={{ flex: 1 }}>
+                          <p style={{ fontSize: '0.82rem', fontWeight: 'bold', color: 'var(--text-primary)' }}>{bet.home} vs {bet.away}</p>
+                          <p style={{ fontSize: '0.68rem', color: '#9ca3af', marginTop: '0.15rem' }}>
+                            Aposta: <strong style={{ color: 'var(--text-primary)' }}>{bet.bet_home} x {bet.bet_away}</strong> | Oficial: <strong style={{ color: 'var(--text-primary)' }}>{bet.real_home} x {bet.real_away}</strong>
+                          </p>
+                        </div>
+                        <div style={{ textAlign: 'right' }}>
+                          <span style={{ fontSize: '0.9rem', fontWeight: '900', color: exact ? 'var(--accent-gold)' : 'var(--accent-gold)' }}>
+                            +{bet.pts} pts
+                          </span>
+                          <p style={{ fontSize: '0.6rem', color: 'var(--text-secondary)', marginTop: '0.1rem' }}>
+                            {exact ? '🎯 Placar Exato' : '✅ Vencedor'}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* Modal Confirmação de Aposta Mata-mata */}
+      {showBetConfirmation && (
+        <div className="modal-overlay" onClick={() => setShowBetConfirmation(false)}>
+          <div className="modal-container" onClick={e => e.stopPropagation()} style={{ maxWidth: '400px' }}>
+            <div className="modal-header">
+              <h3>Confirmar Apostas</h3>
+              <div onClick={() => setShowBetConfirmation(false)} className="modal-close"><Icons.X size={20} /></div>
+            </div>
+            <p style={{ fontSize: '0.88rem', color: '#d1d5db', lineHeight: '1.5', marginBottom: '1rem' }}>
+              Deseja salvar seus palpites para a fase eliminatória? <strong style={{ color: '#D2A74F' }}>Você não poderá alterá-los após a confirmação!</strong>
+            </p>
+            <div className="form-group" style={{ marginBottom: '1.25rem' }}>
+              <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '0.4rem' }}>
+                Nome/Identificador desta Aposta (Diferencie se fizer mais de uma)
+              </label>
+              <input
+                type="text"
+                className="form-control"
+                style={{ width: '100%', fontSize: '0.85rem', padding: '0.5rem' }}
+                value={knockoutBettorName}
+                onChange={(e) => setKnockoutBettorName(e.target.value)}
+                placeholder="Ex: Pedro Silva - Jogo 1"
+                required
+              />
+            </div>
+            <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+              <button 
+                className="btn-upload-bolao" 
+                style={{ backgroundColor: 'var(--bg-card)', color: 'var(--text-secondary)' }}
+                onClick={() => setShowBetConfirmation(false)}
+              >
+                Revisar
+              </button>
+              <button 
+                className="btn-upload-bolao" 
+                style={{ backgroundColor: 'var(--accent-gold)', color: '#000', fontWeight: 'bold' }}
+                onClick={executeSaveKnockoutBets}
+              >
+                ✔ Confirmar e Enviar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Carregamento da Taça (Trophy Loading) */}
+      {bettingLoading && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          backgroundColor: 'rgba(11,15,25,0.85)', backdropFilter: 'blur(12px)',
+          zIndex: 2000, display: 'flex', flexDirection: 'column',
+          alignItems: 'center', justifyContent: 'center', padding: '1rem'
+        }}>
+          <style>{`
+            @keyframes modalShine {
+              0% { left: -150%; }
+              50% { left: 150%; }
+              100% { left: 150%; }
+            }
+            .premium-modal-card::before {
+              content: '';
+              position: absolute;
+              top: 0;
+              left: -150%;
+              width: 50%;
+              height: 100%;
+              background: linear-gradient(
+                90deg,
+                transparent,
+                rgba(255, 255, 255, 0.08),
+                transparent
+              );
+              transform: skewX(-25deg);
+              animation: modalShine 4s infinite;
+            }
+          `}</style>
+          
+          <div className="premium-modal-card" style={{
+            background: 'rgba(17,24,39,0.7)',
+            border: '1px solid rgba(255,255,255,0.08)',
+            borderRadius: '24px',
+            padding: '2.5rem 2rem',
+            maxWidth: '360px',
+            width: '100%',
+            textAlign: 'center',
+            boxShadow: '0 20px 50px rgba(0, 0, 0, 0.5), 0 0 40px rgba(218, 165, 32, 0.05)',
+            position: 'relative',
+            overflow: 'hidden'
+          }}>
+            {/* Ambient glowing background aura */}
+            <div style={{
+              position: 'absolute',
+              width: `${200 + (bettingProgress / 100) * 80}px`,
+              height: `${200 + (bettingProgress / 100) * 80}px`,
+              background: `radial-gradient(circle, rgba(218, 165, 32, ${0.1 + (bettingProgress / 100) * 0.3}) 0%, transparent 70%)`,
+              borderRadius: '50%',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              pointerEvents: 'none',
+              zIndex: -1,
+              transition: 'all 0.3s ease'
+            }}></div>
+
+            <h3 style={{ fontSize: '1.2rem', marginBottom: '0.5rem', color: 'var(--text-primary)' }}>Processando suas Apostas...</h3>
+            <p style={{ fontSize: '0.78rem', color: '#9ca3af' }}>Validando e gerando seu recibo oficial</p>
+
+            <svg viewBox="0 0 100 120" style={{ width: '120px', height: '140px', margin: '1.5rem auto', filter: 'drop-shadow(0 0 15px rgba(0,0,0,0.5))' }}>
+              <defs>
+                <linearGradient id="modalGoldLiquid" x1="0%" y1="100%" x2="0%" y2="0%">
+                  <stop offset="0%" stop-color="#8a660d" />
+                  <stop offset="50%" stop-color="#d4af37" />
+                  <stop offset="85%" stop-color="#ffd700" />
+                  <stop offset="100%" stop-color="#fffbbf" />
+                </linearGradient>
+                <linearGradient id="modalGoldHighlight" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stop-color="rgba(255,255,255,0.4)" />
+                  <stop offset="50%" stop-color="transparent" />
+                  <stop offset="100%" stop-color="rgba(0,0,0,0.3)" />
+                </linearGradient>
+                <clipPath id="modalTrophyClip">
+                  <path d="M 35,106 C 35,102 37,99 39,97 L 61,97 C 63,99 65,102 65,106 Z M 37,95 L 63,95 C 62,90 61,86 60,83 L 40,83 C 39,86 38,90 37,95 Z M 42,81 C 43,74 44,67 45,61 C 41,57 37,51 36,44 C 34,35 37,26 43,20 C 47,15 53,15 57,20 C 63,26 66,35 64,44 C 63,51 59,57 55,61 C 56,67 57,74 58,81 Z" />
+                  <circle cx="50" cy="30" r="11" />
+                </clipPath>
+              </defs>
+              <path fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.12)" strokeWidth="1.5" d="M 35,106 C 35,102 37,99 39,97 L 61,97 C 63,99 65,102 65,106 Z M 37,95 L 63,95 C 62,90 61,86 60,83 L 40,83 C 39,86 38,90 37,95 Z M 42,81 C 43,74 44,67 45,61 C 41,57 37,51 36,44 C 34,35 37,26 43,20 C 47,15 53,15 57,20 C 63,26 66,35 64,44 C 63,51 59,57 55,61 C 56,67 57,74 58,81 Z" />
+              <circle cx="50" cy="30" r="11" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.12)" strokeWidth="1.5" />
+              
+              <g clipPath="url(#modalTrophyClip)">
+                <g style={{ transform: `translateY(${120 - (120 * (bettingProgress / 100))}px)`, transition: 'transform 0.1s ease-out' }}>
+                  {/* Liquid Body */}
+                  <rect x="0" y="0" width="100" height="120" fill="url(#modalGoldLiquid)" />
+                  
+                  {/* Highlight overlay */}
+                  <rect x="0" y="0" width="100" height="120" fill="url(#modalGoldHighlight)" style={{ mixBlendMode: 'overlay' }} />
+
+                  {/* Wave Top */}
+                  <path d="M 0,0 Q 25,-4 50,0 T 100,0 L 100,10 L 0,10 Z" fill="#fffbbf" opacity="0.8">
+                    <animateTransform 
+                      attributeName="transform" 
+                      type="translate" 
+                      from="-50,0" to="0,0" 
+                      dur="1.5s" 
+                      repeatCount="indefinite" />
+                  </path>
+                </g>
+              </g>
+
+              {/* Overlaid Detail Lines (Figures contour and details) */}
+              <path d="M 45,81 C 46,71 49,63 51,54 C 47,51 43,45 42,38" fill="none" stroke="rgba(11,15,25,0.6)" strokeWidth="1.5" strokeLinecap="round" />
+              <path d="M 55,81 C 54,71 51,63 49,54 C 53,51 57,45 58,38" fill="none" stroke="rgba(11,15,25,0.6)" strokeWidth="1.5" strokeLinecap="round" />
+              
+              {/* Pedestal Green Malachite Bands (Instant recognizability) */}
+              <rect x="38" y="100" width="24" height="2.5" fill="#047857" rx="0.5" opacity="0.85" />
+              <rect x="39.5" y="89" width="21" height="2.5" fill="#047857" rx="0.5" opacity="0.85" />
+
+              {/* Bright Golden Border (Matches Fill Level) */}
+              <path d="M 35,106 C 35,102 37,99 39,97 L 61,97 C 63,99 65,102 65,106 Z M 37,95 L 63,95 C 62,90 61,86 60,83 L 40,83 C 39,86 38,90 37,95 Z M 42,81 C 43,74 44,67 45,61 C 41,57 37,51 36,44 C 34,35 37,26 43,20 C 47,15 53,15 57,20 C 63,26 66,35 64,44 C 63,51 59,57 55,61 C 56,67 57,74 58,81 Z"
+                    fill="none" 
+                    stroke="url(#modalGoldLiquid)" 
+                    strokeWidth="1.5" 
+                    style={{ opacity: bettingProgress > 10 ? (bettingProgress / 100) : 0, transition: 'opacity 0.5s' }} />
+              <circle cx="50" cy="30" r="11"
+                    fill="none" 
+                    stroke="url(#modalGoldLiquid)" 
+                    strokeWidth="1.5" 
+                    style={{ opacity: bettingProgress > 10 ? (bettingProgress / 100) : 0, transition: 'opacity 0.5s' }} />
+            </svg>
+
+            <div style={{ fontSize: '2rem', fontWeight: '700', color: 'var(--accent-gold, #ffd700)', fontFamily: 'monospace', textShadow: '0 0 10px rgba(255, 215, 0, 0.3)' }}>
+              {bettingProgress}%
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Humor do Paquetá */}
+      {showPaquetaModal && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          backgroundColor: 'rgba(0,0,0,0.85)', zIndex: 2000,
+          display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem',
+          backdropFilter: 'blur(8px)'
+        }}>
+          <div style={{
+            background: 'linear-gradient(135deg, #111827 0%, #1f2937 100%)',
+            border: '2px solid var(--accent-gold)',
+            borderRadius: '24px',
+            padding: '2.5rem 2rem',
+            maxWidth: '440px',
+            width: '100%',
+            textAlign: 'center',
+            boxShadow: '0 20px 50px rgba(0,0,0,0.6)'
+          }}>
+            <div style={{
+              width: '200px',
+              height: '200px',
+              margin: '0 auto 1.25rem auto',
+              borderRadius: '20px',
+              overflow: 'hidden',
+              boxShadow: '0 8px 30px rgba(0,0,0,0.5)',
+              background: '#000',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}>
+              <video 
+                src="/trophy_success.mp4" 
+                autoPlay 
+                loop 
+                muted 
+                playsInline
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover'
+                }}
+              />
+            </div>
+            <h3 style={{ fontSize: '1.3rem', color: 'var(--text-primary)', fontWeight: '900', letterSpacing: '0.5px', marginBottom: '1rem', textTransform: 'uppercase' }}>
+              {paquetaTitle}
+            </h3>
+            <p style={{ fontSize: '0.88rem', color: '#d1d5db', lineHeight: '1.6', marginBottom: '1.75rem' }}>
+              {paquetaBody}
+            </p>
+            <button
+              onClick={() => setShowPaquetaModal(false)}
+              style={{
+                background: 'linear-gradient(135deg, var(--accent-gold), #10b981)',
+                border: 'none', borderRadius: '12px',
+                color: '#000', fontWeight: 'bold',
+                padding: '0.8rem 2rem', fontSize: '0.9rem',
+                cursor: 'pointer', boxShadow: '0 4px 15px rgba(16,185,129,0.3)',
+                width: '100%'
+              }}
+            >
+              FECHAR E TORCER! 🤞
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Dynamic Toast Indicator */}
+      {toastMsg && (
+        <div className="toast-bar" style={{
+          background: toastType === 'error' ? 'linear-gradient(135deg, #ef4444, #b91c1c)' : 'linear-gradient(135deg, var(--accent-gold), #10b981)',
+          color: toastType === 'error' ? '#fff' : '#000',
+          fontWeight: 'bold',
+          border: toastType === 'error' ? '1px solid rgba(239,68,68,0.4)' : '1px solid rgba(16,185,129,0.4)'
+        }}>
+          {toastMsg}
+        </div>
+      )}
+      {/* Bottom Tab Bar (Conditional for Guest vs Authenticated User) */}
+      <div style={{
+        position: 'fixed',
+        bottom: 0,
+        left: '50%',
+        transform: 'translateX(-50%)',
+        width: '100%',
+        maxWidth: '480px',
+        background: 'rgba(3, 16, 11, 0.95)',
+        backdropFilter: 'blur(10px)',
+        borderTop: '1px solid var(--border-color)',
+        display: 'flex',
+        justifyContent: 'space-around',
+        padding: '0.65rem 0.5rem',
+        boxSizing: 'border-box',
+        zIndex: 100,
+        borderTopLeftRadius: '16px',
+        borderTopRightRadius: '16px'
+      }}>
+        {!currentUser ? (
+          <>
+            <div 
+              onClick={() => router.push('/')}
+              style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.15rem', cursor: 'pointer', flex: 1 }}
+            >
+              <Icons.Home size={21} style={{ color: 'var(--text-secondary)' }} />
+              <span style={{ fontSize: '0.6rem', fontWeight: '700', color: 'var(--text-secondary)', letterSpacing: '0.03em' }}>INÍCIO</span>
+            </div>
+            <div 
+              onClick={() => setActiveTab('ranking')}
+              style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.15rem', cursor: 'pointer', flex: 1 }}
+            >
+              <Icons.Trophy size={21} style={{ color: activeTab === 'ranking' ? 'var(--accent-gold)' : 'var(--text-secondary)' }} />
+              <span style={{ fontSize: '0.6rem', fontWeight: '700', color: activeTab === 'ranking' ? 'var(--accent-gold)' : 'var(--text-secondary)', letterSpacing: '0.03em' }}>CLASSIFICAÇÃO</span>
+            </div>
+            <div 
+              onClick={() => router.push('/?login=true')}
+              style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.15rem', cursor: 'pointer', flex: 1 }}
+            >
+              <Icons.LogIn size={21} style={{ color: 'var(--text-secondary)' }} />
+              <span style={{ fontSize: '0.6rem', fontWeight: '700', color: 'var(--text-secondary)', letterSpacing: '0.03em' }}>LOGIN</span>
+            </div>
+          </>
+        ) : (
+          <>
+            <div 
+              onClick={() => setActiveTab('boloes')}
+              style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.15rem', cursor: 'pointer', flex: 1 }}
+            >
+              <Icons.Home size={18} style={{ color: activeTab === 'boloes' ? 'var(--accent-gold)' : 'var(--text-secondary)' }} />
+              <span style={{ fontSize: '0.55rem', fontWeight: 'bold', color: activeTab === 'boloes' ? 'var(--accent-gold)' : 'var(--text-secondary)' }}>Palpites</span>
+            </div>
+            <div 
+              onClick={() => setActiveTab('apostas_elim')}
+              style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.15rem', cursor: 'pointer', flex: 1 }}
+            >
+              <Icons.List size={18} style={{ color: activeTab === 'apostas_elim' ? 'var(--accent-gold)' : 'var(--text-secondary)' }} />
+              <span style={{ fontSize: '0.55rem', fontWeight: 'bold', color: activeTab === 'apostas_elim' ? 'var(--accent-gold)' : 'var(--text-secondary)' }}>Apostar</span>
+            </div>
+            <div 
+              onClick={() => setActiveTab('ranking')}
+              style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.15rem', cursor: 'pointer', flex: 1 }}
+            >
+              <Icons.Trophy size={18} style={{ color: activeTab === 'ranking' ? 'var(--accent-gold)' : 'var(--text-secondary)' }} />
+              <span style={{ fontSize: '0.55rem', fontWeight: 'bold', color: activeTab === 'ranking' ? 'var(--accent-gold)' : 'var(--text-secondary)' }}>Classific.</span>
+            </div>
+            <div 
+              onClick={() => setActiveTab('placares_geral')}
+              style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.15rem', cursor: 'pointer', flex: 1 }}
+            >
+              <Icons.CheckSquare size={18} style={{ color: activeTab === 'placares_geral' ? 'var(--accent-gold)' : 'var(--text-secondary)' }} />
+              <span style={{ fontSize: '0.55rem', fontWeight: 'bold', color: activeTab === 'placares_geral' ? 'var(--accent-gold)' : 'var(--text-secondary)' }}>Resultados</span>
+            </div>
+            <div 
+              onClick={() => setActiveTab('confrontos_geral')}
+              style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.15rem', cursor: 'pointer', flex: 1 }}
+            >
+              <Icons.Calendar size={18} style={{ color: activeTab === 'confrontos_geral' ? 'var(--accent-gold)' : 'var(--text-secondary)' }} />
+              <span style={{ fontSize: '0.55rem', fontWeight: 'bold', color: activeTab === 'confrontos_geral' ? 'var(--accent-gold)' : 'var(--text-secondary)' }}>Confrontos</span>
+            </div>
+            <div 
+              onClick={() => setActiveTab('jogadores')}
+              style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.15rem', cursor: 'pointer', flex: 1 }}
+            >
+              <Icons.User size={18} style={{ color: activeTab === 'jogadores' ? 'var(--accent-gold)' : 'var(--text-secondary)' }} />
+              <span style={{ fontSize: '0.55rem', fontWeight: 'bold', color: activeTab === 'jogadores' ? 'var(--accent-gold)' : 'var(--text-secondary)' }}>Jogadores</span>
+            </div>
+            {(currentUserRole === 'Admin' || currentUserRole === 'Moderador') && (
+              <div 
+                onClick={() => {
+                  if (currentUserRole === 'Admin') {
+                    setActiveTab('configuracoes');
+                  } else {
+                    setActiveTab('gerenciar_usuarios');
+                  }
+                }}
+                style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.15rem', cursor: 'pointer', flex: 1 }}
+              >
+                <Icons.Settings size={18} style={{ color: (activeTab === 'configuracoes' || activeTab === 'gerenciar_usuarios') ? 'var(--accent-gold)' : 'var(--text-secondary)' }} />
+                <span style={{ fontSize: '0.55rem', fontWeight: 'bold', color: (activeTab === 'configuracoes' || activeTab === 'gerenciar_usuarios') ? 'var(--accent-gold)' : 'var(--text-secondary)' }}>Config</span>
+              </div>
+            )}
+            <div 
+              onClick={handleLogout}
+              style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.15rem', cursor: 'pointer', flex: 1 }}
+            >
+              <Icons.LogOut size={18} style={{ color: 'var(--text-secondary)' }} />
+              <span style={{ fontSize: '0.55rem', fontWeight: 'bold', color: 'var(--text-secondary)' }}>Sair</span>
+            </div>
+          </>
+        )}
+      </div>
+
+      <FirstLaunchOverlay />
+    </div>
+  );
+}
+
+function KnockoutBetsList({ playerUsername, koConfs, boloes, currentUser, currentUserRole, mataMataPublic, expandedBoloesList, setExpandedBoloesList }) {
+  const isSelf = currentUser && playerUsername && currentUser.toLowerCase() === playerUsername.toLowerCase();
+  const isPrivileged = currentUserRole === 'Admin' || currentUserRole === 'Moderador';
+
+  if (!mataMataPublic && !isSelf && !isPrivileged) {
+    return (
+      <div style={{ 
+        padding: '1rem', 
+        background: 'rgba(239, 68, 68, 0.1)', 
+        border: '1px solid rgba(239, 68, 68, 0.25)', 
+        borderRadius: '12px', 
+        color: '#f87171', 
+        fontSize: '0.8rem', 
+        textAlign: 'center',
+        margin: '0.5rem 0',
+        lineHeight: '1.4'
+      }}>
+        🔒 Ainda estamos na Fase de Grupos. Os palpites do Mata-Mata serão liberados em breve pelo administrador.
+      </div>
+    );
+  }
+
+  const playerKoBoloes = (boloes || []).filter(b => 
+    b.username && b.username.toLowerCase() === playerUsername.toLowerCase() &&
+    Array.isArray(b.bets_data) && b.bets_data.some(bd => bd.match_id >= 73)
+  );
+
+
+
+  if (playerKoBoloes.length === 0) {
+    return (
+      <div style={{ 
+        padding: '1rem', 
+        background: 'rgba(239, 68, 68, 0.1)', 
+        border: '1px solid rgba(239, 68, 68, 0.25)', 
+        borderRadius: '12px', 
+        color: '#f87171', 
+        fontSize: '0.8rem', 
+        textAlign: 'center',
+        margin: '0.5rem 0',
+        lineHeight: '1.4'
+      }}>
+        🔒 Ainda estamos na Fase de Grupos. Os palpites do Mata-Mata serão liberados em breve pelo administrador.
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+      {playerKoBoloes.map((bol) => {
+        const isExpanded = expandedBoloesList.includes(bol.id);
+        const bets = bol.bets_data || [];
+        return (
+          <div key={bol.id} style={{ 
+            border: '1px solid rgba(255,255,255,0.08)',
+            borderRadius: '10px',
+            background: 'var(--bg-card)',
+            overflow: 'hidden'
+          }}>
+            <div 
+              onClick={() => {
+                setExpandedBoloesList(prev => 
+                  prev.includes(bol.id) 
+                    ? prev.filter(id => id !== bol.id) 
+                    : [...prev, bol.id]
+                );
+              }}
+              style={{ 
+                fontSize: '0.78rem', 
+                fontWeight: 'bold', 
+                color: '#D2A74F', 
+                padding: '0.75rem 1rem',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                cursor: 'pointer',
+                background: 'rgba(255, 255, 255, 0.03)'
+              }}
+            >
+              <span>🏆 {bol.bettor_name || 'Mata-Mata'}</span>
+              <Icons.ChevronRight size={16} style={{ 
+                color: 'var(--text-secondary)', 
+                transform: isExpanded ? 'rotate(90deg)' : 'none', 
+                transition: 'transform 0.2s' 
+              }} />
+            </div>
+            {isExpanded && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', padding: '1rem', background: 'rgba(0,0,0,0.2)' }}>
+                {bets.map((bet, idx) => {
+                  const match = koConfs.find(c => c.id === bet.match_id) || bet;
+                  const ptsCalculated = bet.pts !== null && bet.pts !== undefined ? bet.pts : '';
+                  return (
+                    <div key={idx} style={{
+                      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                      padding: '0.5rem 0.75rem', borderRadius: '8px',
+                      background: 'rgba(255,255,255,0.01)', border: '1px solid rgba(255,255,255,0.03)'
+                    }}>
+                      <span style={{ fontSize: '0.78rem', color: 'var(--text-primary)' }}>{bet.home} x {bet.away}</span>
+                      <div style={{ textAlign: 'right' }}>
+                        <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: '#D2A74F' }}>
+                          Aposta: {bet.bet_home} - {bet.bet_away}
+                        </span>
+                        {match.home_score !== null && match.home_score !== undefined && String(match.home_score) !== 'null' && (
+                          <span style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', display: 'block' }}>
+                            Oficial: {match.home_score} - {match.away_score} {ptsCalculated !== '' ? `(+${ptsCalculated} pts)` : ''}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+export default function Dashboard() {
+  return (
+    <Suspense fallback={<div style={{ color: 'var(--text-primary)', padding: '2rem', textAlign: 'center' }}>Carregando Pain

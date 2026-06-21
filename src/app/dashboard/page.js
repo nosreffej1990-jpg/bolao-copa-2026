@@ -7,6 +7,8 @@ import { supabase, resetDatabase, defaultConfrontos, isSupabaseConfigured } from
 import { getFinishedMatches, getLiveMatches, getUpcomingMatches, getFlagCode, formatMatchDate, getGroupStandings, fetchAllGames } from '@/lib/worldcupApi';
 import { useChampion, CHAMPIONS } from '@/components/ChampionProvider';
 import RankingTab from '@/components/dashboard/RankingTab';
+import MatchesTab from '@/components/dashboard/MatchesTab';
+import SettingsTab from '@/components/dashboard/SettingsTab';
 import FirstLaunchOverlay from '@/components/FirstLaunchOverlay';
 
 // Helper to compress and resize images on client-side before sending to API
@@ -1975,151 +1977,30 @@ function DashboardContent() {
         )}
 
         {activeTab === 'placares_geral' && (
-          <div>
-            <div style={{ marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-              <div>
-                <h3 style={{ fontSize: '1.05rem', marginBottom: '0.2rem' }}>Resultados dos Jogos</h3>
-                <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Placares oficiais • Atualizado a cada 60s</p>
-              </div>
-              {apiLive.length > 0 && (
-                <span style={{ background: '#ef4444', color: 'var(--text-primary)', fontSize: '0.65rem', fontWeight: 'bold', padding: '0.2rem 0.5rem', borderRadius: '999px', animation: 'pulse 1.5s infinite' }}>🔴 AO VIVO</span>
-              )}
-            </div>
-
-            {/* Ao vivo */}
-            {apiLive.map(g => {
-              const hFlag = getFlagCode(g.home_team_name_en);
-              const aFlag = getFlagCode(g.away_team_name_en);
-              return (
-                <div
-                  className="matchup-card"
-                  key={g.id}
-                  style={{ borderColor: '#ef4444', boxShadow: '0 0 12px rgba(239,68,68,0.25)', cursor: 'pointer' }}
-                  onClick={() => { setShowMatchModal(g); setMatchModalTab('palpites'); }}
-                >
-                  <div className="matchup-meta">
-                    <span style={{ color: '#ef4444', fontWeight: 'bold' }}>🔴 AO VIVO • Grupo {g.group}</span>
-                    <span>{g.time_elapsed}</span>
-                  </div>
-                  <div className="matchup-teams-row">
-                    <div className="matchup-team-item">
-                      <img src={`https://flagcdn.com/w80/${hFlag}.png`} className="team-flag" alt={g.home_team_name_en} />
-                      <span>{g.home_team_name_en}</span>
-                    </div>
-                    <div className="matchup-scores-center">
-                      <input type="number" className="score-field" value={g.home_score} readOnly />
-                      <span className="score-sep">x</span>
-                      <input type="number" className="score-field" value={g.away_score} readOnly />
-                    </div>
-                    <div className="matchup-team-item">
-                      <img src={`https://flagcdn.com/w80/${aFlag}.png`} className="team-flag" alt={g.away_team_name_en} />
-                      <span>{g.away_team_name_en}</span>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-
-            {/* Finalizados */}
-            {apiLoading && apiFinished.length === 0 ? (
-              <p style={{ textAlign: 'center', color: 'var(--text-secondary)', fontSize: '0.8rem', padding: '2rem' }}>Carregando resultados...</p>
-            ) : apiFinished.length === 0 ? (
-              <p style={{ textAlign: 'center', color: 'var(--text-secondary)', fontSize: '0.8rem', padding: '2rem' }}>Nenhum jogo finalizado ainda.</p>
-            ) : (
-              <div className="matchup-list">
-                {apiFinished.map(g => {
-                  const hFlag = getFlagCode(g.home_team_name_en);
-                  const aFlag = getFlagCode(g.away_team_name_en);
-                  const { date, time } = formatMatchDate(g.local_date);
-                  return (
-                    <div
-                      className="matchup-card"
-                      key={g.id}
-                      style={{ borderColor: 'rgba(16,185,129,0.3)', cursor: 'pointer', position: 'relative' }}
-                      onClick={() => { setShowMatchModal(g); setMatchModalTab('detalhes'); }}
-                    >
-                      <div className="matchup-meta">
-                        <span>Grupo {g.group} • Encerrado</span>
-                        <span>{date} {time}</span>
-                      </div>
-                      <div className="matchup-teams-row">
-                        <div className="matchup-team-item">
-                          <img src={`https://flagcdn.com/w80/${hFlag}.png`} className="team-flag" alt={g.home_team_name_en} />
-                          <span>{g.home_team_name_en}</span>
-                        </div>
-                        <div className="matchup-scores-center">
-                          <input type="number" className="score-field" value={g.home_score} readOnly />
-                          <span className="score-sep">x</span>
-                          <input type="number" className="score-field" value={g.away_score} readOnly />
-                        </div>
-                        <div className="matchup-team-item">
-                          <img src={`https://flagcdn.com/w80/${aFlag}.png`} className="team-flag" alt={g.away_team_name_en} />
-                          <span>{g.away_team_name_en}</span>
-                        </div>
-                      </div>
-                      {g.home_scorers && g.home_scorers !== 'null' && (
-                        <p style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', marginTop: '0.5rem', textAlign: 'center' }}>⚽ {g.home_scorers.replace(/[{}"]/g, '')}</p>
-                      )}
-                      <div style={{ display: 'flex', justifyContent: 'center', gap: '0.5rem', marginTop: '0.75rem' }}>
-                        <span style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', background: 'rgba(255,255,255,0.06)', padding: '0.2rem 0.6rem', borderRadius: '999px' }}>Toque para ver detalhes</span>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
+          <MatchesTab
+            mode="results"
+            apiLive={apiLive}
+            apiFinished={apiFinished}
+            apiLoading={apiLoading}
+            getFlagCode={getFlagCode}
+            formatMatchDate={formatMatchDate}
+            setShowMatchModal={setShowMatchModal}
+            setMatchModalTab={setMatchModalTab}
+          />
         )}
 
-        {/* 5. Próximos Confrontos via API */}
         {activeTab === 'confrontos_geral' && (
-          <div>
-            <div style={{ marginBottom: '1.25rem' }}>
-              <h3 style={{ fontSize: '1.05rem', marginBottom: '0.2rem' }}>Próximos Confrontos</h3>
-              <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Partidas oficiais da Copa 2026 • worldcup26.ir</p>
-            </div>
-
-            {apiLoading && apiUpcoming.length === 0 ? (
-              <p style={{ textAlign: 'center', color: 'var(--text-secondary)', fontSize: '0.8rem', padding: '2rem' }}>Carregando calendário...</p>
-            ) : (
-              <div className="matchup-list">
-                {apiUpcoming.map(g => {
-                  const hFlag = getFlagCode(g.home_team_name_en);
-                  const aFlag = getFlagCode(g.away_team_name_en);
-                  const { date, time } = formatMatchDate(g.local_date);
-                  return (
-                    <div
-                      className="matchup-card"
-                      key={g.id}
-                      style={{ cursor: 'pointer' }}
-                      onClick={() => { setShowMatchModal(g); setMatchModalTab('palpites'); }}
-                    >
-                      <div className="matchup-meta">
-                        <span>Grupo {g.group} • Rodada {g.matchday}</span>
-                        <span>{date} às {time}</span>
-                      </div>
-                      <div className="matchup-teams-row">
-                        <div className="matchup-team-item">
-                          <img src={`https://flagcdn.com/w80/${hFlag}.png`} className="team-flag" alt={g.home_team_name_en} />
-                          <span>{g.home_team_name_en}</span>
-                        </div>
-                        <div className="matchup-scores-center">
-                          <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: 'bold' }}>vs</span>
-                        </div>
-                        <div className="matchup-team-item">
-                          <img src={`https://flagcdn.com/w80/${aFlag}.png`} className="team-flag" alt={g.away_team_name_en} />
-                          <span>{g.away_team_name_en}</span>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
+          <MatchesTab
+            mode="upcoming"
+            apiUpcoming={apiUpcoming}
+            apiLoading={apiLoading}
+            getFlagCode={getFlagCode}
+            formatMatchDate={formatMatchDate}
+            setShowMatchModal={setShowMatchModal}
+            setMatchModalTab={setMatchModalTab}
+          />
         )}
 
-        {/* 6. Grupos da Copa via API */}
         {activeTab === 'grupos' && (
           <div>
             <div style={{ marginBottom: '1rem' }}>
@@ -2584,267 +2465,20 @@ function DashboardContent() {
 
         {/* 8. Configurações (Admin Only) */}
         {activeTab === 'configuracoes' && currentUser && currentUserRole === 'Admin' && (
-          <div className="tab-pane active" style={{ animation: 'fadeIn 0.4s ease-out' }}>
-            <div style={{ marginBottom: '1.25rem' }}>
-              <h3 style={{ fontSize: '1.1rem', marginBottom: '0.2rem', color: 'var(--text-primary)' }}>Painel de Configurações</h3>
-              <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                Gerencie o comportamento do bolão, restaures e edições de textos do sistema.
-              </p>
-            </div>
-              <div style={{ marginBottom: '1.5rem' }}>
-                {/* Recalcular Pontuação */}
-                  <button onClick={handleRecalcular} style={{
-                    width: '100%', marginTop: '1.25rem', padding: '0.85rem',
-                    background: 'transparent',
-                    border: '1px solid var(--accent-gold)', borderRadius: '10px', color: 'var(--accent-gold)', fontWeight: '700', fontSize: '0.9rem', cursor: 'pointer',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem'
-                  }}>
-                    <Icons.RefreshCw size={18} /> Recalcular Pontuação
-                  </button>
-
-                  
-              </div>
-
-            <button 
-              className="btn-upload-bolao" 
-              style={{ backgroundColor: 'rgba(251,191,36,0.12)', color: '#D2A74F', border: '1px solid rgba(251,191,36,0.3)', marginBottom: '1.25rem', width: '100%', cursor: 'pointer', fontWeight: 'bold' }}
-              onClick={() => setActiveTab('gerenciar_usuarios')}
-            >
-              👥 Ir para o Gerenciador de Usuários
-            </button>
-
-            <div style={{
-              background: 'var(--bg-card)',
-              border: '1px solid var(--border-color)',
-              borderRadius: '12px',
-              padding: '1.5rem',
-              marginBottom: '1.5rem',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '1rem'
-            }}>
-              <h4 style={{ fontSize: '0.85rem', color: '#D2A74F', margin: 0, fontWeight: 'bold' }}>⚙️ Painel de Ativações do Admin</h4>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1.5rem' }}>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.78rem', cursor: 'pointer' }}>
-                  <input
-                    type="checkbox"
-                    checked={mataMataPublic}
-                    onChange={async (e) => {
-                      const val = e.target.checked;
-                      setMataMataPublic(val);
-                      try {
-                        if (!isSupabaseConfigured) {
-                          await supabase.from('config').upsert({ key: 'mata_mata_public', value: String(val) });
-                        } else {
-                          const password = localStorage.getItem('copa26_pass') || '';
-                          await fetch('/api/usuarios', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                              action: 'updateConfig',
-                              username: currentUser,
-                              password,
-                              key: 'mata_mata_public',
-                              value: String(val)
-                            })
-                          });
-                        }
-                        showToast(`Aba do Mata-Mata ${val ? 'Liberada no Menu' : 'Oculta para Jogadores'}`);
-                      } catch (err) {
-                        console.error(err);
-                        showToast('Erro ao atualizar configuração.', 'error');
-                      }
-                    }}
-                  />
-                  <span>Liberar Aba de Apostas Mata-Mata para todos os Jogadores</span>
-                </label>
-                
-                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.78rem', cursor: 'pointer' }}>
-                  <input
-                    type="checkbox"
-                    checked={allowRegister}
-                    onChange={async (e) => {
-                      const val = e.target.checked;
-                      setAllowRegister(val);
-                      try {
-                        if (!isSupabaseConfigured) {
-                          await supabase.from('config').upsert({ key: 'allow_register', value: String(val) });
-                        } else {
-                          const password = localStorage.getItem('copa26_pass') || '';
-                          await fetch('/api/usuarios', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                              action: 'updateConfig',
-                              username: currentUser,
-                              password,
-                              key: 'allow_register',
-                              value: String(val)
-                            })
-                          });
-                        }
-                        showToast(`Novos cadastros ${val ? 'Ativados' : 'Desativados'}`);
-                      } catch (err) {
-                        console.error(err);
-                        showToast('Erro ao atualizar configuração.', 'error');
-                      }
-                    }}
-                  />
-                  <span>Permitir Novos Cadastros de Jogadores</span>
-                </label>
-
-                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.78rem', cursor: 'pointer' }}>
-                  <input
-                    type="checkbox"
-                    checked={allowGroupUpload}
-                    onChange={async (e) => {
-                      const val = e.target.checked;
-                      setAllowGroupUpload(val);
-                      try {
-                        if (!isSupabaseConfigured) {
-                          await supabase.from('config').upsert({ key: 'allow_group_upload', value: String(val) });
-                        } else {
-                          const password = localStorage.getItem('copa26_pass') || '';
-                          await fetch('/api/usuarios', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                              action: 'updateConfig',
-                              username: currentUser,
-                              password,
-                              key: 'allow_group_upload',
-                              value: String(val)
-                            })
-                          });
-                        }
-                        showToast(`Upload da Fase de Grupos ${val ? 'Ativado' : 'Desativado'}`);
-                      } catch (err) {
-                        console.error(err);
-                        showToast('Erro ao atualizar configuração.', 'error');
-                      }
-                    }}
-                  />
-                  <span>Permitir Upload/Cadastro de Bolões da Fase de Grupos</span>
-                </label>
-
-                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.78rem', cursor: 'pointer' }}>
-                  <input
-                    type="checkbox"
-                    checked={allowDrawerMenu}
-                    onChange={async (e) => {
-                      const val = e.target.checked;
-                      setAllowDrawerMenu(val);
-                      try {
-                        if (!isSupabaseConfigured) {
-                          await supabase.from('config').upsert({ key: 'allow_drawer_menu', value: String(val) });
-                        } else {
-                          const password = localStorage.getItem('copa26_pass') || '';
-                          await fetch('/api/usuarios', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                              action: 'updateConfig',
-                              username: currentUser,
-                              password,
-                              key: 'allow_drawer_menu',
-                              value: String(val)
-                            })
-                          });
-                        }
-                        showToast(`Menu Hamburger ${val ? 'Ativado' : 'Desativado'}`);
-                      } catch (err) {
-                        console.error(err);
-                        showToast('Erro ao atualizar configuração.', 'error');
-                      }
-                    }}
-                  />
-                  <span>Exibir Botão de Menu Superior (Hamburger)</span>
-                </label>
-              </div>
-
-              <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '1rem', marginTop: '0.5rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--text-secondary)' }}>✏️ Editar Textos do Popup de Confirmação (Paquetá)</span>
-                <div className="form-group" style={{ marginBottom: 0 }}>
-                  <label style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>Título do Popup</label>
-                  <input
-                    type="text"
-                    className="form-control"
-                    style={{ fontSize: '0.8rem', padding: '0.45rem 0.6rem', marginTop: '0.2rem' }}
-                    value={paquetaTitle}
-                    onChange={(e) => setPaquetaTitle(e.target.value)}
-                  />
-                </div>
-                <div className="form-group" style={{ marginBottom: 0 }}>
-                  <label style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>Mensagem (Corpo)</label>
-                  <textarea
-                    className="form-control"
-                    style={{ fontSize: '0.8rem', padding: '0.45rem 0.6rem', minHeight: '60px', marginTop: '0.2rem', fontFamily: 'inherit', resize: 'vertical' }}
-                    value={paquetaBody}
-                    onChange={(e) => setPaquetaBody(e.target.value)}
-                  />
-                </div>
-                <button
-                  onClick={async () => {
-                    try {
-                      const password = localStorage.getItem('copa26_pass') || '';
-                      await Promise.all([
-                        fetch('/api/usuarios', {
-                          method: 'POST',
-                          headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify({
-                            action: 'updateConfig',
-                            username: currentUser,
-                            password,
-                            key: 'paqueta_title',
-                            value: paquetaTitle
-                          })
-                        }),
-                        fetch('/api/usuarios', {
-                          method: 'POST',
-                          headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify({
-                            action: 'updateConfig',
-                            username: currentUser,
-                            password,
-                            key: 'paqueta_body',
-                            value: paquetaBody
-                          })
-                        })
-                      ]);
-                      showToast('Textos do popup salvos com sucesso!');
-                    } catch (err) {
-                      console.error(err);
-                      showToast('Erro ao salvar textos do popup.', 'error');
-                    }
-                  }}
-                  style={{
-                    background: 'rgba(16,185,129,0.12)', border: '1px solid rgba(16,185,129,0.4)',
-                    color: '#D2A74F', padding: '0.4rem 1rem', borderRadius: '8px',
-                    fontSize: '0.75rem', fontWeight: 'bold', cursor: 'pointer', alignSelf: 'flex-start'
-                  }}
-                >
-                  Salvar Textos do Popup
-                </button>
-              </div>
-
-              {currentUser === 'Jefferson' && (
-                <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '1rem', marginTop: '0.5rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                  <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--text-secondary)' }}>⚠ Ações do Desenvolvedor (Jefferson)</span>
-                  <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                    <button className="btn-upload-bolao" style={{ backgroundColor: 'rgba(59, 130, 246, 0.12)', color: '#60a5fa', border: '1px solid rgba(59, 130, 246, 0.3)' }} onClick={handleRestoreConfrontosOnly}>
-                      🔄 Restaurar Confrontos
-                    </button>
-                    <button className="btn-upload-bolao" style={{ backgroundColor: 'rgba(239, 68, 68, 0.12)', color: '#f87171', border: '1px solid rgba(239, 68, 68, 0.3)' }} onClick={handleResetDatabase}>
-                      🗑️ Reiniciar Dados
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
+          <SettingsTab
+            handleRecalcular={handleRecalcular}
+            mataMataPublic={mataMataPublic} setMataMataPublic={setMataMataPublic}
+            allowRegister={allowRegister} setAllowRegister={setAllowRegister}
+            allowGroupUpload={allowGroupUpload} setAllowGroupUpload={setAllowGroupUpload}
+            allowDrawerMenu={allowDrawerMenu} setAllowDrawerMenu={setAllowDrawerMenu}
+            paquetaTitle={paquetaTitle} setPaquetaTitle={setPaquetaTitle}
+            paquetaBody={paquetaBody} setPaquetaBody={setPaquetaBody}
+            saveConfig={saveConfig}
+            handleRestoreConfrontosOnly={handleRestoreConfrontosOnly}
+            handleResetDatabase={handleResetDatabase}
+          />
         )}
 
-        {/* 9. Apostar Próxima Fase (Mata-mata) */}
         {activeTab === 'apostas_elim' && (() => {
           if (!currentUser) {
             return (

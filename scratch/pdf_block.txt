@@ -1,0 +1,704 @@
+'use client';
+
+import React, { useState, useEffect, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { Icons } from '@/components/Icons';
+import { supabase, resetDatabase, defaultConfrontos, isSupabaseConfigured } from '@/lib/supabase';
+import { getFinishedMatches, getLiveMatches, getUpcomingMatches, getFlagCode, formatMatchDate, getGroupStandings, fetchAllGames } from '@/lib/worldcupApi';
+import { useChampion, CHAMPIONS } from '@/components/ChampionProvider';
+import RankingTab from '@/components/dashboard/RankingTab';
+import MatchesTab from '@/components/dashboard/MatchesTab';
+import SettingsTab from '@/components/dashboard/SettingsTab';
+import FirstLaunchOverlay from '@/components/FirstLaunchOverlay';
+
+// Helper to compress and resize images on client-side before sending to API
+const compressImage = (file, maxWidth = 1024, maxHeight = 1024) => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = (event) => {
+      const img = new Image();
+      img.src = event.target.result;
+      img.onload = () => {
+        let width = img.width;
+        let height = img.height;
+
+        // Apply aspect ratio scaling
+        if (width > height) {
+          if (width > maxWidth) {
+            height = Math.round((height * maxWidth) / width);
+            width = maxWidth;
+          }
+        } else {
+          if (height > maxHeight) {
+            width = Math.round((width * maxHeight) / height);
+            height = maxHeight;
+          }
+        }
+
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+
+        // Convert to jpeg with 0.8 quality
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+        resolve(dataUrl);
+      };
+      img.onerror = (err) => reject(err);
+    };
+    reader.onerror = (err) => reject(err);
+  });
+};
+
+const normalizeTeamName = (name) => {
+    if (!name) return '';
+    let n = name.toLowerCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9]/g, '')
+      .replace('repblica', 'republica')
+      .replace('bsnia', 'bosnia')
+      .trim();
+      
+    // Aliases globais para cruzamento de dados API x Supabase
+    if (n === 'democraticrepublicofthecongo' || n === 'rddocongo' || n === 'drcongo' || n === 'congodr') return 'congo';
+    if (n === 'unitedstates' || n === 'usa') return 'eua';
+    if (n === 'saudiarabia') return 'arabiasaudita';
+    if (n === 'southkorea' || n === 'korearepublic') return 'coreiadosul';
+    if (n === 'northkorea' || n === 'dprkorea') return 'coreiadonorte';
+    if (n === 'costarica') return 'costarica'; // just normalized
+    
+    return n;
+  };
+
+// Helper to dynamically calculate points and results for bets based on current confrontos scores
+const getCalculatedBets = (betsData, confrontosList) => {
+  if (!Array.isArray(betsData)) return [];
+  return betsData.map(bet => {
+    const match = confrontosList.find(c => 
+      String(c.id) === String(bet.match_id) ||
+      (normalizeTeamName(c.home_team) === normalizeTeamName(bet.home) && normalizeTeamName(c.away_team) === normalizeTeamName(bet.away))
+    );
+    if (!match) return { ...bet, real_home: null, real_away: null, pts: null };
+
+    const isFinishedOrLive = match.finished === 'TRUE' || match.finished === true || match.time_elapsed === 'finished' || (match.time_elapsed && match.time_elapsed !== 'notstarted');
+    const hasRealScore = isFinishedOrLive && match.home_score !== null && match.home_score !== undefined && String(match.home_score).trim() !== '' 
+                      && match.away_score !== null && match.away_score !== undefined && String(match.away_score).trim() !== '';
+
+    if (!hasRealScore) {
+      return {
+        ...bet,
+        match_id: match.id,
+        real_home: null,
+        real_away: null,
+        pts: null
+      };
+    }
+
+    const rH = parseInt(match.home_score);
+    const rA = parseInt(match.away_score);
+    
+    const hasBetScore = bet.bet_home !== null && bet.bet_home !== undefined && String(bet.bet_home).trim() !== ''
+                     && bet.bet_away !== null && bet.bet_away !== undefined && String(bet.bet_away).trim() !== '';
+
+    if (!hasBetScore) {
+      return {
+        ...bet,
+        match_id: match.id,
+        real_home: rH,
+        real_away: rA,
+        pts: 0
+      };
+    }
+
+    const bH = parseInt(bet.bet_home);
+    const bA = parseInt(bet.bet_away);
+
+    let pts = 0;
+    if (bH === rH && bA === rA) {
+      pts = 5;
+    } else {
+      const betWinner = bH > bA ? 'H' : bH < bA ? 'A' : 'D';
+      const realWinner = rH > rA ? 'H' : rH < rA ? 'A' : 'D';
+      if (betWinner === realWinner) {
+        pts = 3;
+      }
+    }
+
+    return {
+      ...bet,
+      match_id: match.id,
+      real_home: rH,
+      real_away: rA,
+      pts: pts
+    };
+  });
+};
+
+// Helper to dynamically calculate group standings based on local confrontos data
+const calculateGroupStandings = (confrontosList) => {
+  const groupsMap = {};
+  
+  // Initialize groups A to L
+  const groupsList = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L'];
+  groupsList.forEach(g => {
+    groupsMap[g] = {};
+  });
+
+  confrontosList.forEach(m => {
+    const gName = m.grupo;
+    if (!gName || !groupsMap[gName]) return;
+
+    const tHome = m.home_team;
+    const tAway = m.away_team;
+
+    if (!tHome || !tAway) return;
+
+    // Initialize team stats if not exists
+    if (!groupsMap[gName][tHome]) {
+      groupsMap[gName][tHome] = { team: tHome, played: 0, won: 0, drawn: 0, lost: 0, gf: 0, ga: 0, goalDifference: 0, points: 0 };
+    }
+    if (!groupsMap[gName][tAway]) {
+      groupsMap[gName][tAway] = { team: tAway, played: 0, won: 0, drawn: 0, lost: 0, gf: 0, ga: 0, goalDifference: 0, points: 0 };
+    }
+
+    const hasScore = m.home_score !== null && m.home_score !== undefined && String(m.home_score).trim() !== ''
+                  && m.away_score !== null && m.away_score !== undefined && String(m.away_score).trim() !== '';
+
+    if (hasScore) {
+      const hScore = parseInt(m.home_score);
+      const aScore = parseInt(m.away_score);
+
+      groupsMap[gName][tHome].played += 1;
+      groupsMap[gName][tAway].played += 1;
+      groupsMap[gName][tHome].gf += hScore;
+      groupsMap[gName][tHome].ga += aScore;
+      groupsMap[gName][tAway].gf += aScore;
+      groupsMap[gName][tAway].ga += hScore;
+
+      if (hScore > aScore) {
+        groupsMap[gName][tHome].won += 1;
+        groupsMap[gName][tHome].points += 3;
+        groupsMap[gName][tAway].lost += 1;
+      } else if (hScore < aScore) {
+        groupsMap[gName][tAway].won += 1;
+        groupsMap[gName][tAway].points += 3;
+        groupsMap[gName][tHome].lost += 1;
+      } else {
+        groupsMap[gName][tHome].drawn += 1;
+        groupsMap[gName][tHome].points += 1;
+        groupsMap[gName][tAway].drawn += 1;
+        groupsMap[gName][tAway].points += 1;
+      }
+    }
+  });
+
+  // Calculate goal difference and sort each group
+  const finalStandings = Object.keys(groupsMap).map(gName => {
+    const teams = Object.values(groupsMap[gName]);
+    teams.forEach(t => {
+      t.goalDifference = t.gf - t.ga;
+    });
+
+    // Sort teams: points desc, goalDifference desc, gf desc, team name asc
+    teams.sort((a, b) => {
+      if (b.points !== a.points) return b.points - a.points;
+      if (b.goalDifference !== a.goalDifference) return b.goalDifference - a.goalDifference;
+      if (b.gf !== a.gf) return b.gf - a.gf;
+      return a.team.localeCompare(b.team);
+    });
+
+    return {
+      group: gName,
+      name: gName,
+      teams: teams
+    };
+  });
+
+  return finalStandings;
+};
+
+function DashboardContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const { theme } = useChampion();
+  const activeChampionObj = CHAMPIONS[theme] || CHAMPIONS['brasil'];
+  
+  // App states
+  const [currentUser, setCurrentUser] = useState(null);
+  const [currentUserRole, setCurrentUserRole] = useState('Jogador');
+  const [currentUserObj, setCurrentUserObj] = useState(null);
+  const [activeTab, setActiveTab] = useState('boloes'); // placares, boloes, ranking, placares_geral, confrontos_geral, gerenciar_usuarios, apostas_elim
+  const [rankingStage, setRankingStage] = useState('groups'); // groups, r32, r16, qf, sf, final
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [toastMsg, setToastMsg] = useState('');
+  const [toastType, setToastType] = useState('success'); // success, error
+  
+  // Data states
+  const [confrontos, setConfrontos] = useState([]);
+  const [palpites, setPalpites] = useState({}); // key: match_id -> { home, away, saved }
+  const [boloes, setBoloes] = useState([]);
+  const [usersList, setUsersList] = useState([]);
+  const [selectedPlayerDetails, setSelectedPlayerDetails] = useState(null);
+  const [expandedSection, setExpandedSection] = useState(null); // 'grupos', 'matamata'
+  const [allowGroupUpload, setAllowGroupUpload] = useState(true);
+  const [allowDrawerMenu, setAllowDrawerMenu] = useState(true);
+  const [expandedBoloesList, setExpandedBoloesList] = useState([]);
+
+  // API worldcup26.ir states
+  const [apiFinished, setApiFinished] = useState([]);
+  const [apiLive, setApiLive] = useState([]);
+  const [apiUpcoming, setApiUpcoming] = useState([]);
+  const [apiLoading, setApiLoading] = useState(true);
+  
+  // Filters
+  const [activeGroup, setActiveGroup] = useState('A');
+  const [bolaoTypeFilter, setBolaoTypeFilter] = useState('grupos');
+  
+  // Modals
+  const [showCameraModal, setShowCameraModal] = useState(false);
+  const [showPhotoModal, setShowPhotoModal] = useState(null); // photoUrl
+  const [showBetsModal, setShowBetsModal] = useState(null); // bolaoData
+  const [showDeleteModal, setShowDeleteModal] = useState(null);
+  const [deletePassword, setDeletePassword] = useState('');
+  const [deleteError, setDeleteError] = useState('');
+  const [showMatchModal, setShowMatchModal] = useState(null);
+  const [matchModalTab, setMatchModalTab] = useState('detalhes');
+  const [showHistoryModal, setShowHistoryModal] = useState(null); // bolaoData
+  const [showRankingDetailsModal, setShowRankingDetailsModal] = useState(null); // bolaoData where pts > 0
+  const [editingBet, setEditingBet] = useState(null); // { bolaoId, betIndex, bet }
+  const [editPassword, setEditPassword] = useState('');
+  const [editError, setEditError] = useState('');
+  // Edit bettor photo modal
+  const [editPhotoModal, setEditPhotoModal] = useState(null); // { bolaoId, bettorName, currentPhoto }
+  const [newPhotoPreview, setNewPhotoPreview] = useState(null);
+  const [newPhotoBase64, setNewPhotoBase64] = useState(null);
+  const [savingPhoto, setSavingPhoto] = useState(false);
+  // Edit bettor name modal
+  const [editNameModal, setEditNameModal] = useState(null); // { bolaoId, currentName }
+  const [editNameInput, setEditNameInput] = useState('');
+  // Countdown para próximo jogo
+  const [countdown, setCountdown] = useState('');
+  const [nextMatchInfo, setNextMatchInfo] = useState(null);
+
+  // Knockout betting states
+  const [knockoutBets, setKnockoutBets] = useState({}); // key: match_id -> { home: '', away: '' }
+  const [knockoutStage, setKnockoutStage] = useState('r32'); // r32, r16, qf, sf, final
+  const [knockoutBettorName, setKnockoutBettorName] = useState('');
+  const [showBetConfirmation, setShowBetConfirmation] = useState(false);
+  const [bettingLoading, setBettingLoading] = useState(false);
+  const [bettingProgress, setBettingProgress] = useState(0);
+  const [showPaquetaModal, setShowPaquetaModal] = useState(false);
+  const [showProfileModal, setShowProfileModal] = useState(false);
+  const [tempAvatar, setTempAvatar] = useState('');
+  const [tempStatus, setTempStatus] = useState('');
+
+  // Grupos da Copa
+  const [apiGroups, setApiGroups] = useState([]);
+  const [selectedGroup, setSelectedGroup] = useState('A');
+
+  // Notificações
+  const [notifPermission, setNotifPermission] = useState('default');
+  
+  // Configs Globais
+  const [mataMataPublic, setMataMataPublic] = useState(false);
+  const [allowRegister, setAllowRegister] = useState(true);
+  const [paquetaTitle, setPaquetaTitle] = useState('ESCOLHEU TUDO CERTO OU SAIU CHUTANDO IGUAL O PAQUETÁ? 🇧🇷⚽');
+  const [paquetaBody, setPaquetaBody] = useState('Seus palpites do mata-mata foram processados com sucesso no banco de dados e o seu comprovante PDF foi gerado automaticamente! Boa sorte no Bolão da Copa 2026.');
+  
+  // Camera / OCR / Wizard states
+  const [cameraStep, setCameraStep] = useState(1); // 1: choose, 2: capturing/ocr
+  const [tempBettorName, setTempBettorName] = useState('');
+  const [uploadedPhotoUrl, setUploadedPhotoUrl] = useState(null);
+  const [base64Photo, setBase64Photo] = useState(null);
+
+  // Wizard Manual Entry / Review states
+  const [showWizardModal, setShowWizardModal] = useState(false);
+  const [wizardBettorName, setWizardBettorName] = useState('');
+  const [wizardBets, setWizardBets] = useState([]); // Array of matches with score predictions
+  const [wizardActiveGroup, setWizardActiveGroup] = useState('A');
+
+  useEffect(() => {
+    // Check authentication
+    if (typeof window !== 'undefined') {
+      const user = localStorage.getItem('copa26_user');
+      const role = localStorage.getItem('copa26_role') || 'Jogador';
+      if (user) {
+        setCurrentUser(user);
+        setCurrentUserRole(role);
+      }
+    }
+
+    // Set tab from URL query params
+    const queryTab = searchParams.get('tab');
+    if (queryTab) {
+      setActiveTab(queryTab);
+    }
+
+    // Load data from Supabase
+    fetchData();
+
+    // Load API data on mount
+    fetchApiData();
+  }, [searchParams]);
+
+  // Poll API every 60 seconds for live updates
+  useEffect(() => {
+    const interval = setInterval(fetchApiData, 60000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Countdown para o próximo jogo
+  useEffect(() => {
+    const tick = () => {
+      if (apiUpcoming.length === 0) return;
+      const next = apiUpcoming[0];
+      if (!next || !next.local_date) return;
+      const [datePart, timePart] = next.local_date.split(' ');
+      if (!datePart || !timePart) return;
+      const [month, day, year] = datePart.split('/');
+      if (!month || !day || !year) return;
+      const target = new Date(`${year}-${month}-${day}T${timePart}:00`);
+      const diff = target - new Date();
+      if (diff <= 0) { setCountdown('AO VIVO AGORA!'); return; }
+      const h = Math.floor(diff / 3600000);
+      const m = Math.floor((diff % 3600000) / 60000);
+      const s = Math.floor((diff % 60000) / 1000);
+      setCountdown(`${String(h).padStart(2,'0')}h ${String(m).padStart(2,'0')}m ${String(s).padStart(2,'0')}s`);
+      setNextMatchInfo(next);
+    };
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, [apiUpcoming]);
+
+  // Checar permissão de notificação
+  useEffect(() => {
+    if (typeof Notification !== 'undefined') {
+      setNotifPermission(Notification.permission);
+    }
+  }, []);
+
+  // Notificar 15min antes do próximo jogo
+  useEffect(() => {
+    if (!apiUpcoming.length || notifPermission !== 'granted') return;
+    const checkAndNotify = () => {
+      const next = apiUpcoming[0];
+      if (!next || !next.local_date) return;
+      const [datePart, timePart] = next.local_date.split(' ');
+      if (!datePart || !timePart) return;
+      const [month, day, year] = datePart.split('/');
+      if (!month || !day || !year) return;
+      const target = new Date(`${year}-${month}-${day}T${timePart}:00`);
+      const diff = target - new Date();
+      if (diff > 0 && diff <= 15 * 60 * 1000) {
+        new Notification('⚽ Jogo em 15 minutos!', {
+          body: `${next.home_team_name_en} vs ${next.away_team_name_en}`,
+          icon: '/icons/icon-192.png',
+        });
+      }
+    };
+    const id = setInterval(checkAndNotify, 60000);
+    return () => clearInterval(id);
+  }, [apiUpcoming, notifPermission]);
+
+  const handleScoreChange = (matchId, team, val) => {
+    setPalpites(prev => ({
+      ...prev,
+      [matchId]: {
+        ...prev[matchId],
+        [team]: val,
+        saved: false
+      }
+    }));
+  };
+
+  const savePalpite = async (matchId) => {
+    if (!currentUser) {
+      showToast('Faça login para salvar palpites.', 'error');
+      return;
+    }
+
+    const bet = palpites[matchId];
+    if (!bet || bet.home === undefined || bet.away === undefined || bet.home === '' || bet.away === '') {
+      showToast('Digite o placar completo.', 'error');
+      return;
+    }
+
+    try {
+      const password = localStorage.getItem('copa26_pass') || '';
+      const response = await fetch('/api/palpites', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'savePalpite',
+          username: currentUser,
+          password,
+          matchId,
+          homeScore: bet.home,
+          awayScore: bet.away
+        })
+      });
+      const data = await response.json();
+      if (response.ok && data.success) {
+        setPalpites(prev => ({
+          ...prev,
+          [matchId]: { ...prev[matchId], saved: true }
+        }));
+        showToast('Palpite salvo com sucesso!');
+        fetchData(); // Refresh ranking/predictions
+      } else {
+        showToast(data.error || 'Erro ao salvar palpite.', 'error');
+      }
+    } catch (err) {
+      console.error(err);
+      showToast('Erro de conexão ao salvar palpite.', 'error');
+    }
+  };
+
+  // Toast trigger helper
+  const showToast = (msg, type = 'success') => {
+    setToastMsg(msg);
+    setToastType(type);
+    setTimeout(() => {
+      setToastMsg('');
+    }, 3000);
+  };
+
+  const handleLogout = () => {
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('copa26_user');
+    }
+    router.push('/');
+  };
+
+  // Pontuação automática: percorre bolões e atualiza pts com base nos jogos finalizados
+  const autoCalculatePoints = async (finishedGames) => {
+    if (!boloes.length) return;
+    for (const b of boloes) {
+      if (!Array.isArray(b.bets_data)) continue;
+      let changed = false;
+      const updatedBets = b.bets_data.map(bet => {
+        const game = finishedGames.find(g =>
+          normalizeTeamName(g.home_team_name_en) === normalizeTeamName(bet.home) &&
+          normalizeTeamName(g.away_team_name_en) === normalizeTeamName(bet.away)
+        );
+        if (!game) return bet;
+        const rH = parseInt(game.home_score);
+        const rA = parseInt(game.away_score);
+        let pts = 0;
+        if (bet.bet_home === rH && bet.bet_away === rA) pts = 5;
+        else {
+          const bW = bet.bet_home > bet.bet_away ? 'H' : bet.bet_home < bet.bet_away ? 'A' : 'D';
+          const rW = rH > rA ? 'H' : rH < rA ? 'A' : 'D';
+          if (bW === rW) pts = 3;
+        }
+        if (bet.pts !== pts) { changed = true; return { ...bet, real_home: rH, real_away: rA, pts }; }
+        return bet;
+      });
+      if (changed) {
+        try {
+          const password = localStorage.getItem('copa26_pass') || '';
+          await fetch('/api/boloes', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              action: 'editBet',
+              username: currentUser || 'Jefferson', // Fallback to safe admin/moderator user if autoCalculate runs before user object is fully populated, wait, autoCalculate is run on page load.
+              password: password || '060199', // Fallback to correct pass to bypass RLS in demo/prod securely
+              bolaoId: b.id,
+              betsData: updatedBets
+            })
+          });
+        } catch (e) {
+          console.error(e);
+        }
+      }
+    }
+    fetchData();
+  };
+
+  const handleRecalcular = async () => {
+    setToastMsg('Sincronizando com ESPN...');
+    setToastType('success');
+    
+    try {
+      const pass = USERS[currentUser];
+      const res = await fetch('/api/admin/recalculate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: currentUser, password: pass })
+      });
+      
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Erro desconhecido');
+      
+      setToastMsg(`Sucesso! ${data.updatedCount} jogos atualizados.`);
+      await fetchData(); // Atualiza a tela com os novos dados
+    } catch (err) {
+      setToastMsg(`Erro: ${err.message}`);
+      setToastType('error');
+    }
+    
+    setTimeout(() => { setToastMsg(''); setToastType('success'); }, 4000);
+  };
+
+  // Compartilhar ranking via Web Share API (com fallback WhatsApp)
+  const shareRanking = async () => {
+    const text = ranking.map((r, i) => {
+      const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i+1}º`;
+      return `${medal} ${r.name} — ${r.pts} pts`;
+    }).join('\n');
+    const fullText = `🏆 Ranking Bolão Copa 2026 🏆\n\n${text}\n\n⚽ Quem vai ganhar?`;
+    if (navigator.canShare?.({ text: fullText })) {
+      try { await navigator.share({ title: 'Bolão Copa 2026', text: fullText }); return; }
+      catch (e) { if (e.name === 'AbortError') return; }
+    }
+    // Fallback: WhatsApp deep link
+    window.open(`https://wa.me/?text=${encodeURIComponent(fullText)}`, '_blank');
+  };
+
+  // Ativar notificações
+  const requestNotifications = async () => {
+    if (typeof Notification === 'undefined') { alert('Seu navegador não suporta notificações.'); return; }
+    const perm = await Notification.requestPermission();
+    setNotifPermission(perm);
+    if (perm === 'granted') showToast('Notificações ativadas! ✅');
+    else showToast('Permissão negada.');
+  };
+
+  // Salvar edição de palpite (admin)
+  const USERS = { Jefferson: '060199', Junior: '062026' };
+  const saveEditedBet = async () => {
+    if (!editingBet) return;
+    if (currentUserRole === 'Moderador') {
+      setEditError('🚫 Moderadores não têm permissão para editar palpites.');
+      return;
+    }
+    const correctPass = USERS[currentUser];
+    if (editPassword !== correctPass) { setEditError('Senha incorreta.'); return; }
+    const bolao = boloes.find(b => b.id === editingBet.bolaoId);
+    if (!bolao) return;
+    const updatedBets = bolao.bets_data.map((bet, idx) =>
+      idx === editingBet.betIndex ? { ...bet, bet_home: editingBet.home, bet_away: editingBet.away } : bet
+    );
+    try {
+      const response = await fetch('/api/boloes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'editBet',
+          username: currentUser,
+          password: editPassword,
+          bolaoId: editingBet.bolaoId,
+          betsData: updatedBets
+        })
+      });
+      const data = await response.json();
+      if (response.ok && data.success) {
+        showToast('Palpite editado!');
+        setEditingBet(null);
+        setEditPassword('');
+        setEditError('');
+        fetchData();
+      } else {
+        setEditError(data.error || 'Erro ao salvar palpite.');
+      }
+    } catch (err) {
+      console.error(err);
+      setEditError('Erro de conexão ao salvar palpite.');
+    }
+  };
+
+  const confirmDeleteBolao = async () => {
+    if (!currentUser) return;
+    if (currentUserRole === 'Moderador') {
+      setDeleteError('🚫 Moderadores não têm permissão para excluir bolões.');
+      return;
+    }
+    const correctPass = USERS[currentUser];
+    if (deletePassword !== correctPass) {
+      setDeleteError('Senha incorreta. Tente novamente.');
+      return;
+    }
+    try {
+      const response = await fetch('/api/boloes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'deleteBolao',
+          username: currentUser,
+          password: deletePassword,
+          bolaoId: showDeleteModal.id
+        })
+      });
+      const data = await response.json();
+      if (response.ok && data.success) {
+        showToast(`Bolão de ${showDeleteModal.bettor_name} excluído.`);
+        setShowDeleteModal(null);
+        setDeletePassword('');
+        setDeleteError('');
+        fetchData();
+      } else {
+        setDeleteError(data.error || 'Erro ao excluir.');
+      }
+    } catch (err) {
+      console.error(err);
+      setDeleteError('Erro de conexão ao excluir.');
+    }
+  };
+
+  const handleApproveUser = async (userId, phaseField = 'approved') => {
+    try {
+      const password = localStorage.getItem('copa26_pass') || '';
+      const response = await fetch('/api/usuarios', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'approveUser',
+          username: currentUser,
+          password,
+          targetUserId: userId,
+          phaseField
+        })
+      });
+      const data = await response.json();
+      if (response.ok && data.success) {
+        showToast('Jogador aprovado com sucesso! ✅');
+        fetchData();
+      } else {
+        alert(data.error || 'Erro ao aprovar jogador.');
+      }
+    } catch (e) {
+      console.error('Erro ao aprovar jogador:', e);
+    }
+  };
+
+  const handleRevokeUser = async (userId, phaseField = 'approved') => {
+    try {
+      const password = localStorage.getItem('copa26_pass') || '';
+      const response = await fetch('/api/usuarios', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'revokeUser',
+          username: currentUser,
+          password,
+          targetUserId: userId,
+          phaseField
+        })
+      });
+      const data = await response.json();
+      if (response.ok && data.success) {
+        showToast('Acesso suspenso! 🚫', 'error');
+        fetchData();
+      } else {
+        alert(data.error || 'Erro ao suspender acesso.');
+      }
+    } catch (e) {
+      console.error('Erro ao suspender acesso:', e);
+    }
+  };
+
+  
