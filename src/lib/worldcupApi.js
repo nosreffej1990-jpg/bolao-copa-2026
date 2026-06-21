@@ -134,6 +134,62 @@ export async function fetchAllGames() {
     return cache.games;
   }
 
+  try {
+    const espnRes = await fetch('https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard', { cache: 'no-store' });
+    if (espnRes.ok) {
+      const espnData = await espnRes.json();
+      if (espnData && espnData.events) {
+        const games = espnData.events.map((event, idx) => {
+          const comp = event.competitions[0];
+          const home = comp.competitors.find(c => c.homeAway === 'home');
+          const away = comp.competitors.find(c => c.homeAway === 'away');
+          
+          const state = comp.status.type.state;
+          let finished = 'FALSE';
+          let time_elapsed = 'notstarted';
+          if (state === 'post') {
+            finished = 'TRUE';
+            time_elapsed = 'finished';
+          } else if (state === 'in') {
+            time_elapsed = comp.status.displayClock || "Live";
+          }
+          
+          const homeName = home ? home.team.name : 'TBD';
+          const awayName = away ? away.team.name : 'TBD';
+          
+          const d = new Date(event.date);
+          // convert UTC to UTC-3
+          d.setHours(d.getHours() - 3);
+          const mm = String(d.getMonth() + 1).padStart(2, '0');
+          const dd = String(d.getDate()).padStart(2, '0');
+          const yyyy = d.getFullYear();
+          const hh = String(d.getHours()).padStart(2, '0');
+          const min = String(d.getMinutes()).padStart(2, '0');
+          const local_date = `${mm}/${dd}/${yyyy} ${hh}:${min}`;
+
+          return {
+            id: String(idx + 1),
+            home_team_name_en: TEAM_TRANSLATIONS[homeName] || homeName,
+            away_team_name_en: TEAM_TRANSLATIONS[awayName] || awayName,
+            home_score: home && home.score ? home.score : "null",
+            away_score: away && away.score ? away.score : "null",
+            finished,
+            time_elapsed,
+            local_date,
+            stadium_id: '1'
+          };
+        });
+        
+        cache.games = games;
+        cache.lastFetch = now;
+        return cache.games;
+      }
+    }
+  } catch (err) {
+    console.error('Erro na ESPN API, caindo para fallback:', err);
+  }
+
+  // FALLBACK PARA worldcup26.ir
   let url = `${BASE_URL}/games`;
   if (typeof window !== 'undefined') {
     url = '/api/games';
@@ -145,7 +201,6 @@ export async function fetchAllGames() {
     const data = await res.json();
     const games = data.games || [];
     
-    // Traduz e corrige data
     cache.games = games.map(g => ({
       ...g,
       home_team_name_en: TEAM_TRANSLATIONS[g.home_team_name_en] || g.home_team_name_en,
@@ -156,12 +211,10 @@ export async function fetchAllGames() {
     cache.lastFetch = now;
     return cache.games;
   } catch (e) {
-    console.error('Erro ao buscar jogos no proxy:', e);
+    console.error('Erro ao buscar jogos no proxy fallback:', e);
     
-    // Fallback: tenta chamar a API direta se estiver rodando no navegador e a rota de proxy falhar
     if (typeof window !== 'undefined' && url !== `${BASE_URL}/games`) {
       try {
-        console.log('Tentando fallback direto para buscar jogos...');
         const fallbackRes = await fetch(`${BASE_URL}/games`, { cache: 'no-store' });
         if (fallbackRes.ok) {
           const fallbackData = await fallbackRes.json();
