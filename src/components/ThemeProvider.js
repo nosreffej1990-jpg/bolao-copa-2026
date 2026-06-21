@@ -4,7 +4,7 @@ import { createContext, useContext, useEffect, useState } from 'react';
 
 // Color definitions for all 48 nations in World Cup 2026
 export const THEMES = {
-  brasil: { id: 'brasil', nome: 'Brasil', emoji: '🇧🇷', flag: 'br', primary: '#fbbf24', secondary: '#fbbf24', bg: '#060913' },
+  brasil: { id: 'brasil', nome: 'Brasil', emoji: '🇧🇷', flag: 'br', primary: '#00e676', secondary: '#E1B64F', bg: '#021a11' },
   mexico: { id: 'mexico', nome: 'México', emoji: '🇲🇽', flag: 'mx', primary: '#12a154', secondary: '#c91b2c', bg: '#042110' },
   africa_do_sul: { id: 'africa_do_sul', nome: 'África do Sul', emoji: '🇿🇦', flag: 'za', primary: '#007a4d', secondary: '#ffb612', bg: '#022417' },
   coreia_do_sul: { id: 'coreia_do_sul', nome: 'Coreia do Sul', emoji: '🇰🇷', flag: 'kr', primary: '#cd2e3a', secondary: '#0047a0', bg: '#0e1828' },
@@ -115,8 +115,15 @@ export function ThemeProvider({ children }) {
     
     // Custom specific components variables
     root.style.setProperty('--splash-bg', `radial-gradient(circle at center, ${bgCard}, ${bgHeader})`);
-    root.style.setProperty('--btn-primary-bg', `linear-gradient(135deg, ${t.primary}, ${t.secondary})`);
-    root.style.setProperty('--btn-primary-color', '#000000');
+    
+    if (themeId === 'brasil') {
+      root.style.setProperty('--btn-primary-bg', `linear-gradient(to bottom, var(--gold-light) 0%, var(--gold-mid) 55%, var(--gold-dark) 100%)`);
+      root.style.setProperty('--btn-primary-color', '#0f1c14');
+    } else {
+      root.style.setProperty('--btn-primary-bg', `linear-gradient(135deg, ${t.primary}, ${t.secondary})`);
+      root.style.setProperty('--btn-primary-color', '#000000');
+    }
+    
     root.style.setProperty('--nav-bg', bgHeader);
     root.style.setProperty('--nav-border', borderCard);
     root.style.setProperty('--nav-active', t.secondary);

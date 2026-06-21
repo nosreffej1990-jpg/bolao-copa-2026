@@ -252,46 +252,72 @@ export default function Home() {
       {/* Main Home Screen */}
       {!loading && (
         <div className="home-page-wrapper">
-          <header className="home-header" style={{ position: 'relative', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'flex-start' }}>
-            <img
-              src="/icons/logo-transparent.png"
-              alt="Logo Copa 2026"
-              style={{
-                width: '60px',
-                height: '60px',
-                objectFit: 'contain'
-              }}
-            />
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', textAlign: 'left', marginLeft: '0.5rem', flex: 1 }}>
-              <h1>BOLÃO COPA 2026</h1>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginTop: '0.1rem' }}>
-                <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--text-secondary)' }}>EUA • México • Canadá</p>
+          <header className="home-header" style={{
+            position: 'relative',
+            width: '100%',
+            display: 'grid',
+            gridTemplateColumns: '55px 1fr 55px',
+            alignItems: 'center',
+            padding: '10px 16px',
+            borderBottom: '1px solid rgba(225, 182, 79, 0.15)',
+            boxSizing: 'border-box'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
+              <img
+                src="/icons/logo-transparent.png"
+                alt="Logo Copa 2026"
+                style={{
+                  width: '42px',
+                  height: '52px',
+                  objectFit: 'contain'
+                }}
+              />
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
+              <h1 style={{
+                margin: 0,
+                fontSize: '1.4rem',
+                fontWeight: '800',
+                letterSpacing: '0.8px',
+                lineHeight: '1.1',
+                background: 'linear-gradient(to bottom, var(--gold-light) 0%, var(--gold-mid) 55%, var(--gold-dark) 100%)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                fontFamily: 'var(--font-main)'
+              }}>
+                BOLÃO COPA 2026
+              </h1>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', marginTop: '2px' }}>
+                <p style={{ margin: 0, fontSize: '0.65rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: '700' }}>
+                  EUA • MX • CAN
+                </p>
                 {isSupabaseConfigured ? (
-                  <span title="Conectado ao Supabase Cloud" style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', fontSize: '0.6rem', background: 'rgba(16,185,129,0.12)', color: 'var(--soccer-green)', padding: '1px 6px', borderRadius: '4px', border: '1px solid rgba(16,185,129,0.3)', fontWeight: 'bold' }}>
-                    <span style={{ width: '5px', height: '5px', borderRadius: '50%', backgroundColor: 'var(--soccer-green)' }}></span> Nuvem
+                  <span title="Conectado ao Supabase Cloud" style={{ display: 'inline-flex', alignItems: 'center', gap: '2px', fontSize: '0.55rem', background: 'rgba(16,185,129,0.12)', color: 'var(--soccer-green)', padding: '0px 4px', borderRadius: '3px', border: '1px solid rgba(16,185,129,0.3)', fontWeight: 'bold' }}>
+                    Nuvem
                   </span>
                 ) : (
-                  <span title="As chaves do Supabase não estão configuradas no .env.local. Os dados são salvos apenas no seu navegador (LocalStorage)." style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', fontSize: '0.6rem', background: 'rgba(251,191,36,0.12)', color: 'var(--accent-gold)', padding: '1px 6px', borderRadius: '4px', border: '1px solid rgba(251,191,36,0.3)', fontWeight: 'bold' }}>
-                    ⚠️ Demo (Local)
+                  <span title="As chaves do Supabase não estão configuradas no .env.local. Os dados são salvos apenas no seu navegador (LocalStorage)." style={{ display: 'inline-flex', alignItems: 'center', gap: '2px', fontSize: '0.55rem', background: 'rgba(251,191,36,0.12)', color: 'var(--accent-gold)', padding: '0px 4px', borderRadius: '3px', border: '1px solid rgba(251,191,36,0.3)', fontWeight: 'bold' }}>
+                    Demo
                   </span>
                 )}
               </div>
             </div>
-            <div
-              style={{
-                width: '36px',
-                height: '36px',
-                borderRadius: '50%',
-                background: 'rgba(251, 191, 36, 0.1)',
-                border: '1.5px solid rgba(251, 191, 36, 0.3)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer',
-                marginRight: '0.5rem'
-              }}
-            >
-              <Icons.User size={18} style={{ color: 'var(--accent-gold)' }} />
+            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+              <div
+                style={{
+                  width: '36px',
+                  height: '36px',
+                  borderRadius: '50%',
+                  background: 'rgba(225, 182, 79, 0.05)',
+                  border: '1.5px solid var(--accent-gold)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer'
+                }}
+              >
+                <Icons.User size={18} style={{ color: 'var(--accent-gold)' }} />
+              </div>
             </div>
           </header>
 
