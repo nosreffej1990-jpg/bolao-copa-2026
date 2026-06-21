@@ -441,14 +441,13 @@ export default function Home() {
                 <div 
                   onClick={() => { setShowLogin(true); setShowRegister(false); setErrorMsg(''); }}
                   style={{
-                    background: 'linear-gradient(135deg, #FBBF24 0%, #D4A017 50%, #C8960E 100%)',
+                    background: 'var(--btn-primary-bg)',
                     border: '2px solid rgba(255, 215, 0, 0.6)',
                     borderRadius: '20px',
                     padding: '1.25rem 1.5rem',
                     display: 'flex',
                     alignItems: 'center',
-                    justifyContent: 'center',
-                    cursor: 'pointer',
+                    justifyContent: 'space-between', cursor: 'pointer',
                     boxShadow: '0 8px 30px rgba(251, 191, 36, 0.35), 0 0 60px rgba(251, 191, 36, 0.1)',
                     transition: 'all 0.2s',
                     width: '100%',
@@ -463,9 +462,11 @@ export default function Home() {
                     e.currentTarget.style.boxShadow = '0 8px 30px rgba(251, 191, 36, 0.3)';
                   }}
                 >
-                  <div style={{ display: 'flex', flexDirection: 'column', textAlign: 'center', gap: '0.15rem' }}>
-                    <span style={{ fontSize: '1.15rem', fontWeight: '900', color: '#1a0f00', letterSpacing: '0.04em', textTransform: 'uppercase' }}>Login</span>
+                  <div style={{ display: 'flex', flexDirection: 'column', textAlign: 'left', gap: '0.15rem' }}>
+                    <span style={{ fontSize: '1.25rem', fontWeight: '900', color: 'var(--btn-primary-color)', letterSpacing: '0.02em' }}>Entrar / Enviar Bolão</span>
+                    <span style={{ fontSize: '0.75rem', fontWeight: '700', color: 'var(--btn-primary-color)', opacity: 0.8, letterSpacing: '1px', textTransform: 'uppercase' }}>PALPITE AGORA</span>
                   </div>
+                  <Icons.ChevronRight size={24} style={{ color: 'var(--btn-primary-color)' }} />
                   
                 </div>
 
@@ -475,9 +476,8 @@ export default function Home() {
                     onClick={() => handleDirectNavigate('ranking')}
                     className="home-btn"
                     style={{
-                      background: 'var(--bg-card)',
-                      backdropFilter: 'blur(10px)',
-                      border: '2px solid var(--accent-gold)', boxShadow: '0 0 10px rgba(225, 182, 79, 0.4), inset 0 0 10px rgba(225, 182, 79, 0.2)',
+                      background: 'rgba(20, 44, 35, 0.6)', backdropFilter: 'blur(10px)',
+                      border: '1px solid rgba(210, 167, 79, 0.15)', boxShadow: '0 4px 15px rgba(0,0,0, 0.4)',
                       borderRadius: '16px',
                       padding: '1.25rem 1rem',
                       display: 'flex',
@@ -488,29 +488,17 @@ export default function Home() {
                       transition: 'all 0.2s'
                     }}
                   >
-                    <div style={{
-                      background: 'transparent',
-                      borderRadius: '50%',
-                      width: '50px',
-                      height: '50px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      border: '2px solid var(--accent-gold)', boxShadow: '0 0 10px rgba(225, 182, 79, 0.4), inset 0 0 10px rgba(225, 182, 79, 0.2)'
-                    }}>
-                      <Icons.Trophy size={20} style={{ color: 'var(--accent-gold)' }} />
-                    </div>
-                    <span style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#fff' }}>Classificação</span>
-                    <span style={{ fontSize: '0.65rem', color: 'rgba(251, 191, 36, 0.7)' }}>Ver líderes e pontos</span>
+                    <Icons.Trophy size={36} style={{ color: 'var(--accent-gold)', marginBottom: '0.4rem' }} />
+                    <span style={{ fontSize: '0.9rem', fontWeight: 'bold', color: 'var(--text-primary)' }}>Classificação</span>
+                    <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>Classificação do leaderboard</span>
                   </div>
 
                   <div 
                     onClick={() => handleDirectNavigate('placares_geral')}
                     className="home-btn"
                     style={{
-                      background: 'var(--bg-card)',
-                      backdropFilter: 'blur(10px)',
-                      border: '2px solid var(--accent-gold)', boxShadow: '0 0 10px rgba(225, 182, 79, 0.4), inset 0 0 10px rgba(225, 182, 79, 0.2)',
+                      background: 'rgba(20, 44, 35, 0.6)', backdropFilter: 'blur(10px)',
+                      border: '1px solid rgba(210, 167, 79, 0.15)', boxShadow: '0 4px 15px rgba(0,0,0, 0.4)',
                       borderRadius: '16px',
                       padding: '1.25rem 1rem',
                       display: 'flex',
@@ -521,29 +509,17 @@ export default function Home() {
                       transition: 'all 0.2s'
                     }}
                   >
-                    <div style={{
-                      background: 'transparent',
-                      borderRadius: '50%',
-                      width: '50px',
-                      height: '50px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      border: '2px solid var(--accent-gold)', boxShadow: '0 0 10px rgba(225, 182, 79, 0.4), inset 0 0 10px rgba(225, 182, 79, 0.2)'
-                    }}>
-                      <Icons.Check size={20} style={{ color: 'var(--accent-gold)' }} />
-                    </div>
-                    <span style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#fff' }}>Resultados</span>
-                    <span style={{ fontSize: '0.65rem', color: 'rgba(251, 191, 36, 0.7)' }}>Jogos finalizados</span>
+                    <Icons.Check size={36} style={{ color: 'var(--accent-gold)', marginBottom: '0.4rem' }} />
+                    <span style={{ fontSize: '0.9rem', fontWeight: 'bold', color: 'var(--text-primary)' }}>Resultados</span>
+                    <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', textAlign: 'center' }}>Resultados no resultados</span>
                   </div>
 
                   <div 
                     onClick={() => handleDirectNavigate('confrontos_geral')}
                     className="home-btn"
                     style={{
-                      background: 'var(--bg-card)',
-                      backdropFilter: 'blur(10px)',
-                      border: '2px solid var(--accent-gold)', boxShadow: '0 0 10px rgba(225, 182, 79, 0.4), inset 0 0 10px rgba(225, 182, 79, 0.2)',
+                      background: 'rgba(20, 44, 35, 0.6)', backdropFilter: 'blur(10px)',
+                      border: '1px solid rgba(210, 167, 79, 0.15)', boxShadow: '0 4px 15px rgba(0,0,0, 0.4)',
                       borderRadius: '16px',
                       padding: '1.25rem 1rem',
                       display: 'flex',
@@ -554,29 +530,17 @@ export default function Home() {
                       transition: 'all 0.2s'
                     }}
                   >
-                    <div style={{
-                      background: 'transparent',
-                      borderRadius: '50%',
-                      width: '50px',
-                      height: '50px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      border: '2px solid var(--accent-gold)', boxShadow: '0 0 10px rgba(225, 182, 79, 0.4), inset 0 0 10px rgba(225, 182, 79, 0.2)'
-                    }}>
-                      <Icons.Calendar size={20} style={{ color: 'var(--accent-gold)' }} />
-                    </div>
-                    <span style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#fff' }}>Confrontos</span>
-                    <span style={{ fontSize: '0.65rem', color: 'rgba(251, 191, 36, 0.7)' }}>Agenda de jogos</span>
+                    <Icons.Calendar size={36} style={{ color: 'var(--accent-gold)', marginBottom: '0.4rem' }} />
+                    <span style={{ fontSize: '0.9rem', fontWeight: 'bold', color: 'var(--text-primary)' }}>Confrontos</span>
+                    <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', textAlign: 'center' }}>Confrontos e os confrontos</span>
                   </div>
 
                   <div 
                     onClick={() => handleDirectNavigate('grupos')}
                     className="home-btn"
                     style={{
-                      background: 'var(--bg-card)',
-                      backdropFilter: 'blur(10px)',
-                      border: '2px solid var(--accent-gold)', boxShadow: '0 0 10px rgba(225, 182, 79, 0.4), inset 0 0 10px rgba(225, 182, 79, 0.2)',
+                      background: 'rgba(20, 44, 35, 0.6)', backdropFilter: 'blur(10px)',
+                      border: '1px solid rgba(210, 167, 79, 0.15)', boxShadow: '0 4px 15px rgba(0,0,0, 0.4)',
                       borderRadius: '16px',
                       padding: '1.25rem 1rem',
                       display: 'flex',
@@ -587,20 +551,9 @@ export default function Home() {
                       transition: 'all 0.2s'
                     }}
                   >
-                    <div style={{
-                      background: 'transparent',
-                      borderRadius: '50%',
-                      width: '50px',
-                      height: '50px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      border: '2px solid var(--accent-gold)', boxShadow: '0 0 10px rgba(225, 182, 79, 0.4), inset 0 0 10px rgba(225, 182, 79, 0.2)'
-                    }}>
-                      <Icons.List size={20} style={{ color: 'var(--accent-gold)' }} />
-                    </div>
-                    <span style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#fff' }}>Grupos</span>
-                    <span style={{ fontSize: '0.65rem', color: 'rgba(251, 191, 36, 0.7)' }}>Classificação oficial</span>
+                    <Icons.List size={36} style={{ color: 'var(--accent-gold)', marginBottom: '0.4rem' }} />
+                    <span style={{ fontSize: '0.9rem', fontWeight: 'bold', color: 'var(--text-primary)' }}>Grupos</span>
+                    <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', textAlign: 'center' }}>Grupos dos grupos friais de grupos</span>
                   </div>
                 </div>
 
