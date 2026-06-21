@@ -126,7 +126,7 @@ export function ThemeProvider({ children }) {
   };
 
   useEffect(() => {
-    const saved = localStorage.getItem('copa26_theme') || 'brasil';
+    const saved = localStorage.getItem('copa26_theme') || 'carbono';
     setThemeState(saved);
     applyThemeVariables(saved);
   }, []);

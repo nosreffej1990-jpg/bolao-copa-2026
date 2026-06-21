@@ -59,6 +59,10 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Credenciais inválidas' }, { status: 401 });
     }
 
+    if (!isSupabaseServerConfigured) {
+      return NextResponse.json({ error: 'Erro no Servidor: SUPABASE_SERVICE_ROLE_KEY não configurada nas variáveis de ambiente. Verifique o painel da Vercel.' }, { status: 500 });
+    }
+
     if (action === 'updateChampion') {
       const { champion } = body;
       const { error } = await supabaseServer.from('usuarios').update({ campeao: champion }).eq('username', username);

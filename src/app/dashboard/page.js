@@ -4942,24 +4942,24 @@ function DashboardContent() {
           <>
             <div 
               onClick={() => router.push('/')}
-              style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.2rem', cursor: 'pointer', flex: 1 }}
+              style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.15rem', cursor: 'pointer', flex: 1 }}
             >
-              <Icons.Home size={20} style={{ color: 'var(--text-secondary)' }} />
-              <span style={{ fontSize: '0.65rem', fontWeight: 'bold', color: 'var(--text-secondary)' }}>Início</span>
+              <Icons.Home size={21} style={{ color: 'var(--text-secondary)' }} />
+              <span style={{ fontSize: '0.6rem', fontWeight: '700', color: 'var(--text-secondary)', letterSpacing: '0.03em' }}>INÍCIO</span>
             </div>
             <div 
               onClick={() => setActiveTab('ranking')}
-              style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.2rem', cursor: 'pointer', flex: 1 }}
+              style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.15rem', cursor: 'pointer', flex: 1 }}
             >
-              <Icons.Trophy size={20} style={{ color: activeTab === 'ranking' ? 'var(--accent-gold)' : 'var(--text-secondary)' }} />
-              <span style={{ fontSize: '0.65rem', fontWeight: 'bold', color: activeTab === 'ranking' ? 'var(--accent-gold)' : 'var(--text-secondary)' }}>Classificação</span>
+              <Icons.Trophy size={21} style={{ color: activeTab === 'ranking' ? 'var(--accent-gold)' : 'var(--text-secondary)' }} />
+              <span style={{ fontSize: '0.6rem', fontWeight: '700', color: activeTab === 'ranking' ? 'var(--accent-gold)' : 'var(--text-secondary)', letterSpacing: '0.03em' }}>CLASSIFICAÇÃO</span>
             </div>
             <div 
               onClick={() => router.push('/?login=true')}
-              style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.2rem', cursor: 'pointer', flex: 1 }}
+              style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.15rem', cursor: 'pointer', flex: 1 }}
             >
-              <Icons.User size={20} style={{ color: 'var(--text-secondary)' }} />
-              <span style={{ fontSize: '0.65rem', fontWeight: 'bold', color: 'var(--text-secondary)' }}>Login</span>
+              <Icons.LogIn size={21} style={{ color: 'var(--text-secondary)' }} />
+              <span style={{ fontSize: '0.6rem', fontWeight: '700', color: 'var(--text-secondary)', letterSpacing: '0.03em' }}>LOGIN</span>
             </div>
           </>
         ) : (
@@ -5050,11 +5050,23 @@ function KnockoutBetsList({ playerUsername, koConfs, boloes, currentUser, curren
     Array.isArray(b.bets_data) && b.bets_data.some(bd => bd.match_id >= 73)
   );
 
+
+
   if (playerKoBoloes.length === 0) {
     return (
-      <p style={{ textAlign: 'center', color: 'var(--text-secondary)', fontSize: '0.8rem', margin: 0, padding: '1rem' }}>
-        Nenhum palpite do Mata-Mata cadastrado para este jogador.
-      </p>
+      <div style={{ 
+        padding: '1rem', 
+        background: 'rgba(239, 68, 68, 0.1)', 
+        border: '1px solid rgba(239, 68, 68, 0.25)', 
+        borderRadius: '12px', 
+        color: '#f87171', 
+        fontSize: '0.8rem', 
+        textAlign: 'center',
+        margin: '0.5rem 0',
+        lineHeight: '1.4'
+      }}>
+        🔒 Ainda estamos na Fase de Grupos. Os palpites do Mata-Mata serão liberados em breve pelo administrador.
+      </div>
     );
   }
 

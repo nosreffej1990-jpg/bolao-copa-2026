@@ -769,8 +769,8 @@ export default function Home() {
                 padding: '1rem', backdropFilter: 'blur(8px)'
               }}>
                 <div style={{
-                  background: 'linear-gradient(135deg, #111827 0%, #1f2937 100%)',
-                  border: '1px solid rgba(251,191,36,0.3)',
+                  background: 'var(--bg-card)',
+                  border: '1px solid var(--border-active)',
                   borderRadius: '20px',
                   padding: '2rem',
                   maxWidth: '420px',
@@ -778,7 +778,9 @@ export default function Home() {
                   textAlign: 'center',
                   boxShadow: '0 20px 40px rgba(0,0,0,0.6)'
                 }}>
-                  <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>💸</div>
+                  <div style={{ marginBottom: '1rem', display: 'flex', justifyContent: 'center' }}>
+                    <Icons.Check size={48} style={{ color: 'var(--accent-gold)' }} />
+                  </div>
                   <h3 style={{ fontSize: '1.25rem', marginBottom: '0.75rem', color: 'var(--accent-gold)', fontWeight: 'bold' }}>
                     Cadastro Pendente de Aprovação
                   </h3>
@@ -838,9 +840,9 @@ export default function Home() {
               transform: 'translateX(-50%)',
               width: '100%',
               maxWidth: '480px',
-              background: 'rgba(6, 12, 8, 0.97)',
+              background: 'var(--bg-header)',
               backdropFilter: 'blur(12px)',
-              borderTop: '1px solid rgba(251, 191, 36, 0.12)',
+              borderTop: '1px solid var(--border-color)',
               display: 'flex',
               justifyContent: 'space-around',
               padding: '0.6rem 0.5rem 0.75rem',
@@ -854,22 +856,22 @@ export default function Home() {
                 onClick={() => { setShowLogin(false); setShowRegister(false); }}
                 style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.15rem', cursor: 'pointer', flex: 1 }}
               >
-                <Icons.Home size={21} style={{ color: (!showLogin && !showRegister) ? '#FBBF24' : 'rgba(255,255,255,0.35)' }} />
-                <span style={{ fontSize: '0.6rem', fontWeight: '700', color: (!showLogin && !showRegister) ? '#FBBF24' : 'rgba(255,255,255,0.35)', letterSpacing: '0.03em' }}>INÍCIO</span>
+                <Icons.Home size={21} style={{ color: (!showLogin && !showRegister) ? 'var(--accent-gold)' : 'var(--text-secondary)' }} />
+                <span style={{ fontSize: '0.6rem', fontWeight: '700', color: (!showLogin && !showRegister) ? 'var(--accent-gold)' : 'var(--text-secondary)', letterSpacing: '0.03em' }}>INÍCIO</span>
               </div>
               <div 
                 onClick={() => handleDirectNavigate('ranking')}
                 style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.15rem', cursor: 'pointer', flex: 1 }}
               >
-                <Icons.Trophy size={21} style={{ color: 'rgba(255,255,255,0.35)' }} />
-                <span style={{ fontSize: '0.6rem', fontWeight: '700', color: 'rgba(255,255,255,0.35)', letterSpacing: '0.03em' }}>CLASSIFICAÇÃO</span>
+                <Icons.Trophy size={21} style={{ color: 'var(--text-secondary)' }} />
+                <span style={{ fontSize: '0.6rem', fontWeight: '700', color: 'var(--text-secondary)', letterSpacing: '0.03em' }}>CLASSIFICAÇÃO</span>
               </div>
               <div 
                 onClick={() => { setShowLogin(true); setShowRegister(false); }}
                 style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.15rem', cursor: 'pointer', flex: 1 }}
               >
-                <Icons.LogIn size={21} style={{ color: (showLogin || showRegister) ? '#FBBF24' : 'rgba(255,255,255,0.35)' }} />
-                <span style={{ fontSize: '0.6rem', fontWeight: '700', color: (showLogin || showRegister) ? '#FBBF24' : 'rgba(255,255,255,0.35)', letterSpacing: '0.03em' }}>LOGIN</span>
+                <Icons.LogIn size={21} style={{ color: (showLogin || showRegister) ? 'var(--accent-gold)' : 'var(--text-secondary)' }} />
+                <span style={{ fontSize: '0.6rem', fontWeight: '700', color: (showLogin || showRegister) ? 'var(--accent-gold)' : 'var(--text-secondary)', letterSpacing: '0.03em' }}>LOGIN</span>
               </div>
             </div>
           </div>
