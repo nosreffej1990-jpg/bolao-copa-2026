@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { THEMES } from './ThemeProvider';
+import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 
 export default function FirstLaunchOverlay() {
   const [show, setShow] = useState(false);
@@ -40,19 +41,27 @@ export default function FirstLaunchOverlay() {
     localStorage.setItem('copa26_champion_chosen', selectedTeam.nome);
 
     if (user && pass) {
-      try {
-        await fetch('/api/usuarios', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            action: 'updateChampion',
-            username: user,
-            password: pass,
-            champion: selectedTeam.nome
-          })
-        });
-      } catch (e) {
-        console.error('Erro ao salvar palpite no banco de dados:', e);
+      if (!isSupabaseConfigured) {
+        try {
+          await supabase.from('usuarios').update({ campeao: selectedTeam.nome }).eq('username', user);
+        } catch (e) {
+          console.error('Erro ao salvar campeão no mock local:', e);
+        }
+      } else {
+        try {
+          await fetch('/api/usuarios', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              action: 'updateChampion',
+              username: user,
+              password: pass,
+              champion: selectedTeam.nome
+            })
+          });
+        } catch (e) {
+          console.error('Erro ao salvar palpite no banco de dados:', e);
+        }
       }
     }
 

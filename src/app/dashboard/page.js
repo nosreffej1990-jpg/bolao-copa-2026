@@ -229,6 +229,9 @@ function DashboardContent() {
   const [usersList, setUsersList] = useState([]);
   const [selectedPlayerDetails, setSelectedPlayerDetails] = useState(null);
   const [expandedSection, setExpandedSection] = useState(null); // 'grupos', 'matamata'
+  const [allowGroupUpload, setAllowGroupUpload] = useState(true);
+  const [allowDrawerMenu, setAllowDrawerMenu] = useState(true);
+  const [expandedBoloesList, setExpandedBoloesList] = useState([]);
 
   // API worldcup26.ir states
   const [apiFinished, setApiFinished] = useState([]);
@@ -528,6 +531,10 @@ function DashboardContent() {
         if (mmp) setMataMataPublic(mmp.value === 'true');
         const reg = configData.find(c => c.key === 'allow_register');
         if (reg) setAllowRegister(reg.value === 'true');
+        const uploadGrp = configData.find(c => c.key === 'allow_group_upload');
+        if (uploadGrp) setAllowGroupUpload(uploadGrp.value === 'true');
+        const drawMenu = configData.find(c => c.key === 'allow_drawer_menu');
+        if (drawMenu) setAllowDrawerMenu(drawMenu.value === 'true');
         const pTitle = configData.find(c => c.key === 'paqueta_title');
         if (pTitle) setPaquetaTitle(pTitle.value);
         const pBody = configData.find(c => c.key === 'paqueta_body');
@@ -1713,9 +1720,11 @@ function DashboardContent() {
               }}
             />
           )}
-          <button className="menu-toggle-btn" onClick={() => setIsDrawerOpen(true)}>
-            <Icons.Menu size={20} />
-          </button>
+          {allowDrawerMenu && (
+            <button className="menu-toggle-btn" onClick={() => setIsDrawerOpen(true)}>
+              <Icons.Menu size={20} />
+            </button>
+          )}
         </div>
       </header>
 
@@ -1978,7 +1987,7 @@ function DashboardContent() {
                 <h3 style={{ fontSize: '1.05rem', marginBottom: '0.2rem' }}>Bolões Cadastrados</h3>
                 <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Visualize fotos e palpites lidos.</p>
               </div>
-              {currentUser && (currentUserRole === 'Admin' || currentUserRole === 'Moderador') && (
+              {currentUser && (currentUserRole === 'Admin' || currentUserRole === 'Moderador') && allowGroupUpload && (
                 <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
                   <button className="btn-upload-bolao" onClick={startCameraUpload}>
                     <Icons.Camera size={14} />
@@ -2875,18 +2884,22 @@ function DashboardContent() {
                       const val = e.target.checked;
                       setMataMataPublic(val);
                       try {
-                        const password = localStorage.getItem('copa26_pass') || '';
-                        await fetch('/api/usuarios', {
-                          method: 'POST',
-                          headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify({
-                            action: 'updateConfig',
-                            username: currentUser,
-                            password,
-                            key: 'mata_mata_public',
-                            value: String(val)
-                          })
-                        });
+                        if (!isSupabaseConfigured) {
+                          await supabase.from('config').upsert({ key: 'mata_mata_public', value: String(val) });
+                        } else {
+                          const password = localStorage.getItem('copa26_pass') || '';
+                          await fetch('/api/usuarios', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                              action: 'updateConfig',
+                              username: currentUser,
+                              password,
+                              key: 'mata_mata_public',
+                              value: String(val)
+                            })
+                          });
+                        }
                         showToast(`Aba do Mata-Mata ${val ? 'Liberada no Menu' : 'Oculta para Jogadores'}`);
                       } catch (err) {
                         console.error(err);
@@ -2905,18 +2918,22 @@ function DashboardContent() {
                       const val = e.target.checked;
                       setAllowRegister(val);
                       try {
-                        const password = localStorage.getItem('copa26_pass') || '';
-                        await fetch('/api/usuarios', {
-                          method: 'POST',
-                          headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify({
-                            action: 'updateConfig',
-                            username: currentUser,
-                            password,
-                            key: 'allow_register',
-                            value: String(val)
-                          })
-                        });
+                        if (!isSupabaseConfigured) {
+                          await supabase.from('config').upsert({ key: 'allow_register', value: String(val) });
+                        } else {
+                          const password = localStorage.getItem('copa26_pass') || '';
+                          await fetch('/api/usuarios', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                              action: 'updateConfig',
+                              username: currentUser,
+                              password,
+                              key: 'allow_register',
+                              value: String(val)
+                            })
+                          });
+                        }
                         showToast(`Novos cadastros ${val ? 'Ativados' : 'Desativados'}`);
                       } catch (err) {
                         console.error(err);
@@ -2925,6 +2942,74 @@ function DashboardContent() {
                     }}
                   />
                   <span>Permitir Novos Cadastros de Jogadores</span>
+                </label>
+
+                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.78rem', cursor: 'pointer' }}>
+                  <input
+                    type="checkbox"
+                    checked={allowGroupUpload}
+                    onChange={async (e) => {
+                      const val = e.target.checked;
+                      setAllowGroupUpload(val);
+                      try {
+                        if (!isSupabaseConfigured) {
+                          await supabase.from('config').upsert({ key: 'allow_group_upload', value: String(val) });
+                        } else {
+                          const password = localStorage.getItem('copa26_pass') || '';
+                          await fetch('/api/usuarios', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                              action: 'updateConfig',
+                              username: currentUser,
+                              password,
+                              key: 'allow_group_upload',
+                              value: String(val)
+                            })
+                          });
+                        }
+                        showToast(`Upload da Fase de Grupos ${val ? 'Ativado' : 'Desativado'}`);
+                      } catch (err) {
+                        console.error(err);
+                        showToast('Erro ao atualizar configuração.', 'error');
+                      }
+                    }}
+                  />
+                  <span>Permitir Upload/Cadastro de Bolões da Fase de Grupos</span>
+                </label>
+
+                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.78rem', cursor: 'pointer' }}>
+                  <input
+                    type="checkbox"
+                    checked={allowDrawerMenu}
+                    onChange={async (e) => {
+                      const val = e.target.checked;
+                      setAllowDrawerMenu(val);
+                      try {
+                        if (!isSupabaseConfigured) {
+                          await supabase.from('config').upsert({ key: 'allow_drawer_menu', value: String(val) });
+                        } else {
+                          const password = localStorage.getItem('copa26_pass') || '';
+                          await fetch('/api/usuarios', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                              action: 'updateConfig',
+                              username: currentUser,
+                              password,
+                              key: 'allow_drawer_menu',
+                              value: String(val)
+                            })
+                          });
+                        }
+                        showToast(`Menu Hamburger ${val ? 'Ativado' : 'Desativado'}`);
+                      } catch (err) {
+                        console.error(err);
+                        showToast('Erro ao atualizar configuração.', 'error');
+                      }
+                    }}
+                  />
+                  <span>Exibir Botão de Menu Superior (Hamburger)</span>
                 </label>
               </div>
 
@@ -3503,47 +3588,79 @@ function DashboardContent() {
                     <span style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#fff', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                       ⚽ FASE DE GRUPOS 
                       <span style={{ fontSize: '0.7rem', padding: '1px 6px', background: 'rgba(255,255,255,0.1)', borderRadius: '10px', color: 'var(--text-secondary)' }}>
-                        {playerBoloes.length} cartela(s)
+                        {playerBoloes.filter(b => !b.bets_data || !b.bets_data.some(bd => bd.match_id >= 73)).length} cartela(s)
                       </span>
                     </span>
                     <Icons.ChevronRight size={18} style={{ color: 'var(--text-secondary)', transform: expandedSection === 'grupos' ? 'rotate(90deg)' : 'none', transition: 'transform 0.2s' }} />
                   </div>
 
                   {expandedSection === 'grupos' && (
-                    <div style={{ background: 'rgba(0,0,0,0.15)', padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.85rem', borderTop: '1px solid var(--border-color)' }}>
-                      {playerBoloes.map((bol, bIdx) => {
+                    <div style={{ background: 'rgba(0,0,0,0.15)', padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem', borderTop: '1px solid var(--border-color)' }}>
+                      {playerBoloes.filter(b => !b.bets_data || !b.bets_data.some(bd => bd.match_id >= 73)).map((bol, bIdx) => {
+                        const isExpanded = expandedBoloesList.includes(bol.id);
                         const calcBets = getCalculatedBets(bol.bets_data, confrontos);
                         return (
-                          <div key={bol.id} style={{ borderBottom: bIdx < playerBoloes.length - 1 ? '1px solid rgba(255,255,255,0.08)' : 'none', paddingBottom: '1rem' }}>
-                            <div style={{ fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--accent-gold)', marginBottom: '0.5rem' }}>
-                              Cartela: {bol.bettor_name}
+                          <div key={bol.id} style={{ 
+                            border: '1px solid rgba(255,255,255,0.08)',
+                            borderRadius: '10px',
+                            background: 'rgba(255, 255, 255, 0.02)',
+                            overflow: 'hidden'
+                          }}>
+                            <div 
+                              onClick={() => {
+                                setExpandedBoloesList(prev => 
+                                  prev.includes(bol.id) 
+                                    ? prev.filter(id => id !== bol.id) 
+                                    : [...prev, bol.id]
+                                );
+                              }}
+                              style={{ 
+                                fontSize: '0.78rem', 
+                                fontWeight: 'bold', 
+                                color: 'var(--accent-gold)', 
+                                padding: '0.75rem 1rem',
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'center',
+                                cursor: 'pointer',
+                                background: 'rgba(255, 255, 255, 0.03)'
+                              }}
+                            >
+                              <span>📋 {bol.bettor_name || 'Sem Nome'}</span>
+                              <Icons.ChevronRight size={16} style={{ 
+                                color: 'var(--text-secondary)', 
+                                transform: isExpanded ? 'rotate(90deg)' : 'none', 
+                                transition: 'transform 0.2s' 
+                              }} />
                             </div>
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                              {calcBets.map((bet, idx) => (
-                                <div key={idx} style={{
-                                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                                  padding: '0.5rem 0.75rem', borderRadius: '8px',
-                                  background: 'rgba(255,255,255,0.01)', border: '1px solid rgba(255,255,255,0.03)'
-                                }}>
-                                  <span style={{ fontSize: '0.78rem', color: '#fff' }}>{bet.home} x {bet.away}</span>
-                                  <div style={{ textAlign: 'right' }}>
-                                    <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--accent-gold)' }}>
-                                      Aposta: {bet.bet_home} - {bet.bet_away}
-                                    </span>
-                                    {bet.real_home !== null && (
-                                      <span style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', display: 'block' }}>
-                                        Oficial: {bet.real_home} - {bet.real_away} (+{bet.pts} pts)
+                            {isExpanded && (
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', padding: '1rem', background: 'rgba(0,0,0,0.2)' }}>
+                                {calcBets.map((bet, idx) => (
+                                  <div key={idx} style={{
+                                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                                    padding: '0.5rem 0.75rem', borderRadius: '8px',
+                                    background: 'rgba(255,255,255,0.01)', border: '1px solid rgba(255,255,255,0.03)'
+                                  }}>
+                                    <span style={{ fontSize: '0.78rem', color: '#fff' }}>{bet.home} x {bet.away}</span>
+                                    <div style={{ textAlign: 'right' }}>
+                                      <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--accent-gold)' }}>
+                                        Aposta: {bet.bet_home} - {bet.bet_away}
                                       </span>
-                                    )}
+                                      {bet.real_home !== null && (
+                                        <span style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', display: 'block' }}>
+                                          Oficial: {bet.real_home} - {bet.real_away} (+{bet.pts} pts)
+                                        </span>
+                                      )}
+                                    </div>
                                   </div>
-                                </div>
-                              ))}
-                            </div>
+                                ))}
+                              </div>
+                            )}
                           </div>
                         );
                       })}
 
-                      {playerBoloes.length === 0 && (
+                      {playerBoloes.filter(b => !b.bets_data || !b.bets_data.some(bd => bd.match_id >= 73)).length === 0 && (
                         <p style={{ textAlign: 'center', color: 'var(--text-secondary)', fontSize: '0.8rem', margin: 0, padding: '1rem' }}>
                           Nenhuma cartela da Fase de Grupos conciliada com este jogador.
                         </p>
@@ -3576,7 +3693,16 @@ function DashboardContent() {
                       {(() => {
                         const koConfs = confrontos.filter(c => c.grupo === 'R32' || c.grupo === 'R16' || c.grupo === 'QF' || c.grupo === 'SF' || c.grupo === 'FINAL' || c.grupo === 'THIRD');
                         return (
-                          <KnockoutBetsList playerUsername={player.username} koConfs={koConfs} />
+                          <KnockoutBetsList 
+                            playerUsername={player.username} 
+                            koConfs={koConfs} 
+                            boloes={boloes}
+                            currentUser={currentUser}
+                            currentUserRole={currentUserRole}
+                            mataMataPublic={mataMataPublic}
+                            expandedBoloesList={expandedBoloesList}
+                            setExpandedBoloesList={setExpandedBoloesList}
+                          />
                         );
                       })()}
                     </div>
@@ -4444,10 +4570,45 @@ function DashboardContent() {
                 <div onClick={() => setShowRankingDetailsModal(null)} className="modal-close"><Icons.X size={20} /></div>
               </div>
 
-              <div style={{ background: 'rgba(255,255,255,0.05)', borderRadius: '12px', padding: '1rem', textAlign: 'center', marginBottom: '1.25rem' }}>
+               <div style={{ background: 'rgba(255,255,255,0.05)', borderRadius: '12px', padding: '1rem', textAlign: 'center', marginBottom: '1.25rem' }}>
                 <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'block', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Pontuação Considerada</span>
                 <strong style={{ fontSize: '2rem', color: 'var(--accent-gold)', display: 'block', marginTop: '0.2rem' }}>{totalPts} pts</strong>
                 <span style={{ fontSize: '0.7rem', color: 'var(--soccer-green)' }}>Exibindo apenas jogos com acerto exato (+5) ou vencedor (+3)</span>
+                
+                <button
+                  onClick={() => {
+                    const headerText = `*Resumo de Jogos Pontuados - ${b.bettor_name}*\n🏆 *Pontuação Total:* ${totalPts} pts\n\n`;
+                    const gamesText = scoredBets.map(bet => {
+                      const badge = bet.pts === 5 ? '🎯 Placar Exato' : '✅ Vencedor';
+                      return `⚽ *${bet.home} vs ${bet.away}*\n• Aposta: ${bet.bet_home} x ${bet.bet_away} | Oficial: ${bet.real_home} x ${bet.real_away}\n• Pontos: +${bet.pts} (${badge})\n`;
+                    }).join('\n');
+                    
+                    const fullText = encodeURIComponent(headerText + (scoredBets.length > 0 ? gamesText : 'Nenhum jogo pontuado ainda.'));
+                    window.open(`https://api.whatsapp.com/send?text=${fullText}`, '_blank');
+                  }}
+                  style={{
+                    marginTop: '0.85rem',
+                    width: '100%',
+                    padding: '0.65rem',
+                    background: '#25D366',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: '10px',
+                    fontWeight: 'bold',
+                    fontSize: '0.78rem',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.5rem',
+                    boxShadow: '0 4px 12px rgba(37,211,102,0.25)',
+                    transition: 'all 0.2s'
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.filter = 'brightness(1.08)'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.filter = 'brightness(1)'; }}
+                >
+                  <span style={{ fontSize: '0.9rem' }}>💬</span> Enviar Resumo via WhatsApp
+                </button>
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
@@ -4814,6 +4975,114 @@ function DashboardContent() {
       </div>
 
       <FirstLaunchOverlay />
+    </div>
+  );
+}
+
+function KnockoutBetsList({ playerUsername, koConfs, boloes, currentUser, currentUserRole, mataMataPublic, expandedBoloesList, setExpandedBoloesList }) {
+  const isSelf = currentUser && playerUsername && currentUser.toLowerCase() === playerUsername.toLowerCase();
+  const isPrivileged = currentUserRole === 'Admin' || currentUserRole === 'Moderador';
+
+  if (!mataMataPublic && !isSelf && !isPrivileged) {
+    return (
+      <div style={{ 
+        padding: '1rem', 
+        background: 'rgba(239, 68, 68, 0.1)', 
+        border: '1px solid rgba(239, 68, 68, 0.25)', 
+        borderRadius: '12px', 
+        color: '#f87171', 
+        fontSize: '0.8rem', 
+        textAlign: 'center',
+        margin: '0.5rem 0',
+        lineHeight: '1.4'
+      }}>
+        🔒 Ainda estamos na Fase de Grupos. Os palpites do Mata-Mata serão liberados em breve pelo administrador.
+      </div>
+    );
+  }
+
+  const playerKoBoloes = (boloes || []).filter(b => 
+    b.username && b.username.toLowerCase() === playerUsername.toLowerCase() &&
+    Array.isArray(b.bets_data) && b.bets_data.some(bd => bd.match_id >= 73)
+  );
+
+  if (playerKoBoloes.length === 0) {
+    return (
+      <p style={{ textAlign: 'center', color: 'var(--text-secondary)', fontSize: '0.8rem', margin: 0, padding: '1rem' }}>
+        Nenhum palpite do Mata-Mata cadastrado para este jogador.
+      </p>
+    );
+  }
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+      {playerKoBoloes.map((bol) => {
+        const isExpanded = expandedBoloesList.includes(bol.id);
+        const bets = bol.bets_data || [];
+        return (
+          <div key={bol.id} style={{ 
+            border: '1px solid rgba(255,255,255,0.08)',
+            borderRadius: '10px',
+            background: 'rgba(255, 255, 255, 0.02)',
+            overflow: 'hidden'
+          }}>
+            <div 
+              onClick={() => {
+                setExpandedBoloesList(prev => 
+                  prev.includes(bol.id) 
+                    ? prev.filter(id => id !== bol.id) 
+                    : [...prev, bol.id]
+                );
+              }}
+              style={{ 
+                fontSize: '0.78rem', 
+                fontWeight: 'bold', 
+                color: 'var(--accent-gold)', 
+                padding: '0.75rem 1rem',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                cursor: 'pointer',
+                background: 'rgba(255, 255, 255, 0.03)'
+              }}
+            >
+              <span>🏆 {bol.bettor_name || 'Mata-Mata'}</span>
+              <Icons.ChevronRight size={16} style={{ 
+                color: 'var(--text-secondary)', 
+                transform: isExpanded ? 'rotate(90deg)' : 'none', 
+                transition: 'transform 0.2s' 
+              }} />
+            </div>
+            {isExpanded && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', padding: '1rem', background: 'rgba(0,0,0,0.2)' }}>
+                {bets.map((bet, idx) => {
+                  const match = koConfs.find(c => c.id === bet.match_id) || bet;
+                  const ptsCalculated = bet.pts !== null && bet.pts !== undefined ? bet.pts : '';
+                  return (
+                    <div key={idx} style={{
+                      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                      padding: '0.5rem 0.75rem', borderRadius: '8px',
+                      background: 'rgba(255,255,255,0.01)', border: '1px solid rgba(255,255,255,0.03)'
+                    }}>
+                      <span style={{ fontSize: '0.78rem', color: '#fff' }}>{bet.home} x {bet.away}</span>
+                      <div style={{ textAlign: 'right' }}>
+                        <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--accent-gold)' }}>
+                          Aposta: {bet.bet_home} - {bet.bet_away}
+                        </span>
+                        {match.home_score !== null && match.home_score !== undefined && String(match.home_score) !== 'null' && (
+                          <span style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', display: 'block' }}>
+                            Oficial: {match.home_score} - {match.away_score} {ptsCalculated !== '' ? `(+${ptsCalculated} pts)` : ''}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 }

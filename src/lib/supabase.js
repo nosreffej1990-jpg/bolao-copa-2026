@@ -215,6 +215,8 @@ export const defaultBoloes = [
 export const defaultConfig = [
   { key: 'mata_mata_public', value: 'false' },
   { key: 'allow_register', value: 'true' },
+  { key: 'allow_group_upload', value: 'true' },
+  { key: 'allow_drawer_menu', value: 'true' },
   { key: 'paqueta_title', value: 'ESCOLHEU TUDO CERTO OU SAIU CHUTANDO IGUAL O PAQUETÁ? 🇧🇷⚽' },
   { key: 'paqueta_body', value: 'Seus palpites do mata-mata foram processados com sucesso no banco de dados e o seu comprovante PDF foi gerado automaticamente! Boa sorte no Bolão da Copa 2026.' }
 ];
