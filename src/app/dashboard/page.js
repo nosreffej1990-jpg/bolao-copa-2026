@@ -217,7 +217,7 @@ function DashboardContent() {
   const [currentUserRole, setCurrentUserRole] = useState('Jogador');
   const [currentUserObj, setCurrentUserObj] = useState(null);
   const [activeTab, setActiveTab] = useState('boloes'); // placares, boloes, ranking, placares_geral, confrontos_geral, gerenciar_usuarios, apostas_elim
-  const [rankingStage, setRankingStage] = useState('all'); // all, groups, r32, r16, qf, sf, final
+  const [rankingStage, setRankingStage] = useState('groups'); // groups, r32, r16, qf, sf, final
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [toastMsg, setToastMsg] = useState('');
   const [toastType, setToastType] = useState('success'); // success, error
@@ -2118,7 +2118,6 @@ function DashboardContent() {
             {/* Seletor de Fases da Classificação */}
             <div style={{ display: 'flex', gap: '0.4rem', overflowX: 'auto', paddingBottom: '0.8rem', marginBottom: '1rem', scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}>
               {[
-                { id: 'all', label: 'Geral' },
                 { id: 'groups', label: 'Fase de Grupos' },
                 { id: 'r32', label: '1/16 (32 avos)' },
                 { id: 'r16', label: '1/8 (oitavas)' },
