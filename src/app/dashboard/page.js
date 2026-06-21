@@ -1904,7 +1904,7 @@ function DashboardContent() {
                     <div className="bolao-card-top">
                       <div style={{ position: 'relative', display: 'inline-block' }}>
                         <img
-                          src={((usersList && usersList.find(u => u.username === b.username)?.avatar_url) || `https://api.dicebear.com/7.x/identicon/svg?seed=${b.bettor_name}`)}
+                          src={b.avatar_url || (usersList && usersList.find(u => u.username === b.username)?.avatar_url) || `https://api.dicebear.com/7.x/identicon/svg?seed=${b.bettor_name}`}
                           className="bolao-avatar"
                           alt="avatar"
                           style={{ width: '48px', height: '48px', borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--border-color)' }}
@@ -1944,7 +1944,7 @@ function DashboardContent() {
                         <Icons.Eye size={12} /> Ver Foto
                       </button>
                       <button className="bolao-action-btn btn-view-bets" onClick={() => setShowBetsModal(b)}>
-                        <Icons.Trophy size={12} /> Apostas
+                        <Icons.Trophy size={12} /> Palpites
                       </button>
                       <button className="bolao-action-btn" style={{ background: 'rgba(99,102,241,0.12)', border: '1px solid #6366f1', color: '#818cf8' }}
                         onClick={() => setShowHistoryModal(b)}>
@@ -2018,7 +2018,11 @@ function DashboardContent() {
               ))}
             </div>
             {confrontos.length === 0 ? (
-              <p style={{ textAlign: 'center', color: 'var(--text-secondary)', fontSize: '0.8rem', padding: '2rem' }}>Carregando grupos...</p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem', padding: '1rem' }}>
+  <div className="skeleton" style={{ height: '80px', width: '100%', borderRadius: '12px' }}></div>
+  <div className="skeleton" style={{ height: '80px', width: '100%', borderRadius: '12px' }}></div>
+  <div className="skeleton" style={{ height: '80px', width: '100%', borderRadius: '12px' }}></div>
+</div>
             ) : (() => {
               const localGroups = calculateGroupStandings(confrontos);
               const groupData = localGroups.find(g => g.group === selectedGroup || g.name === selectedGroup);

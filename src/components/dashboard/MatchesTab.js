@@ -60,7 +60,11 @@ export default function MatchesTab({
 
         {/* Finalizados */}
         {apiLoading && apiFinished.length === 0 ? (
-          <p style={{ textAlign: 'center', color: 'var(--text-secondary)', fontSize: '0.8rem', padding: '2rem' }}>Carregando resultados...</p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem', padding: '1rem' }}>
+  <div className="skeleton" style={{ height: '80px', width: '100%', borderRadius: '12px' }}></div>
+  <div className="skeleton" style={{ height: '80px', width: '100%', borderRadius: '12px' }}></div>
+  <div className="skeleton" style={{ height: '80px', width: '100%', borderRadius: '12px' }}></div>
+</div>
         ) : apiFinished.length === 0 ? (
           <p style={{ textAlign: 'center', color: 'var(--text-secondary)', fontSize: '0.8rem', padding: '2rem' }}>Nenhum jogo finalizado ainda.</p>
         ) : (
