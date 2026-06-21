@@ -277,21 +277,22 @@ export default function Home() {
                 )}
               </div>
             </div>
-            {activeThemeObj && (
-              <img
-                src={`https://flagcdn.com/w40/${activeThemeObj.flag}.png`}
-                alt={activeThemeObj.nome}
-                style={{
-                  width: '32px',
-                  height: '32px',
-                  borderRadius: '50%',
-                  objectFit: 'cover',
-                  border: '2px solid rgba(255, 255, 255, 0.2)',
-                  boxShadow: '0 4px 10px rgba(0,0,0,0.3)',
-                  marginRight: '0.5rem'
-                }}
-              />
-            )}
+            <div
+              style={{
+                width: '36px',
+                height: '36px',
+                borderRadius: '50%',
+                background: 'rgba(251, 191, 36, 0.1)',
+                border: '1.5px solid rgba(251, 191, 36, 0.3)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                marginRight: '0.5rem'
+              }}
+            >
+              <Icons.User size={18} style={{ color: 'var(--accent-gold)' }} />
+            </div>
           </header>
 
           <div className="home-container" style={{ paddingBottom: '5.5rem' }}>
@@ -374,15 +375,15 @@ export default function Home() {
                   <div 
                     onClick={handleInstallClick}
                     style={{
-                      background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(5, 150, 105, 0.05) 100%)',
-                      border: '1px solid rgba(16, 185, 129, 0.4)',
+                      background: 'linear-gradient(135deg, rgba(251, 191, 36, 0.15) 0%, rgba(184, 134, 11, 0.05) 100%)',
+                      border: '1px solid rgba(251, 191, 36, 0.3)',
                       borderRadius: '16px',
                       padding: '1.25rem',
                       display: 'flex',
                       alignItems: 'center',
                       gap: '1rem',
                       cursor: 'pointer',
-                      boxShadow: '0 8px 32px rgba(16, 185, 129, 0.1)',
+                      boxShadow: '0 8px 32px rgba(251, 191, 36, 0.1)',
                       transition: 'transform 0.2s',
                       position: 'relative',
                       overflow: 'hidden'
@@ -391,7 +392,7 @@ export default function Home() {
                     onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
                   >
                     <div style={{
-                      background: 'var(--soccer-green)',
+                      background: 'linear-gradient(135deg, #FBBF24, #D97706)',
                       borderRadius: '12px',
                       width: '42px',
                       height: '42px',
@@ -414,15 +415,15 @@ export default function Home() {
                 <div 
                   onClick={() => { setShowLogin(true); setShowRegister(false); setErrorMsg(''); }}
                   style={{
-                    background: 'linear-gradient(90deg, #FBBF24 0%, #D97706 100%)',
-                    border: '1px solid rgba(251, 191, 36, 0.4)',
+                    background: 'linear-gradient(135deg, #FBBF24 0%, #D4A017 50%, #C8960E 100%)',
+                    border: '2px solid rgba(255, 215, 0, 0.6)',
                     borderRadius: '20px',
                     padding: '1.25rem 1.5rem',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'space-between',
                     cursor: 'pointer',
-                    boxShadow: '0 8px 30px rgba(251, 191, 36, 0.3)',
+                    boxShadow: '0 8px 30px rgba(251, 191, 36, 0.35), 0 0 60px rgba(251, 191, 36, 0.1)',
                     transition: 'all 0.2s',
                     width: '100%',
                     boxSizing: 'border-box'
@@ -437,8 +438,8 @@ export default function Home() {
                   }}
                 >
                   <div style={{ display: 'flex', flexDirection: 'column', textAlign: 'left', gap: '0.15rem' }}>
-                    <span style={{ fontSize: '1.2rem', fontWeight: '900', color: '#000', letterSpacing: '0.02em', textTransform: 'uppercase' }}>Entrar</span>
-                    <span style={{ fontSize: '0.7rem', fontWeight: 'bold', color: 'rgba(0,0,0,0.65)' }}>ACESSE SEUS PALPITES E ÁREA LOGADA</span>
+                    <span style={{ fontSize: '1.15rem', fontWeight: '900', color: '#1a0f00', letterSpacing: '0.04em', textTransform: 'uppercase' }}>Entrar / Enviar Bolão</span>
+                    <span style={{ fontSize: '0.68rem', fontWeight: 'bold', color: 'rgba(30,15,0,0.6)', letterSpacing: '0.08em' }}>PALPITE AGORA</span>
                   </div>
                   <Icons.ChevronRight size={22} style={{ color: '#000' }} />
                 </div>
@@ -449,9 +450,9 @@ export default function Home() {
                     onClick={() => handleDirectNavigate('ranking')}
                     className="home-btn"
                     style={{
-                      background: 'var(--bg-card)',
+                      background: 'rgba(10, 25, 15, 0.7)',
                       backdropFilter: 'blur(10px)',
-                      border: '1px solid var(--border-color)',
+                      border: '1px solid rgba(251, 191, 36, 0.15)',
                       borderRadius: '16px',
                       padding: '1.25rem 1rem',
                       display: 'flex',
@@ -463,16 +464,16 @@ export default function Home() {
                     }}
                   >
                     <div style={{
-                      background: 'rgba(251, 191, 36, 0.06)',
+                      background: 'rgba(251, 191, 36, 0.1)',
                       borderRadius: '50%',
-                      width: '46px',
-                      height: '46px',
+                      width: '50px',
+                      height: '50px',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      marginBottom: '0.2rem'
+                      border: '1px solid rgba(251, 191, 36, 0.15)'
                     }}>
-                      <Icons.Trophy size={22} style={{ color: 'var(--accent-gold)' }} />
+                      <Icons.Trophy size={24} style={{ color: '#FBBF24' }} />
                     </div>
                     <span style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#fff' }}>Classificação</span>
                     <span style={{ fontSize: '0.65rem', color: 'var(--text-secondary)' }}>Ver líderes e pontos</span>
@@ -482,9 +483,9 @@ export default function Home() {
                     onClick={() => handleDirectNavigate('placares_geral')}
                     className="home-btn"
                     style={{
-                      background: 'var(--bg-card)',
+                      background: 'rgba(10, 25, 15, 0.7)',
                       backdropFilter: 'blur(10px)',
-                      border: '1px solid var(--border-color)',
+                      border: '1px solid rgba(251, 191, 36, 0.15)',
                       borderRadius: '16px',
                       padding: '1.25rem 1rem',
                       display: 'flex',
@@ -496,16 +497,16 @@ export default function Home() {
                     }}
                   >
                     <div style={{
-                      background: 'rgba(16, 185, 129, 0.06)',
+                      background: 'rgba(251, 191, 36, 0.1)',
                       borderRadius: '50%',
-                      width: '46px',
-                      height: '46px',
+                      width: '50px',
+                      height: '50px',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      marginBottom: '0.2rem'
+                      border: '1px solid rgba(251, 191, 36, 0.15)'
                     }}>
-                      <Icons.Check size={22} style={{ color: 'var(--soccer-green)' }} />
+                      <Icons.Check size={24} style={{ color: '#FBBF24' }} />
                     </div>
                     <span style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#fff' }}>Resultados</span>
                     <span style={{ fontSize: '0.65rem', color: 'var(--text-secondary)' }}>Jogos finalizados</span>
@@ -515,9 +516,9 @@ export default function Home() {
                     onClick={() => handleDirectNavigate('confrontos_geral')}
                     className="home-btn"
                     style={{
-                      background: 'var(--bg-card)',
+                      background: 'rgba(10, 25, 15, 0.7)',
                       backdropFilter: 'blur(10px)',
-                      border: '1px solid var(--border-color)',
+                      border: '1px solid rgba(251, 191, 36, 0.15)',
                       borderRadius: '16px',
                       padding: '1.25rem 1rem',
                       display: 'flex',
@@ -529,16 +530,16 @@ export default function Home() {
                     }}
                   >
                     <div style={{
-                      background: 'rgba(96, 165, 250, 0.06)',
+                      background: 'rgba(251, 191, 36, 0.1)',
                       borderRadius: '50%',
-                      width: '46px',
-                      height: '46px',
+                      width: '50px',
+                      height: '50px',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      marginBottom: '0.2rem'
+                      border: '1px solid rgba(251, 191, 36, 0.15)'
                     }}>
-                      <Icons.Calendar size={22} style={{ color: '#60a5fa' }} />
+                      <Icons.Calendar size={24} style={{ color: '#FBBF24' }} />
                     </div>
                     <span style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#fff' }}>Confrontos</span>
                     <span style={{ fontSize: '0.65rem', color: 'var(--text-secondary)' }}>Agenda de jogos</span>
@@ -548,9 +549,9 @@ export default function Home() {
                     onClick={() => handleDirectNavigate('grupos')}
                     className="home-btn"
                     style={{
-                      background: 'var(--bg-card)',
+                      background: 'rgba(10, 25, 15, 0.7)',
                       backdropFilter: 'blur(10px)',
-                      border: '1px solid var(--border-color)',
+                      border: '1px solid rgba(251, 191, 36, 0.15)',
                       borderRadius: '16px',
                       padding: '1.25rem 1rem',
                       display: 'flex',
@@ -562,16 +563,16 @@ export default function Home() {
                     }}
                   >
                     <div style={{
-                      background: 'rgba(236, 72, 153, 0.06)',
+                      background: 'rgba(251, 191, 36, 0.1)',
                       borderRadius: '50%',
-                      width: '46px',
-                      height: '46px',
+                      width: '50px',
+                      height: '50px',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      marginBottom: '0.2rem'
+                      border: '1px solid rgba(251, 191, 36, 0.15)'
                     }}>
-                      <Icons.List size={22} style={{ color: '#ec4899' }} />
+                      <Icons.List size={24} style={{ color: '#FBBF24' }} />
                     </div>
                     <span style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#fff' }}>Grupos</span>
                     <span style={{ fontSize: '0.65rem', color: 'var(--text-secondary)' }}>Classificação oficial</span>
@@ -588,30 +589,31 @@ export default function Home() {
                     {upcomingMatches.map((g, idx) => (
                       <div key={idx} style={{
                         minWidth: '200px',
-                        background: 'linear-gradient(135deg, rgba(251, 191, 36, 0.1) 0%, rgba(184, 134, 11, 0.03) 100%)',
-                        border: '1px solid rgba(251, 191, 36, 0.2)',
+                        background: 'linear-gradient(135deg, rgba(251, 191, 36, 0.18) 0%, rgba(212, 160, 23, 0.08) 100%)',
+                        border: '1px solid rgba(251, 191, 36, 0.35)',
                         borderRadius: '16px',
                         padding: '0.85rem',
                         display: 'flex',
                         flexDirection: 'column',
                         alignItems: 'center',
                         gap: '0.5rem',
-                        boxSizing: 'border-box'
+                        boxSizing: 'border-box',
+                        boxShadow: '0 4px 20px rgba(251, 191, 36, 0.08)'
                       }}>
-                        <span style={{ fontSize: '0.65rem', fontWeight: 'bold', color: 'var(--accent-gold)' }}>
+                        <span style={{ fontSize: '0.65rem', fontWeight: 'bold', color: '#FBBF24' }}>
                           {new Date(g.match_date).toLocaleDateString('pt-BR')} {g.match_time ? g.match_time.slice(0, 5) : ''}
                         </span>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'center', width: '100%' }}>
                           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1, gap: '0.2rem' }}>
-                            <img src={`https://flagcdn.com/w40/${getFlagCode(g.home_team_name_en)}.png`} style={{ width: '22px', height: '14px', objectFit: 'cover', borderRadius: '2px' }} alt="" />
-                            <span style={{ fontSize: '0.68rem', fontWeight: 'bold', color: '#fff', textAlign: 'center', maxWidth: '65px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            <img src={`https://flagcdn.com/w40/${getFlagCode(g.home_team_name_en)}.png`} style={{ width: '26px', height: '17px', objectFit: 'cover', borderRadius: '2px' }} alt="" />
+                            <span style={{ fontSize: '0.7rem', fontWeight: 'bold', color: '#fff', textAlign: 'center', maxWidth: '65px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                               {g.home_team_name_en}
                             </span>
                           </div>
-                          <span style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', fontWeight: 'bold' }}>VS</span>
+                          <span style={{ fontSize: '0.7rem', color: '#FBBF24', fontWeight: '900' }}>VS</span>
                           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1, gap: '0.2rem' }}>
-                            <img src={`https://flagcdn.com/w40/${getFlagCode(g.away_team_name_en)}.png`} style={{ width: '22px', height: '14px', objectFit: 'cover', borderRadius: '2px' }} alt="" />
-                            <span style={{ fontSize: '0.68rem', fontWeight: 'bold', color: '#fff', textAlign: 'center', maxWidth: '65px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            <img src={`https://flagcdn.com/w40/${getFlagCode(g.away_team_name_en)}.png`} style={{ width: '26px', height: '17px', objectFit: 'cover', borderRadius: '2px' }} alt="" />
+                            <span style={{ fontSize: '0.7rem', fontWeight: 'bold', color: '#fff', textAlign: 'center', maxWidth: '65px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                               {g.away_team_name_en}
                             </span>
                           </div>
@@ -837,37 +839,38 @@ export default function Home() {
               transform: 'translateX(-50%)',
               width: '100%',
               maxWidth: '480px',
-              background: 'rgba(10, 20, 15, 0.95)',
-              backdropFilter: 'blur(10px)',
-              borderTop: '1px solid rgba(255, 255, 255, 0.08)',
+              background: 'rgba(6, 12, 8, 0.97)',
+              backdropFilter: 'blur(12px)',
+              borderTop: '1px solid rgba(251, 191, 36, 0.12)',
               display: 'flex',
               justifyContent: 'space-around',
-              padding: '0.65rem 0.5rem',
+              padding: '0.6rem 0.5rem 0.75rem',
               boxSizing: 'border-box',
               zIndex: 100,
-              borderTopLeftRadius: '16px',
-              borderTopRightRadius: '16px'
+              borderTopLeftRadius: '18px',
+              borderTopRightRadius: '18px',
+              boxShadow: '0 -4px 20px rgba(0,0,0,0.4)'
             }}>
               <div 
                 onClick={() => { setShowLogin(false); setShowRegister(false); }}
-                style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.2rem', cursor: 'pointer', flex: 1 }}
+                style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.15rem', cursor: 'pointer', flex: 1 }}
               >
-                <Icons.Home size={20} style={{ color: (!showLogin && !showRegister) ? 'var(--accent-gold)' : 'var(--text-secondary)' }} />
-                <span style={{ fontSize: '0.65rem', fontWeight: 'bold', color: (!showLogin && !showRegister) ? 'var(--accent-gold)' : 'var(--text-secondary)' }}>INÍCIO</span>
+                <Icons.Home size={21} style={{ color: (!showLogin && !showRegister) ? '#FBBF24' : 'rgba(255,255,255,0.35)' }} />
+                <span style={{ fontSize: '0.6rem', fontWeight: '700', color: (!showLogin && !showRegister) ? '#FBBF24' : 'rgba(255,255,255,0.35)', letterSpacing: '0.03em' }}>INÍCIO</span>
               </div>
               <div 
                 onClick={() => handleDirectNavigate('ranking')}
-                style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.2rem', cursor: 'pointer', flex: 1 }}
+                style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.15rem', cursor: 'pointer', flex: 1 }}
               >
-                <Icons.Trophy size={20} style={{ color: 'var(--text-secondary)' }} />
-                <span style={{ fontSize: '0.65rem', fontWeight: 'bold', color: 'var(--text-secondary)' }}>Classificação</span>
+                <Icons.Trophy size={21} style={{ color: 'rgba(255,255,255,0.35)' }} />
+                <span style={{ fontSize: '0.6rem', fontWeight: '700', color: 'rgba(255,255,255,0.35)', letterSpacing: '0.03em' }}>CLASSIFICAÇÃO</span>
               </div>
               <div 
                 onClick={() => { setShowLogin(true); setShowRegister(false); }}
-                style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.2rem', cursor: 'pointer', flex: 1 }}
+                style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.15rem', cursor: 'pointer', flex: 1 }}
               >
-                <Icons.LogIn size={20} style={{ color: (showLogin || showRegister) ? 'var(--accent-gold)' : 'var(--text-secondary)' }} />
-                <span style={{ fontSize: '0.65rem', fontWeight: 'bold', color: (showLogin || showRegister) ? 'var(--accent-gold)' : 'var(--text-secondary)' }}>Login</span>
+                <Icons.LogIn size={21} style={{ color: (showLogin || showRegister) ? '#FBBF24' : 'rgba(255,255,255,0.35)' }} />
+                <span style={{ fontSize: '0.6rem', fontWeight: '700', color: (showLogin || showRegister) ? '#FBBF24' : 'rgba(255,255,255,0.35)', letterSpacing: '0.03em' }}>LOGIN</span>
               </div>
             </div>
           </div>
