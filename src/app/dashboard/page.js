@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Icons } from '@/components/Icons';
 import { supabase, resetDatabase, defaultConfrontos, isSupabaseConfigured } from '@/lib/supabase';
 import { getFinishedMatches, getLiveMatches, getUpcomingMatches, getFlagCode, formatMatchDate, getGroupStandings, fetchAllGames } from '@/lib/worldcupApi';
-import { useTheme, THEMES } from '@/components/ThemeProvider';
+import { useChampion, CHAMPIONS } from '@/components/ChampionProvider';
 import FirstLaunchOverlay from '@/components/FirstLaunchOverlay';
 
 // Helper to compress and resize images on client-side before sending to API
@@ -219,8 +219,8 @@ const calculateGroupStandings = (confrontosList) => {
 function DashboardContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { theme } = useTheme();
-  const activeThemeObj = THEMES[theme] || THEMES['brasil'];
+  const { theme } = useChampion();
+  const activeChampionObj = CHAMPIONS[theme] || CHAMPIONS['brasil'];
   
   // App states
   const [currentUser, setCurrentUser] = useState(null);
@@ -940,7 +940,7 @@ function DashboardContent() {
 
       // Load logo and active team flag in parallel
       const logoUrl = '/icons/logo-transparent.png';
-      const flagUrl = activeThemeObj ? `https://flagcdn.com/w160/${activeThemeObj.flag}.png` : null;
+      const flagUrl = activeChampionObj ? `https://flagcdn.com/w160/${activeChampionObj.flag}.png` : null;
 
       const [logoImg, flagImg] = await Promise.all([
         loadImage(logoUrl),
@@ -1749,17 +1749,17 @@ function DashboardContent() {
               )}
             </div>
           )}
-          {(currentUserObj?.campeao || boloes.find(b => b.username === currentUser)?.campeao || activeThemeObj) && (
+          {(currentUserObj?.campeao || boloes.find(b => b.username === currentUser)?.campeao || activeChampionObj) && (
             <img
               src={`https://flagcdn.com/w40/${(() => {
                 const champ = currentUserObj?.campeao || boloes.find(b => b.username === currentUser)?.campeao;
                 if (champ) {
                   return getFlagCode(champ);
                 }
-                return activeThemeObj?.flag || 'br';
+                return activeChampionObj?.flag || 'br';
               })()}.png`}
               alt="Tema"
-              title={`Tema: ${activeThemeObj.nome}`}
+              title={`Tema: ${activeChampionObj.nome}`}
               style={{
                 width: '26px',
                 height: '26px',
@@ -3518,7 +3518,7 @@ function DashboardContent() {
                         {player.campeao ? (
                           <span style={{ fontSize: '0.7rem', color: '#D2A74F', display: 'flex', alignItems: 'center', gap: '4px' }}>
                             <img 
-                              src={`https://flagcdn.com/w40/${Object.values(THEMES).find(t => t.nome === player.campeao)?.flag || 'br'}.png`} 
+                              src={`https://flagcdn.com/w40/${Object.values(CHAMPIONS).find(t => t.nome === player.campeao)?.flag || 'br'}.png`} 
                               style={{ width: '14px', borderRadius: '2px' }} 
                               alt={player.campeao} 
                             />
@@ -3644,7 +3644,7 @@ function DashboardContent() {
                     <span style={{ fontSize: '0.78rem', fontWeight: 'bold', color: '#D2A74F', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                       Campeão Escolhido: 
                       <img 
-                        src={`https://flagcdn.com/w40/${Object.values(THEMES).find(t => t.nome === player.campeao)?.flag || 'br'}.png`} 
+                        src={`https://flagcdn.com/w40/${Object.values(CHAMPIONS).find(t => t.nome === player.campeao)?.flag || 'br'}.png`} 
                         style={{ width: '16px', borderRadius: '2px' }} 
                         alt={player.campeao} 
                       />

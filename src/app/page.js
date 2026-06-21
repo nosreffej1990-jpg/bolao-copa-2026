@@ -5,11 +5,11 @@ import { useRouter } from 'next/navigation';
 import { Icons } from '@/components/Icons';
 import { getFlagCode, formatMatchDate } from '@/lib/worldcupApi';
 import { supabase, defaultUsuarios, isSupabaseConfigured } from '@/lib/supabase';
-import { useTheme, THEMES } from '@/components/ThemeProvider';
+import { useChampion, CHAMPIONS } from '@/components/ChampionProvider';
 
 export default function Home() {
-  const { theme } = useTheme();
-  const activeThemeObj = THEMES[theme] || THEMES['brasil'];
+  const { theme } = useChampion();
+  const activeChampionObj = CHAMPIONS[theme] || CHAMPIONS['brasil'];
   const [loading, setLoading] = useState(true);
   const [showLogin, setShowLogin] = useState(false);
   const [showRegister, setShowRegister] = useState(false);

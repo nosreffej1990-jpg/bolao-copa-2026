@@ -29,6 +29,26 @@ export async function POST(request) {
     if (action === 'savePalpite') {
       const { matchId, homeScore, awayScore } = body;
 
+      // Se o Supabase estiver configurado, validar se o palpite já existe
+      if (isSupabaseServerConfigured) {
+        const { data: existingPalpite } = await supabaseServer
+          .from('palpites')
+          .select('id')
+          .eq('username', username)
+          .eq('match_id', parseInt(matchId))
+          .maybeSingle();
+
+        // Se já existe e o usuário NÃO for Admin ou Moderador, bloquear alteração
+        if (existingPalpite) {
+          const userRole = user?.role || 'Jogador';
+          if (userRole !== 'Admin' && userRole !== 'Moderador') {
+            return NextResponse.json({ 
+              error: '🚫 Alteração bloqueada: Seus palpites para este jogo já foram salvos e não podem ser modificados.' 
+            }, { status: 403 });
+          }
+        }
+      }
+
       const { error } = await supabaseServer.from('palpites').upsert({
         username,
         match_id: parseInt(matchId),

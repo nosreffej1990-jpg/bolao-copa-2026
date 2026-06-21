@@ -3,7 +3,7 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 
 // Color definitions for all 48 nations in World Cup 2026
-export const THEMES = {
+export const CHAMPIONS = {
   brasil: { id: 'brasil', nome: 'Brasil', emoji: '🇧🇷', flag: 'br', primary: '#00e676', secondary: '#E1B64F', bg: '#021a11' },
   mexico: { id: 'mexico', nome: 'México', emoji: '🇲🇽', flag: 'mx', primary: '#12a154', secondary: '#c91b2c', bg: '#042110' },
   africa_do_sul: { id: 'africa_do_sul', nome: 'África do Sul', emoji: '🇿🇦', flag: 'za', primary: '#007a4d', secondary: '#ffb612', bg: '#022417' },
@@ -56,7 +56,7 @@ export const THEMES = {
 
 const ThemeContext = createContext({ theme: 'brasil', setTheme: () => {} });
 
-export function ThemeProvider({ children }) {
+export function ChampionProvider({ children }) {
   const [theme, setThemeState] = useState('brasil');
 
   useEffect(() => {
@@ -76,4 +76,4 @@ export function ThemeProvider({ children }) {
   );
 }
 
-export const useTheme = () => useContext(ThemeContext);
+export const useChampion = () => useContext(ThemeContext);

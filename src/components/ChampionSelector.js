@@ -1,10 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import { useTheme, THEMES } from './ThemeProvider';
+import { useChampion, CHAMPIONS } from './ChampionProvider';
 
-export default function ThemeSelector() {
-  const { theme, setTheme } = useTheme();
+export default function ChampionSelector() {
+  const { theme, setTheme } = useChampion();
   const [open, setOpen] = useState(false);
 
   return (
@@ -29,7 +29,7 @@ export default function ThemeSelector() {
               <button className="theme-modal-close" onClick={() => setOpen(false)}>✕</button>
             </div>
             <div className="theme-grid" style={{ maxHeight: '60vh', overflowY: 'auto', paddingRight: '0.25rem' }}>
-              {Object.values(THEMES).map(t => (
+              {Object.values(CHAMPIONS).map(t => (
                 <button
                   key={t.id}
                   className={`theme-option ${theme === t.id ? 'theme-option--active' : ''}`}

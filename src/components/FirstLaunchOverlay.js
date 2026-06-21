@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { THEMES } from './ThemeProvider';
+import { CHAMPIONS } from './ChampionProvider';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 
 export default function FirstLaunchOverlay() {
@@ -110,7 +110,7 @@ export default function FirstLaunchOverlay() {
           background: 'rgba(255,255,255,0.01)', border: '1px solid rgba(255,255,255,0.04)',
           borderRadius: '16px', scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch'
         }}>
-          {Object.values(THEMES).map(t => (
+          {Object.values(CHAMPIONS).map(t => (
             <div
               key={t.id}
               onClick={() => handleSelectTeam(t)}
