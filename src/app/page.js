@@ -475,9 +475,9 @@ export default function Home() {
                     onClick={() => handleDirectNavigate('ranking')}
                     className="home-btn"
                     style={{
-                      background: 'rgba(22, 22, 22, 0.75)',
+                      background: 'var(--bg-card)',
                       backdropFilter: 'blur(10px)',
-                      border: '1px solid rgba(251, 191, 36, 0.15)',
+                      border: '2px solid var(--accent-gold)', boxShadow: '0 0 10px rgba(225, 182, 79, 0.4), inset 0 0 10px rgba(225, 182, 79, 0.2)',
                       borderRadius: '16px',
                       padding: '1.25rem 1rem',
                       display: 'flex',
@@ -489,14 +489,14 @@ export default function Home() {
                     }}
                   >
                     <div style={{
-                      background: 'rgba(251, 191, 36, 0.1)',
+                      background: 'transparent',
                       borderRadius: '50%',
                       width: '50px',
                       height: '50px',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      border: '1px solid rgba(251, 191, 36, 0.15)'
+                      border: '2px solid var(--accent-gold)', boxShadow: '0 0 10px rgba(225, 182, 79, 0.4), inset 0 0 10px rgba(225, 182, 79, 0.2)'
                     }}>
                       <Icons.Trophy size={20} style={{ color: 'var(--accent-gold)' }} />
                     </div>
@@ -508,9 +508,9 @@ export default function Home() {
                     onClick={() => handleDirectNavigate('placares_geral')}
                     className="home-btn"
                     style={{
-                      background: 'rgba(22, 22, 22, 0.75)',
+                      background: 'var(--bg-card)',
                       backdropFilter: 'blur(10px)',
-                      border: '1px solid rgba(251, 191, 36, 0.15)',
+                      border: '2px solid var(--accent-gold)', boxShadow: '0 0 10px rgba(225, 182, 79, 0.4), inset 0 0 10px rgba(225, 182, 79, 0.2)',
                       borderRadius: '16px',
                       padding: '1.25rem 1rem',
                       display: 'flex',
@@ -522,14 +522,14 @@ export default function Home() {
                     }}
                   >
                     <div style={{
-                      background: 'rgba(251, 191, 36, 0.1)',
+                      background: 'transparent',
                       borderRadius: '50%',
                       width: '50px',
                       height: '50px',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      border: '1px solid rgba(251, 191, 36, 0.15)'
+                      border: '2px solid var(--accent-gold)', boxShadow: '0 0 10px rgba(225, 182, 79, 0.4), inset 0 0 10px rgba(225, 182, 79, 0.2)'
                     }}>
                       <Icons.Check size={20} style={{ color: 'var(--accent-gold)' }} />
                     </div>
@@ -541,9 +541,9 @@ export default function Home() {
                     onClick={() => handleDirectNavigate('confrontos_geral')}
                     className="home-btn"
                     style={{
-                      background: 'rgba(22, 22, 22, 0.75)',
+                      background: 'var(--bg-card)',
                       backdropFilter: 'blur(10px)',
-                      border: '1px solid rgba(251, 191, 36, 0.15)',
+                      border: '2px solid var(--accent-gold)', boxShadow: '0 0 10px rgba(225, 182, 79, 0.4), inset 0 0 10px rgba(225, 182, 79, 0.2)',
                       borderRadius: '16px',
                       padding: '1.25rem 1rem',
                       display: 'flex',
@@ -555,14 +555,14 @@ export default function Home() {
                     }}
                   >
                     <div style={{
-                      background: 'rgba(251, 191, 36, 0.1)',
+                      background: 'transparent',
                       borderRadius: '50%',
                       width: '50px',
                       height: '50px',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      border: '1px solid rgba(251, 191, 36, 0.15)'
+                      border: '2px solid var(--accent-gold)', boxShadow: '0 0 10px rgba(225, 182, 79, 0.4), inset 0 0 10px rgba(225, 182, 79, 0.2)'
                     }}>
                       <Icons.Calendar size={20} style={{ color: 'var(--accent-gold)' }} />
                     </div>
@@ -574,9 +574,9 @@ export default function Home() {
                     onClick={() => handleDirectNavigate('grupos')}
                     className="home-btn"
                     style={{
-                      background: 'rgba(22, 22, 22, 0.75)',
+                      background: 'var(--bg-card)',
                       backdropFilter: 'blur(10px)',
-                      border: '1px solid rgba(251, 191, 36, 0.15)',
+                      border: '2px solid var(--accent-gold)', boxShadow: '0 0 10px rgba(225, 182, 79, 0.4), inset 0 0 10px rgba(225, 182, 79, 0.2)',
                       borderRadius: '16px',
                       padding: '1.25rem 1rem',
                       display: 'flex',
@@ -588,14 +588,14 @@ export default function Home() {
                     }}
                   >
                     <div style={{
-                      background: 'rgba(251, 191, 36, 0.1)',
+                      background: 'transparent',
                       borderRadius: '50%',
                       width: '50px',
                       height: '50px',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      border: '1px solid rgba(251, 191, 36, 0.15)'
+                      border: '2px solid var(--accent-gold)', boxShadow: '0 0 10px rgba(225, 182, 79, 0.4), inset 0 0 10px rgba(225, 182, 79, 0.2)'
                     }}>
                       <Icons.List size={20} style={{ color: 'var(--accent-gold)' }} />
                     </div>
