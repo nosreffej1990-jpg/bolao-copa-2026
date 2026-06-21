@@ -219,7 +219,9 @@ CREATE POLICY "Leitura pública de config" ON public.config FOR SELECT USING (tr
 
 INSERT INTO public.config (key, value) VALUES
 ('mata_mata_public', 'false'),
-('allow_register', 'true')
+('allow_register', 'true'),
+('allow_group_upload', 'true'),
+('allow_drawer_menu', 'true')
 ON CONFLICT (key) DO NOTHING;
 
 
