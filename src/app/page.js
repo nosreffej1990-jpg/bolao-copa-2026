@@ -851,9 +851,9 @@ export default function Home() {
                     rel="noopener noreferrer"
                     style={{
                       display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem',
-                      background: '#25D366', color: '#fff', padding: '0.85rem', borderRadius: '12px',
+                      background: 'var(--btn-primary-bg)', color: 'var(--btn-primary-color)', textShadow: '0 1px 2px rgba(255,255,255, 0.4)', padding: '0.85rem', borderRadius: '12px',
                       fontWeight: 'bold', textDecoration: 'none', fontSize: '0.95rem',
-                      boxShadow: '0 4px 12px rgba(37,211,102,0.3)', marginBottom: '0.75rem'
+                      boxShadow: '0 4px 12px rgba(210, 167, 79, 0.3)', marginBottom: '0.75rem'
                     }}
                   >
                     <span>💬 Enviar Comprovante no WhatsApp</span>

@@ -2259,9 +2259,8 @@ function DashboardContent() {
                 {/* Compartilhar Ranking */}
                 <button onClick={shareRanking} style={{
                   width: '100%', marginTop: '1.25rem', padding: '0.85rem',
-                  background: 'linear-gradient(135deg, #25D366, #128C7E)',
-                  border: 'none', borderRadius: '10px', color: 'var(--text-primary)',
-                  fontWeight: '700', fontSize: '0.9rem', cursor: 'pointer',
+                  background: 'var(--btn-primary-bg)',
+                  border: 'none', borderRadius: '10px', color: 'var(--btn-primary-color)', fontWeight: '700', fontSize: '0.9rem', cursor: 'pointer', textShadow: '0 1px 2px rgba(255,255,255, 0.4)',
                   display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem'
                 }}>
                   📤 Compartilhar Ranking no WhatsApp
@@ -4964,7 +4963,7 @@ function DashboardContent() {
         transform: 'translateX(-50%)',
         width: '100%',
         maxWidth: '480px',
-        background: 'rgba(11, 15, 25, 0.95)',
+        background: 'rgba(3, 16, 11, 0.95)',
         backdropFilter: 'blur(10px)',
         borderTop: '1px solid var(--border-color)',
         display: 'flex',
