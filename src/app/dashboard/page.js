@@ -400,233 +400,6 @@ function DashboardContent() {
     return () => clearInterval(id);
   }, [apiUpcoming, notifPermission]);
 
-  const syncConfrontosWithApi = async (allApiGames, currentConfs) => {
-    if (!currentConfs || currentConfs.length === 0 || !allApiGames || allApiGames.length === 0) return;
-    
-    const changedConfrontos = [];
-    const updatedConfrontos = currentConfs.map(c => {
-      let apiGame = null;
-      if (c.id <= 72) {
-        // Group stage: match by team names (API IDs are chronological and differ from our Group-based IDs)
-        apiGame = allApiGames.find(g =>
-          normalizeTeamName(g.home_team_name_en) === normalizeTeamName(c.home_team) &&
-          normalizeTeamName(g.away_team_name_en) === normalizeTeamName(c.away_team)
-        );
-      } else {
-        // Knockout stage: match by match ID (chronological matches match 73-104)
-        apiGame = allApiGames.find(g => String(g.id) === String(c.id));
-      }
-
-      if (apiGame) {
-        const apiHomeName = apiGame.home_team_name_en && apiGame.home_team_name_en !== '0' && apiGame.home_team_name_en !== '' 
-          ? apiGame.home_team_name_en 
-          : (apiGame.home_team_label || c.home_team);
-        const apiAwayName = apiGame.away_team_name_en && apiGame.away_team_name_en !== '0' && apiGame.away_team_name_en !== '' 
-          ? apiGame.away_team_name_en 
-          : (apiGame.away_team_label || c.away_team);
-          
-        const apiHomeCode = getFlagCode(apiHomeName) || 'placeholder';
-        const apiAwayCode = getFlagCode(apiAwayName) || 'placeholder';
-
-        let isDifferent = false;
-        let nextHomeScore = c.home_score;
-        let nextAwayScore = c.away_score;
-        let nextFinished = c.finished;
-        let nextHomeTeam = c.home_team;
-        let nextAwayTeam = c.away_team;
-        let nextHomeCode = c.home_code;
-        let nextAwayCode = c.away_code;
-
-        // ONLY update team names and codes for knockout stage matches (id >= 73)
-        if (c.id >= 73 && (apiHomeName !== c.home_team || apiAwayName !== c.away_team || apiHomeCode !== c.home_code || apiAwayCode !== c.away_code)) {
-          nextHomeTeam = apiHomeName;
-          nextAwayTeam = apiAwayName;
-          nextHomeCode = apiHomeCode;
-          nextAwayCode = apiAwayCode;
-          isDifferent = true;
-        }
-
-        if (apiGame.finished === 'TRUE') {
-          const apiHomeScore = apiGame.home_score !== null && apiGame.home_score !== undefined ? parseInt(apiGame.home_score) : null;
-          const apiAwayScore = apiGame.away_score !== null && apiGame.away_score !== undefined ? parseInt(apiGame.away_score) : null;
-          
-          if (apiHomeScore !== null && apiAwayScore !== null && (c.home_score !== apiHomeScore || c.away_score !== apiAwayScore || !c.finished)) {
-            nextHomeScore = apiHomeScore;
-            nextAwayScore = apiAwayScore;
-            nextFinished = true;
-            isDifferent = true;
-          }
-        } else {
-          if (c.home_score !== null || c.away_score !== null || c.finished) {
-            nextHomeScore = null;
-            nextAwayScore = null;
-            nextFinished = false;
-            isDifferent = true;
-          }
-        }
-
-        if (isDifferent) {
-          const updated = {
-            ...c,
-            home_team: nextHomeTeam,
-            away_team: nextAwayTeam,
-            home_code: nextHomeCode,
-            away_code: nextAwayCode,
-            home_score: nextHomeScore,
-            away_score: nextAwayScore,
-            finished: nextFinished
-          };
-          changedConfrontos.push(updated);
-          return updated;
-        }
-      }
-      return c;
-    });
-
-    if (changedConfrontos.length > 0) {
-      setConfrontos(updatedConfrontos);
-      for (const uc of changedConfrontos) {
-        await supabase.from('confrontos')
-          .update({ 
-            home_team: uc.home_team,
-            away_team: uc.away_team,
-            home_code: uc.home_code,
-            away_code: uc.away_code,
-            home_score: uc.home_score, 
-            away_score: uc.away_score,
-            finished: uc.finished ?? false
-          })
-          .eq('id', uc.id);
-      }
-    }
-  };
-
-  const fetchApiData = async () => {
-    setApiLoading(true);
-    try {
-      const [allGames, finished, live, upcoming, groups] = await Promise.all([
-        fetchAllGames(),
-        getFinishedMatches(),
-        getLiveMatches(),
-        getUpcomingMatches(15),
-        getGroupStandings(),
-      ]);
-      setApiFinished(finished);
-      setApiLive(live);
-      setApiUpcoming(upcoming);
-      setApiGroups(groups);
-
-      // Pontuação automática: atualizar pts dos bolões com jogos finalizados
-      if (finished.length > 0) {
-        autoCalculatePoints(finished);
-      }
-
-      // Sincronizar confrontos locais com a API (passando todos os jogos para tratar não finalizados)
-      if (allGames.length > 0 && confrontos.length > 0) {
-        await syncConfrontosWithApi(allGames, confrontos);
-      }
-    } catch (e) {
-      console.error('Erro na API:', e);
-    } finally {
-      setApiLoading(false);
-    }
-  };
-
-  const fetchData = async () => {
-    // Buscar configurações globais
-    try {
-      const { data: configData } = await supabase.from('config').select('*');
-      if (configData) {
-        const mmp = configData.find(c => c.key === 'mata_mata_public');
-        if (mmp) setMataMataPublic(mmp.value === 'true');
-        const reg = configData.find(c => c.key === 'allow_register');
-        if (reg) setAllowRegister(reg.value === 'true');
-        const uploadGrp = configData.find(c => c.key === 'allow_group_upload');
-        if (uploadGrp) setAllowGroupUpload(uploadGrp.value === 'true');
-        const drawMenu = configData.find(c => c.key === 'allow_drawer_menu');
-        if (drawMenu) setAllowDrawerMenu(drawMenu.value === 'true');
-        const pTitle = configData.find(c => c.key === 'paqueta_title');
-        if (pTitle) setPaquetaTitle(pTitle.value);
-        const pBody = configData.find(c => c.key === 'paqueta_body');
-        if (pBody) setPaquetaBody(pBody.value);
-      }
-    } catch (err) {
-      console.error('Erro ao carregar configurações:', err);
-    }
-
-    const { data: confs } = await supabase.from('confrontos').select('*').order('id', { ascending: true });
-    const loadedConfs = confs || [];
-    setConfrontos(loadedConfs);
-
-    const { data: bols } = await supabase.from('boloes').select('*');
-    setBoloes(bols || []);
-
-    // Load user's saved predictions if logged in
-    if (typeof window !== 'undefined') {
-      const user = localStorage.getItem('copa26_user');
-      const role = localStorage.getItem('copa26_role') || 'Jogador';
-      
-      if (user) {
-        // Fetch current user details object for stage validation checks
-        const { data: userData, error: userFetchErr } = await supabase.from('usuarios').select('*');
-        if (userFetchErr) {
-          console.error('Erro ao buscar perfil do usuario logado:', userFetchErr);
-        }
-        const loggedInUserObj = (userData || []).find(u => u.username.toLowerCase() === user.toLowerCase());
-        if (loggedInUserObj) {
-          setCurrentUserObj(loggedInUserObj);
-        }
-
-        const { data: palps, error: palpsErr } = await supabase.from('palpites').select('*').eq('username', user);
-        if (palpsErr) {
-          console.error('Erro ao buscar palpites do usuario:', palpsErr);
-        }
-        const palpsMap = {};
-        const koBets = {};
-        (palps || []).forEach(p => {
-          palpsMap[p.match_id] = {
-            home: p.home_score,
-            away: p.away_score,
-            saved: true
-          };
-          if (p.match_id >= 73) {
-            koBets[p.match_id] = {
-              home: String(p.home_score),
-              away: String(p.away_score)
-            };
-          }
-        });
-        setPalpites(palpsMap);
-        setKnockoutBets(koBets);
-      }
-
-      // Load registered users
-      if (user) {
-        const isAdminOrMod = role === 'Admin' || role === 'Moderador';
-        const query = isAdminOrMod 
-          ? supabase.from('usuarios').select('*').order('username', { ascending: true })
-          : supabase.from('usuarios').select('id, username, role, campeao, avatar_url, status').order('username', { ascending: true });
-        
-        const { data: users, error: listErr } = await query;
-        if (listErr) {
-          console.error('Erro ao carregar lista de usuarios:', listErr);
-        }
-        if (!listErr && users) {
-          console.log('Usuarios carregados com sucesso:', users.length);
-          setUsersList(users);
-        }
-      }
-    }
-
-    // Sincronizar confrontos se a API já carregou os finalizados (passando todos os jogos para tratar não finalizados)
-    if (loadedConfs.length > 0) {
-      const allGames = await fetchAllGames();
-      if (allGames && allGames.length > 0) {
-        await syncConfrontosWithApi(allGames, loadedConfs);
-      }
-    }
-  };
-
   const handleScoreChange = (matchId, team, val) => {
     setPalpites(prev => ({
       ...prev,
@@ -744,11 +517,28 @@ function DashboardContent() {
   };
 
   const handleRecalcular = async () => {
-    setToastMsg('Recalculando pontuação...');
+    setToastMsg('Sincronizando com ESPN...');
     setToastType('success');
-    await fetchData();
-    setToastMsg('Pontuação atualizada com sucesso!');
-    setTimeout(() => setToastMsg(''), 3000);
+    
+    try {
+      const pass = USERS[currentUser];
+      const res = await fetch('/api/admin/recalculate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: currentUser, password: pass })
+      });
+      
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Erro desconhecido');
+      
+      setToastMsg(`Sucesso! ${data.updatedCount} jogos atualizados.`);
+      await fetchData(); // Atualiza a tela com os novos dados
+    } catch (err) {
+      setToastMsg(`Erro: ${err.message}`);
+      setToastType('error');
+    }
+    
+    setTimeout(() => { setToastMsg(''); setToastType('success'); }, 4000);
   };
 
   // Compartilhar ranking via Web Share API (com fallback WhatsApp)

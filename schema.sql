@@ -38,8 +38,8 @@ CREATE TABLE IF NOT EXISTS public.palpites (
 
 ALTER TABLE public.palpites ENABLE ROW LEVEL SECURITY;
 
--- Permissões para palpites (Acesso total)
-CREATE POLICY "Acesso total de palpites" ON public.palpites FOR ALL USING (true) WITH CHECK (true);
+-- Permissões para palpites (Apenas Leitura)
+CREATE POLICY "Leitura de palpites" ON public.palpites FOR SELECT USING (true);
 
 -- 3. Tabela de Bolões (Uploads de Fotos dos Bolões)
 CREATE TABLE IF NOT EXISTS public.boloes (
@@ -48,13 +48,14 @@ CREATE TABLE IF NOT EXISTS public.boloes (
     bettor_name VARCHAR(100) NOT NULL, -- Nome do apostador do Bolão
     photo_url TEXT, -- Link da imagem salva como Base64 ou URL do Storage
     bets_data JSONB, -- Lista de apostas lidas por OCR
+    avatar_url TEXT DEFAULT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
 );
 
 ALTER TABLE public.boloes ENABLE ROW LEVEL SECURITY;
 
--- Permissões para bolões (Acesso total)
-CREATE POLICY "Acesso total de boloes" ON public.boloes FOR ALL USING (true) WITH CHECK (true);
+-- Permissões para bolões (Apenas Leitura)
+CREATE POLICY "Leitura de boloes" ON public.boloes FOR SELECT USING (true);
 
 -- 4. Inserção de dados dos confrontos oficiais (Fase de Grupos Completa da Copa 2026 - 72 Jogos)
 INSERT INTO public.confrontos (id, grupo, home_team, home_code, away_team, away_code, match_date, match_time, stadium, home_score, away_score, finished) VALUES
