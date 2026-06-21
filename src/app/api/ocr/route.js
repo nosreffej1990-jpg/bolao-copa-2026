@@ -3,12 +3,22 @@ import { defaultConfrontos } from '@/lib/supabase';
 
 const normalizeTeamName = (name) => {
   if (!name) return '';
-  return name.toLowerCase()
+  let n = name.toLowerCase()
     .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
     .replace(/[^a-z0-9]/g, '')
     .replace('repblica', 'republica')
     .replace('bsnia', 'bosnia')
     .trim();
+    
+  // Aliases globais para cruzamento de dados API x Supabase
+  if (n === 'democraticrepublicofthecongo' || n === 'rddocongo' || n === 'drcongo' || n === 'congodr') return 'congo';
+  if (n === 'unitedstates' || n === 'usa') return 'eua';
+  if (n === 'saudiarabia') return 'arabiasaudita';
+  if (n === 'southkorea' || n === 'korearepublic') return 'coreiadosul';
+  if (n === 'northkorea' || n === 'dprkorea') return 'coreiadonorte';
+  if (n === 'costarica') return 'costarica';
+  
+  return n;
 };
 
 export const dynamic = 'force-dynamic';
