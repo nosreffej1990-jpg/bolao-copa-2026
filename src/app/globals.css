@@ -4,35 +4,34 @@
    TEMA ÚNICO: Premium Dark & Gold
    ============================================ */
 :root {
-    --bg-app: #060913;
-    --bg-header: #0b0f19;
-    --bg-card: #0f1322;
-    --bg-card-hover: #182038;
-    --border-color: rgba(225, 182, 79, 0.2);
-    --border-active: #E1B64F;
-    
-    
-    --accent-gold: #E1B64F;
-    --accent-gold-hover: #FFDF7A;
-    --text-primary: #ffffff;
-    --text-secondary: #cbd5e1;
-    --text-muted: #64748b;
-    --splash-bg: radial-gradient(circle at center, #0f1322, #0b0f19);
+    --bg-app: #051A12;
+    --bg-header: #03100B;
+    --bg-card: rgba(20, 44, 35, 0.8);
+    --bg-card-hover: rgba(20, 44, 35, 1);
+    --border-color: rgba(210, 167, 79, 0.2);
+    --border-active: #D2A74F;
+    --accent-gold: #D2A74F;
+    --accent-gold-hover: #F8E090;
+    --text-primary: #E8F0ED;
+    --text-secondary: rgba(232, 240, 237, 0.7);
+    --text-muted: rgba(232, 240, 237, 0.4);
+    --splash-bg: radial-gradient(circle at 50% 20%, #1A402D 0%, #051A12 70%);
     
     /* Novo Ouro Unificado */
-    --gold-light: #FFDF7A;
-    --gold-mid: #E1B64F;
-    --gold-dark: #9C711D;
-    --btn-primary-bg: linear-gradient(to bottom, var(--gold-light) 0%, var(--gold-mid) 55%, var(--gold-dark) 100%);
-    --btn-primary-color: #0f1c14;
+    --gold-light: #F8E090;
+    --gold-mid: #D2A74F;
+    --gold-dark: #8A6721;
+    --btn-primary-bg: linear-gradient(135deg, var(--gold-light) 0%, var(--gold-mid) 50%, var(--gold-dark) 100%);
+    --btn-primary-color: #1E1E1E;
     
-    --nav-bg: #0b0f19;
-    --nav-border: rgba(255, 255, 255, 0.06);
-    --nav-active: #E1B64F;
-    --card-glow: rgba(225, 182, 79, 0.08);
+    --nav-bg: #03100B;
+    --nav-border: rgba(210, 167, 79, 0.15);
+    --nav-active: #D2A74F;
+    --card-glow: rgba(210, 167, 79, 0.08);
+    
     --font-main: 'Outfit', sans-serif;
     --font-alt: 'Plus Jakarta Sans', sans-serif;
-    --shadow-premium: 0 10px 30px rgba(0, 0, 0, 0.6);
+    --shadow-premium: 0 4px 15px rgba(0, 0, 0, 0.4);
     --radius-lg: 22px;
     --radius-md: 16px;
     --radius-sm: 12px;
