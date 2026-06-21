@@ -1658,46 +1658,46 @@ function DashboardContent() {
       <header className="dashboard-header" style={{
         position: 'relative',
         display: 'grid',
-        gridTemplateColumns: '55px 1fr 85px',
+        gridTemplateColumns: '100px 1fr 100px',
         alignItems: 'center',
         padding: '10px 16px',
         borderBottom: '1px solid var(--border-color)',
         boxSizing: 'border-box'
       }}>
-        <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', justifyContent: 'flex-start' }}>
           <div className="back-btn" onClick={() => router.push('/')} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
             <Icons.ChevronLeft size={24} style={{ color: 'var(--accent-gold)' }} />
           </div>
+          <img src="/icons/logo-transparent.png" alt="Logo" style={{ width: '38px', height: '48px', objectFit: 'contain' }} />
         </div>
         
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-            <img src="/icons/logo-transparent.png" alt="Logo" style={{ width: '32px', height: '40px', objectFit: 'contain' }} />
-            <h2 style={{
-              margin: 0,
-              fontSize: '1.25rem',
-              fontWeight: '800',
-              letterSpacing: '0.5px',
-              lineHeight: '1.1',
-              background: 'linear-gradient(to bottom, var(--gold-light) 0%, var(--gold-mid) 55%, var(--gold-dark) 100%)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              fontFamily: 'var(--font-main)',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.35rem'
-            }}>
-              BOLÃO COPA 2026
-              {isSupabaseConfigured ? (
-                <span title="Nuvem Sincronizada" style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', backgroundColor: 'var(--soccer-green)', boxShadow: '0 0 8px var(--soccer-green)' }}></span>
-              ) : (
-                <span title="Modo Demo: Salvo Localmente (LocalStorage)" style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', backgroundColor: 'var(--accent-gold)', boxShadow: '0 0 8px var(--accent-gold)', animation: 'pulse 1.5s infinite' }}></span>
-              )}
-            </h2>
+          <h2 style={{
+            margin: 0,
+            fontSize: '1.4rem',
+            fontWeight: '800',
+            letterSpacing: '0.8px',
+            lineHeight: '1.1',
+            background: 'linear-gradient(to bottom, var(--gold-light) 0%, var(--gold-mid) 55%, var(--gold-dark) 100%)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            fontFamily: 'var(--font-main)'
+          }}>
+            BOLÃO COPA 2026
+          </h2>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', marginTop: '2px' }}>
+            <p style={{ margin: 0, fontSize: '0.65rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: '700' }}>
+              EUA • MX • CAN
+            </p>
+            {isSupabaseConfigured ? (
+              <span title="Nuvem Sincronizada" style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', backgroundColor: 'var(--soccer-green)', boxShadow: '0 0 6px var(--soccer-green)' }}></span>
+            ) : (
+              <span title="Modo Demo: Salvo Localmente" style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', backgroundColor: 'var(--accent-gold)', boxShadow: '0 0 6px var(--accent-gold)', animation: 'pulse 1.5s infinite' }}></span>
+            )}
           </div>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '0.5rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '0.4rem' }}>
           {currentUser && (
             <div 
               onClick={() => {
@@ -1707,15 +1707,16 @@ function DashboardContent() {
               }}
               style={{
                 cursor: 'pointer',
-                width: '30px',
-                height: '30px',
+                width: '36px',
+                height: '36px',
                 borderRadius: '50%',
                 overflow: 'hidden',
                 border: '2px solid var(--accent-gold)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                background: 'rgba(255,255,255,0.05)'
+                background: 'rgba(225, 182, 79, 0.05)',
+                transition: 'transform 0.2s'
               }}
               title="Meu Perfil"
             >
@@ -1726,14 +1727,15 @@ function DashboardContent() {
                   style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
                 />
               ) : (
-                <Icons.User size={16} style={{ color: 'var(--accent-gold)' }} />
+                <Icons.User size={18} style={{ color: 'var(--accent-gold)' }} />
               )}
             </div>
           )}
           {activeThemeObj && (
             <img
               src={`https://flagcdn.com/w40/${activeThemeObj.flag}.png`}
-              alt={activeThemeObj.nome}
+              alt="Tema"
+              title={`Tema: ${activeThemeObj.nome}`}
               style={{
                 width: '26px',
                 height: '26px',
@@ -1745,8 +1747,8 @@ function DashboardContent() {
             />
           )}
           {allowDrawerMenu && (
-            <button className="menu-toggle-btn" onClick={() => setIsDrawerOpen(true)} style={{ margin: 0 }}>
-              <Icons.Menu size={20} />
+            <button className="menu-toggle-btn" onClick={() => setIsDrawerOpen(true)}>
+              <Icons.Menu size={20} style={{ color: 'var(--text-primary)' }} />
             </button>
           )}
         </div>
