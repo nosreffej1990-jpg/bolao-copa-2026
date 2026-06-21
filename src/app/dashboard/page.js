@@ -1690,7 +1690,7 @@ function DashboardContent() {
               EUA • MX • CAN
             </p>
             {isSupabaseConfigured ? (
-              <span title="Nuvem Sincronizada" style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', backgroundColor: 'var(--soccer-green)', boxShadow: '0 0 6px var(--soccer-green)' }}></span>
+              <span title="Nuvem Sincronizada" style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', backgroundColor: 'var(--accent-gold)', boxShadow: '0 0 6px var(--accent-gold)' }}></span>
             ) : (
               <span title="Modo Demo: Salvo Localmente" style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', backgroundColor: 'var(--accent-gold)', boxShadow: '0 0 6px var(--accent-gold)', animation: 'pulse 1.5s infinite' }}></span>
             )}
@@ -1979,7 +1979,7 @@ function DashboardContent() {
                       >
                         {savedBet.saved ? (
                           <>
-                            <Icons.Check size={14} style={{ color: 'var(--soccer-green)' }} />
+                            <Icons.Check size={14} style={{ color: 'var(--accent-gold)' }} />
                             <span>Confirmado</span>
                           </>
                         ) : (
@@ -2033,7 +2033,7 @@ function DashboardContent() {
                 onClick={() => setBolaoTypeFilter('grupos')}
                 style={{
                   flex: 1, padding: '0.5rem', borderRadius: '8px', fontSize: '0.8rem', fontWeight: 'bold',
-                  background: bolaoTypeFilter === 'grupos' ? 'var(--soccer-green)' : 'rgba(255,255,255,0.05)',
+                  background: bolaoTypeFilter === 'grupos' ? 'var(--accent-gold)' : 'rgba(255,255,255,0.05)',
                   color: bolaoTypeFilter === 'grupos' ? '#000' : '#cbd5e1', border: 'none', cursor: 'pointer',
                   transition: 'all 0.2s'
                 }}
@@ -2044,7 +2044,7 @@ function DashboardContent() {
                 onClick={() => setBolaoTypeFilter('matamata')}
                 style={{
                   flex: 1, padding: '0.5rem', borderRadius: '8px', fontSize: '0.8rem', fontWeight: 'bold',
-                  background: bolaoTypeFilter === 'matamata' ? 'var(--soccer-green)' : 'rgba(255,255,255,0.05)',
+                  background: bolaoTypeFilter === 'matamata' ? 'var(--accent-gold)' : 'rgba(255,255,255,0.05)',
                   color: bolaoTypeFilter === 'matamata' ? '#000' : '#cbd5e1', border: 'none', cursor: 'pointer',
                   transition: 'all 0.2s'
                 }}
@@ -2171,7 +2171,7 @@ function DashboardContent() {
                     border: 'none',
                     cursor: 'pointer',
                     whiteSpace: 'nowrap',
-                    background: rankingStage === s.id ? 'var(--soccer-green)' : 'rgba(255,255,255,0.08)',
+                    background: rankingStage === s.id ? 'var(--accent-gold)' : 'rgba(255,255,255,0.08)',
                     color: rankingStage === s.id ? '#000' : '#cbd5e1',
                     transition: 'all 0.2s'
                   }}
@@ -2429,7 +2429,7 @@ function DashboardContent() {
                 <button key={g} onClick={() => setSelectedGroup(g)} style={{
                   padding: '0.35rem 0.75rem', borderRadius: '999px', fontSize: '0.78rem', fontWeight: '700',
                   border: 'none', cursor: 'pointer',
-                  background: selectedGroup === g ? 'var(--soccer-green)' : 'rgba(255,255,255,0.08)',
+                  background: selectedGroup === g ? 'var(--accent-gold)' : 'rgba(255,255,255,0.08)',
                   color: selectedGroup === g ? '#000' : '#cbd5e1'
                 }}>Grupo {g}</button>
               ))}
@@ -2455,7 +2455,7 @@ function DashboardContent() {
                     <tbody>
                       {groupData.teams.map((t, idx) => (
                         <tr key={t.team} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)', background: idx < 2 ? 'rgba(16,185,129,0.07)' : 'transparent' }}>
-                          <td style={{ padding: '0.6rem 0.3rem', color: idx < 2 ? 'var(--soccer-green)' : 'var(--text-secondary)', fontWeight: 'bold', textAlign: 'center' }}>{t.position ?? idx+1}º</td>
+                          <td style={{ padding: '0.6rem 0.3rem', color: idx < 2 ? 'var(--accent-gold)' : 'var(--text-secondary)', fontWeight: 'bold', textAlign: 'center' }}>{t.position ?? idx+1}º</td>
                           <td style={{ padding: '0.6rem 0.3rem', fontWeight: '600' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                               <img src={`https://flagcdn.com/w40/${getFlagCode(t.team)}.png`} style={{ width: '20px' }} alt="" />{t.team}
@@ -2490,7 +2490,7 @@ function DashboardContent() {
             <div style={{ display: 'flex', gap: '1.5rem', overflowX: 'auto', padding: '1rem 0' }}>
               {/* Fase de 32 (16 avos) */}
               <div style={{ flex: '0 0 240px', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                <h4 style={{ textAlign: 'center', color: 'var(--soccer-green)', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem', fontSize: '0.85rem' }}>16 avos (32 times)</h4>
+                <h4 style={{ textAlign: 'center', color: 'var(--accent-gold)', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem', fontSize: '0.85rem' }}>16 avos (32 times)</h4>
                 {confrontos.filter(c => c.grupo === 'R32').map(g => {
                   const hFlag = getFlagCode(g.home_team);
                   const aFlag = getFlagCode(g.away_team);
@@ -2521,7 +2521,7 @@ function DashboardContent() {
 
               {/* Oitavas */}
               <div style={{ flex: '0 0 240px', display: 'flex', flexDirection: 'column', gap: '2rem', justifyContent: 'space-around' }}>
-                <h4 style={{ textAlign: 'center', color: 'var(--soccer-green)', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem', fontSize: '0.85rem' }}>Oitavas de Final</h4>
+                <h4 style={{ textAlign: 'center', color: 'var(--accent-gold)', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem', fontSize: '0.85rem' }}>Oitavas de Final</h4>
                 {confrontos.filter(c => c.grupo === 'R16').map(g => {
                   const hFlag = getFlagCode(g.home_team);
                   const aFlag = getFlagCode(g.away_team);
@@ -2552,7 +2552,7 @@ function DashboardContent() {
 
               {/* Quartas */}
               <div style={{ flex: '0 0 240px', display: 'flex', flexDirection: 'column', gap: '4rem', justifyContent: 'space-around' }}>
-                <h4 style={{ textAlign: 'center', color: 'var(--soccer-green)', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem', fontSize: '0.85rem' }}>Quartas de Final</h4>
+                <h4 style={{ textAlign: 'center', color: 'var(--accent-gold)', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem', fontSize: '0.85rem' }}>Quartas de Final</h4>
                 {confrontos.filter(c => c.grupo === 'QF').map(g => {
                   const hFlag = getFlagCode(g.home_team);
                   const aFlag = getFlagCode(g.away_team);
@@ -2583,7 +2583,7 @@ function DashboardContent() {
 
               {/* Semifinais */}
               <div style={{ flex: '0 0 240px', display: 'flex', flexDirection: 'column', gap: '8rem', justifyContent: 'space-around' }}>
-                <h4 style={{ textAlign: 'center', color: 'var(--soccer-green)', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem', fontSize: '0.85rem' }}>Semifinais</h4>
+                <h4 style={{ textAlign: 'center', color: 'var(--accent-gold)', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem', fontSize: '0.85rem' }}>Semifinais</h4>
                 {confrontos.filter(c => c.grupo === 'SF').map(g => {
                   const hFlag = getFlagCode(g.home_team);
                   const aFlag = getFlagCode(g.away_team);
@@ -2614,7 +2614,7 @@ function DashboardContent() {
 
               {/* Final e Terceiro Lugar */}
               <div style={{ flex: '0 0 240px', display: 'flex', flexDirection: 'column', gap: '3rem', justifyContent: 'center' }}>
-                <h4 style={{ textAlign: 'center', color: 'var(--soccer-green)', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem', fontSize: '0.85rem' }}>Finais</h4>
+                <h4 style={{ textAlign: 'center', color: 'var(--accent-gold)', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem', fontSize: '0.85rem' }}>Finais</h4>
                 
                 {/* Final */}
                 {confrontos.filter(c => c.grupo === 'FINAL').map(g => {
@@ -2689,7 +2689,7 @@ function DashboardContent() {
             <div style={{ overflowX: 'auto', background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '12px' }}>
               {(() => {
                 const stages = [
-                  { key: 'approved', label: 'Grupos', btnColor: 'linear-gradient(135deg, var(--soccer-green), #10b981)' },
+                  { key: 'approved', label: 'Grupos', btnColor: 'linear-gradient(135deg, var(--accent-gold), #10b981)' },
                   { key: 'approved_r32', label: '1/16 Final', btnColor: 'linear-gradient(135deg, var(--accent-gold), #b8860b)' },
                   { key: 'approved_r16', label: 'Oitavas (1/8)', btnColor: 'linear-gradient(135deg, var(--accent-gold), #b8860b)' },
                   { key: 'approved_qf', label: 'Quartas (1/4)', btnColor: 'linear-gradient(135deg, var(--accent-gold), #b8860b)' },
@@ -2726,7 +2726,7 @@ function DashboardContent() {
                                   href={`https://wa.me/${u.whatsapp.replace(/\D/g, '')}`}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  style={{ color: 'var(--soccer-green)', textDecoration: 'none', fontWeight: '600', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}
+                                  style={{ color: 'var(--accent-gold)', textDecoration: 'none', fontWeight: '600', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}
                                 >
                                   💬 {u.whatsapp}
                                 </a>
@@ -2752,7 +2752,7 @@ function DashboardContent() {
                                     <span style={{
                                       padding: '0.1rem 0.4rem', borderRadius: '999px', fontSize: '0.65rem', fontWeight: 'bold',
                                       background: isApproved ? 'rgba(16,185,129,0.12)' : 'rgba(239,68,68,0.12)',
-                                      color: isApproved ? 'var(--soccer-green)' : '#f87171'
+                                      color: isApproved ? 'var(--accent-gold)' : '#f87171'
                                     }}>
                                       {isApproved ? '✔ Pago' : '⏳ Pendente'}
                                     </span>
@@ -3104,7 +3104,7 @@ function DashboardContent() {
                   }}
                   style={{
                     background: 'rgba(16,185,129,0.12)', border: '1px solid rgba(16,185,129,0.4)',
-                    color: 'var(--soccer-green)', padding: '0.4rem 1rem', borderRadius: '8px',
+                    color: 'var(--accent-gold)', padding: '0.4rem 1rem', borderRadius: '8px',
                     fontSize: '0.75rem', fontWeight: 'bold', cursor: 'pointer', alignSelf: 'flex-start'
                   }}
                 >
@@ -3490,7 +3490,7 @@ function DashboardContent() {
                     
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                       {playerBolao ? (
-                        <span style={{ fontSize: '0.68rem', background: 'rgba(16,185,129,0.1)', color: 'var(--soccer-green)', padding: '2px 8px', borderRadius: '999px', fontWeight: 'bold' }}>
+                        <span style={{ fontSize: '0.68rem', background: 'rgba(16,185,129,0.1)', color: 'var(--accent-gold)', padding: '2px 8px', borderRadius: '999px', fontWeight: 'bold' }}>
                           Palpites Ativos
                         </span>
                       ) : (
@@ -3973,7 +3973,7 @@ function DashboardContent() {
             )}
 
             {cameraStep === 3 && (
-              <div style={{ textAlign: 'center', padding: '2rem 0', color: 'var(--soccer-green)' }}>
+              <div style={{ textAlign: 'center', padding: '2rem 0', color: 'var(--accent-gold)' }}>
                 <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🎉</div>
                 <p style={{ fontWeight: 'bold' }}>Leitura concluída com sucesso!</p>
                 <span style={{ fontSize: '0.7rem', color: 'var(--text-primary)' }}>O bolão de {tempBettorName} foi adicionado ao ranking.</span>
@@ -4016,7 +4016,7 @@ function DashboardContent() {
                   <div style={{ fontSize: '2rem', fontWeight: '900', color: 'var(--text-primary)', letterSpacing: '4px' }}>
                     {((g.finished === 'TRUE' || g.finished === true || g.time_elapsed === 'finished' || (g.time_elapsed && g.time_elapsed !== 'notstarted')) && g.home_score !== undefined && g.home_score !== null && g.home_score !== '' && String(g.home_score) !== 'null') ? `${g.home_score} — ${g.away_score}` : 'vs'}
                   </div>
-                  <span style={{ fontSize: '0.6rem', color: (g.finished === 'TRUE' || g.finished === true || g.time_elapsed === 'finished') ? 'var(--soccer-green)' : 'var(--accent-gold)', fontWeight: 'bold' }}>
+                  <span style={{ fontSize: '0.6rem', color: (g.finished === 'TRUE' || g.finished === true || g.time_elapsed === 'finished') ? 'var(--accent-gold)' : 'var(--accent-gold)', fontWeight: 'bold' }}>
                     {(g.finished === 'TRUE' || g.finished === true || g.time_elapsed === 'finished') ? `ENCERRADO • ${date}` : (g.time_elapsed && g.time_elapsed !== 'notstarted') ? `AO VIVO • ${g.time_elapsed}` : `${date} às ${time}`}
                   </span>
                 </div>
@@ -4031,7 +4031,7 @@ function DashboardContent() {
                 <button
                   onClick={() => setMatchModalTab('detalhes')}
                   style={{ flex: 1, padding: '0.6rem', borderRadius: '8px', fontWeight: '700', fontSize: '0.8rem', cursor: 'pointer', border: 'none',
-                    background: matchModalTab === 'detalhes' ? 'var(--soccer-green)' : 'rgba(255,255,255,0.07)',
+                    background: matchModalTab === 'detalhes' ? 'var(--accent-gold)' : 'rgba(255,255,255,0.07)',
                     color: matchModalTab === 'detalhes' ? '#000' : '#cbd5e1' }}
                 >⚽ Detalhes</button>
                 <button
@@ -4082,7 +4082,7 @@ function DashboardContent() {
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem' }}>
                       <span style={{ color: 'var(--text-secondary)' }}>Status</span>
-                      <span style={{ fontWeight: 'bold', color: (g.finished === 'TRUE' || g.finished === true || g.time_elapsed === 'finished') ? 'var(--soccer-green)' : 'var(--accent-gold)' }}>
+                      <span style={{ fontWeight: 'bold', color: (g.finished === 'TRUE' || g.finished === true || g.time_elapsed === 'finished') ? 'var(--accent-gold)' : 'var(--accent-gold)' }}>
                         {g.finished === 'TRUE' || g.finished === true || g.time_elapsed === 'finished' ? '✔ Encerrado' : (g.time_elapsed && g.time_elapsed !== 'notstarted') ? '🔴 Ao Vivo' : '⏳ Agendado'}
                       </span>
                     </div>
@@ -4118,12 +4118,12 @@ function DashboardContent() {
                               {!item.isFinished && !item.isLive ? (
                                 <p style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>⏳ Jogo não iniciado</p>
                               ) : item.isLive ? (
-                                <p style={{ fontSize: '0.68rem', fontWeight: '700', color: (item.exact || item.correct) ? 'var(--soccer-green)' : '#f87171' }}>
+                                <p style={{ fontSize: '0.68rem', fontWeight: '700', color: (item.exact || item.correct) ? 'var(--accent-gold)' : '#f87171' }}>
                                   {item.exact ? '🟢 Vencendo - Exato (+5)' : item.correct ? '🟡 Vencendo - Vencedor (+3)' : '🔴 Perdendo (0 pts)'}
                                   <span style={{ fontSize: '0.55rem', fontWeight: 'normal', color: 'rgba(255,255,255,0.4)', marginLeft: '0.2rem' }}>(parcial)</span>
                                 </p>
                               ) : (
-                                <p style={{ fontSize: '0.68rem', fontWeight: '600', color: item.exact ? 'var(--soccer-green)' : item.correct ? 'var(--accent-gold)' : '#f87171' }}>
+                                <p style={{ fontSize: '0.68rem', fontWeight: '600', color: item.exact ? 'var(--accent-gold)' : item.correct ? 'var(--accent-gold)' : '#f87171' }}>
                                   {item.exact ? '🎯 Exato (+5 pts)' : item.correct ? '✅ Vencedor (+3 pts)' : '❌ Errou (0 pts)'}
                                 </p>
                               )}
@@ -4307,7 +4307,7 @@ function DashboardContent() {
               {/* Stats resumo */}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '0.5rem', marginBottom: '1rem' }}>
                 {[{ label: 'Total Pts', val: totalPts, color: 'var(--accent-gold)' },
-                  { label: '🎯 Exatos', val: exatos, color: 'var(--soccer-green)' },
+                  { label: '🎯 Exatos', val: exatos, color: 'var(--accent-gold)' },
                   { label: '✅ Vencedor', val: corretos, color: '#60a5fa' },
                   { label: '❌ Erros', val: erros, color: '#f87171' }].map(s => (
                   <div key={s.label} style={{ background: 'var(--bg-card)', borderRadius: '8px', padding: '0.5rem', textAlign: 'center' }}>
@@ -4319,7 +4319,7 @@ function DashboardContent() {
               {/* Lista de palpites */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
                 {calculatedBets.map((bet, idx) => {
-                  const ptsColor = bet.pts === 5 ? 'var(--soccer-green)' : bet.pts === 3 ? 'var(--accent-gold)' : bet.pts === 0 ? '#f87171' : 'var(--text-muted)';
+                  const ptsColor = bet.pts === 5 ? 'var(--accent-gold)' : bet.pts === 3 ? 'var(--accent-gold)' : bet.pts === 0 ? '#f87171' : 'var(--text-muted)';
                   return (
                     <div key={idx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.5rem 0.6rem', borderRadius: '8px', background: 'var(--bg-card)' }}>
                       <div style={{ flex: 1 }}>
@@ -4506,7 +4506,7 @@ function DashboardContent() {
                 <button className="btn-upload-bolao" style={{ backgroundColor: 'var(--bg-card)', color: 'var(--text-secondary)' }} onClick={() => setShowWizardModal(false)}>
                   Cancelar
                 </button>
-                <button className="btn-upload-bolao" style={{ backgroundColor: 'var(--soccer-green)', color: '#000' }} onClick={saveWizardBolao}>
+                <button className="btn-upload-bolao" style={{ backgroundColor: 'var(--accent-gold)', color: '#000' }} onClick={saveWizardBolao}>
                   Salvar Bolão
                 </button>
               </div>
@@ -4626,7 +4626,7 @@ function DashboardContent() {
                <div style={{ background: 'var(--bg-card)', borderRadius: '12px', padding: '1rem', textAlign: 'center', marginBottom: '1.25rem' }}>
                 <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'block', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Pontuação Considerada</span>
                 <strong style={{ fontSize: '2rem', color: 'var(--accent-gold)', display: 'block', marginTop: '0.2rem' }}>{totalPts} pts</strong>
-                <span style={{ fontSize: '0.7rem', color: 'var(--soccer-green)' }}>Exibindo apenas jogos com acerto exato (+5) ou vencedor (+3)</span>
+                <span style={{ fontSize: '0.7rem', color: 'var(--accent-gold)' }}>Exibindo apenas jogos com acerto exato (+5) ou vencedor (+3)</span>
                 
                 <button
                   onClick={() => {
@@ -4686,7 +4686,7 @@ function DashboardContent() {
                           </p>
                         </div>
                         <div style={{ textAlign: 'right' }}>
-                          <span style={{ fontSize: '0.9rem', fontWeight: '900', color: exact ? 'var(--soccer-green)' : 'var(--accent-gold)' }}>
+                          <span style={{ fontSize: '0.9rem', fontWeight: '900', color: exact ? 'var(--accent-gold)' : 'var(--accent-gold)' }}>
                             +{bet.pts} pts
                           </span>
                           <p style={{ fontSize: '0.6rem', color: 'var(--text-secondary)', marginTop: '0.1rem' }}>
@@ -4931,7 +4931,7 @@ function DashboardContent() {
             <button
               onClick={() => setShowPaquetaModal(false)}
               style={{
-                background: 'linear-gradient(135deg, var(--soccer-green), #10b981)',
+                background: 'linear-gradient(135deg, var(--accent-gold), #10b981)',
                 border: 'none', borderRadius: '12px',
                 color: '#000', fontWeight: 'bold',
                 padding: '0.8rem 2rem', fontSize: '0.9rem',
@@ -4948,7 +4948,7 @@ function DashboardContent() {
       {/* Dynamic Toast Indicator */}
       {toastMsg && (
         <div className="toast-bar" style={{
-          background: toastType === 'error' ? 'linear-gradient(135deg, #ef4444, #b91c1c)' : 'linear-gradient(135deg, var(--soccer-green), #10b981)',
+          background: toastType === 'error' ? 'linear-gradient(135deg, #ef4444, #b91c1c)' : 'linear-gradient(135deg, var(--accent-gold), #10b981)',
           color: toastType === 'error' ? '#fff' : '#000',
           fontWeight: 'bold',
           border: toastType === 'error' ? '1px solid rgba(239,68,68,0.4)' : '1px solid rgba(16,185,129,0.4)'

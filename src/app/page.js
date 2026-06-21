@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Icons } from '@/components/Icons';
-import { getFlagCode } from '@/lib/worldcupApi';
+import { getFlagCode, formatMatchDate } from '@/lib/worldcupApi';
 import { supabase, defaultUsuarios, isSupabaseConfigured } from '@/lib/supabase';
 import { useTheme, THEMES } from '@/components/ThemeProvider';
 
@@ -447,7 +447,7 @@ export default function Home() {
                     padding: '1.25rem 1.5rem',
                     display: 'flex',
                     alignItems: 'center',
-                    justifyContent: 'space-between',
+                    justifyContent: 'center',
                     cursor: 'pointer',
                     boxShadow: '0 8px 30px rgba(251, 191, 36, 0.35), 0 0 60px rgba(251, 191, 36, 0.1)',
                     transition: 'all 0.2s',
@@ -463,10 +463,10 @@ export default function Home() {
                     e.currentTarget.style.boxShadow = '0 8px 30px rgba(251, 191, 36, 0.3)';
                   }}
                 >
-                  <div style={{ display: 'flex', flexDirection: 'column', textAlign: 'left', gap: '0.15rem' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', textAlign: 'center', gap: '0.15rem' }}>
                     <span style={{ fontSize: '1.15rem', fontWeight: '900', color: '#1a0f00', letterSpacing: '0.04em', textTransform: 'uppercase' }}>Login</span>
                   </div>
-                  <Icons.ChevronRight size={22} style={{ color: '#000' }} />
+                  
                 </div>
 
                 {/* 2x2 Grid for standard features */}
@@ -498,7 +498,7 @@ export default function Home() {
                       justifyContent: 'center',
                       border: '1px solid rgba(251, 191, 36, 0.15)'
                     }}>
-                      <Icons.Trophy size={24} style={{ color: '#FBBF24' }} />
+                      <Icons.Trophy size={20} style={{ color: 'var(--accent-gold)' }} />
                     </div>
                     <span style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#fff' }}>Classificação</span>
                     <span style={{ fontSize: '0.65rem', color: 'rgba(251, 191, 36, 0.7)' }}>Ver líderes e pontos</span>
@@ -531,7 +531,7 @@ export default function Home() {
                       justifyContent: 'center',
                       border: '1px solid rgba(251, 191, 36, 0.15)'
                     }}>
-                      <Icons.Check size={24} style={{ color: '#FBBF24' }} />
+                      <Icons.Check size={20} style={{ color: 'var(--accent-gold)' }} />
                     </div>
                     <span style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#fff' }}>Resultados</span>
                     <span style={{ fontSize: '0.65rem', color: 'rgba(251, 191, 36, 0.7)' }}>Jogos finalizados</span>
@@ -564,7 +564,7 @@ export default function Home() {
                       justifyContent: 'center',
                       border: '1px solid rgba(251, 191, 36, 0.15)'
                     }}>
-                      <Icons.Calendar size={24} style={{ color: '#FBBF24' }} />
+                      <Icons.Calendar size={20} style={{ color: 'var(--accent-gold)' }} />
                     </div>
                     <span style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#fff' }}>Confrontos</span>
                     <span style={{ fontSize: '0.65rem', color: 'rgba(251, 191, 36, 0.7)' }}>Agenda de jogos</span>
@@ -597,7 +597,7 @@ export default function Home() {
                       justifyContent: 'center',
                       border: '1px solid rgba(251, 191, 36, 0.15)'
                     }}>
-                      <Icons.List size={24} style={{ color: '#FBBF24' }} />
+                      <Icons.List size={20} style={{ color: 'var(--accent-gold)' }} />
                     </div>
                     <span style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#fff' }}>Grupos</span>
                     <span style={{ fontSize: '0.65rem', color: 'rgba(251, 191, 36, 0.7)' }}>Classificação oficial</span>
@@ -606,7 +606,7 @@ export default function Home() {
 
                 {/* Próximos Jogos Section */}
                 <div style={{ marginTop: '0.5rem', width: '100%', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 0.25rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '0 0.25rem' }}>
                     <span style={{ fontSize: '0.9rem', fontWeight: '900', color: 'var(--accent-gold)', letterSpacing: '0.05em' }}>PRÓXIMOS JOGOS</span>
                     <Icons.ChevronRight size={18} style={{ color: 'var(--accent-gold)', cursor: 'pointer' }} onClick={() => handleDirectNavigate('confrontos_geral')} />
                   </div>
@@ -626,7 +626,7 @@ export default function Home() {
                         boxShadow: '0 4px 20px rgba(251, 191, 36, 0.08)'
                       }}>
                         <span style={{ fontSize: '0.65rem', fontWeight: 'bold', color: '#FBBF24' }}>
-                          {new Date(g.match_date).toLocaleDateString('pt-BR')} {g.match_time ? g.match_time.slice(0, 5) : ''}
+                          {formatMatchDate(g.match_date).date} {g.match_time ? g.match_time.slice(0, 5) : ''}
                         </span>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'center', width: '100%' }}>
                           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1, gap: '0.2rem' }}>
