@@ -441,8 +441,8 @@ export default function Home() {
                 <div 
                   onClick={() => { setShowLogin(true); setShowRegister(false); setErrorMsg(''); }}
                   style={{
-                    background: 'linear-gradient(135deg, #FBBF24 0%, #D4A017 50%, #C8960E 100%)',
-                    border: '2px solid rgba(255, 215, 0, 0.6)',
+                    background: 'var(--btn-primary-bg)',
+                    border: '1px solid rgba(210, 167, 79, 0.4)',
                     borderRadius: '20px',
                     padding: '1.25rem 1.5rem',
                     display: 'flex',
@@ -768,9 +768,7 @@ export default function Home() {
                       textAlign: 'center',
                       background: 'rgba(255, 255, 255, 0.05)',
                       border: '1px solid #E1B64F',
-                      backgroundImage: 'linear-gradient(to bottom, #FFDF7A 0%, #E1B64F 55%, #9C711D 100%)',
-                      WebkitBackgroundClip: 'text',
-                      WebkitTextFillColor: 'transparent',
+                      background: 'var(--btn-primary-bg)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
                       fontWeight: '800',
                       letterSpacing: '1px'
                     }}>
@@ -897,7 +895,7 @@ export default function Home() {
                 style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.15rem', cursor: 'pointer', flex: 1 }}
               >
                 <Icons.Home size={21} style={{ color: (!showLogin && !showRegister) ? 'var(--accent-gold)' : 'var(--text-secondary)' }} />
-                <span style={{ fontSize: '0.6rem', fontWeight: '700', color: (!showLogin && !showRegister) ? 'var(--accent-gold)' : 'var(--text-secondary)', letterSpacing: '0.03em' }}>INÍCIO</span>
+                <span className={(!showLogin && !showRegister) ? "text-gold-gradient" : ""} style={{ fontSize: '0.6rem', fontWeight: '700', color: (!showLogin && !showRegister) ? 'transparent' : 'var(--text-secondary)', letterSpacing: '0.03em' }}>INÍCIO</span>
               </div>
               <div 
                 onClick={() => handleDirectNavigate('ranking')}
@@ -911,7 +909,7 @@ export default function Home() {
                 style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.15rem', cursor: 'pointer', flex: 1 }}
               >
                 <Icons.LogIn size={21} style={{ color: (showLogin || showRegister) ? 'var(--accent-gold)' : 'var(--text-secondary)' }} />
-                <span style={{ fontSize: '0.6rem', fontWeight: '700', color: (showLogin || showRegister) ? 'var(--accent-gold)' : 'var(--text-secondary)', letterSpacing: '0.03em' }}>LOGIN</span>
+                <span className={(showLogin || showRegister) ? "text-gold-gradient" : ""} style={{ fontSize: '0.6rem', fontWeight: '700', color: (showLogin || showRegister) ? 'transparent' : 'var(--text-secondary)', letterSpacing: '0.03em' }}>LOGIN</span>
               </div>
             </div>
           </div>

@@ -1666,7 +1666,7 @@ function DashboardContent() {
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', justifyContent: 'flex-start' }}>
           <div className="back-btn" onClick={() => router.push('/')} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
-            <Icons.ChevronLeft size={24} style={{ color: 'var(--accent-gold)' }} />
+            <Icons.ChevronLeft size={24} style={{ color: '#D2A74F' }} />
           </div>
           <img src="/icons/logo-transparent.png" alt="Logo" style={{ width: '38px', height: '48px', objectFit: 'contain' }} />
         </div>
@@ -1727,7 +1727,7 @@ function DashboardContent() {
                   style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
                 />
               ) : (
-                <Icons.User size={18} style={{ color: 'var(--accent-gold)' }} />
+                <Icons.User size={18} style={{ color: '#D2A74F' }} />
               )}
             </div>
           )}
@@ -1811,8 +1811,8 @@ function DashboardContent() {
                 onClick={() => { setActiveTab('apostas_elim'); setIsDrawerOpen(false); }}
                 style={{ background: 'rgba(251,191,36,0.08)', borderLeft: '3px solid var(--accent-gold)' }}
               >
-                <Icons.Trophy size={18} style={{ color: 'var(--accent-gold)' }} />
-                <span style={{ color: 'var(--accent-gold)', fontWeight: 'bold' }}>Apostar Mata-mata</span>
+                <Icons.Trophy size={18} style={{ color: '#D2A74F' }} />
+                <span style={{ color: '#D2A74F', fontWeight: 'bold' }}>Apostar Mata-mata</span>
               </button>
             )}
 
@@ -1866,7 +1866,7 @@ function DashboardContent() {
                   />
                   <div>
                     <p style={{ fontWeight: 'bold', fontSize: '0.85rem' }}>{currentUser}</p>
-                    <span style={{ fontSize: '0.7rem', color: 'var(--accent-gold)' }}>Logado</span>
+                    <span style={{ fontSize: '0.7rem',  }} className="text-gold-gradient">Logado</span>
                   </div>
                 </div>
                 <button className="btn-logout" onClick={handleLogout}>
@@ -1979,7 +1979,7 @@ function DashboardContent() {
                       >
                         {savedBet.saved ? (
                           <>
-                            <Icons.Check size={14} style={{ color: 'var(--accent-gold)' }} />
+                            <Icons.Check size={14} style={{ color: '#D2A74F' }} />
                             <span>Confirmado</span>
                           </>
                         ) : (
@@ -2216,7 +2216,7 @@ function DashboardContent() {
                       <div className="podium-box">
                         <span className="podium-name">{top3[0].name}</span>
                         <span className="podium-pts">{top3[0].pts} pts</span>
-                        <span style={{ fontSize: '0.65rem', color: 'var(--accent-gold)', fontWeight: 'bold' }}>1º Lugar</span>
+                        <span style={{ fontSize: '0.65rem', color: '#D2A74F', fontWeight: 'bold' }}>1º Lugar</span>
                       </div>
                     </div>
                   )}
@@ -2465,7 +2465,7 @@ function DashboardContent() {
                           <td style={{ textAlign: 'center', padding: '0.6rem 0.3rem' }}>{t.drawn ?? '-'}</td>
                           <td style={{ textAlign: 'center', padding: '0.6rem 0.3rem' }}>{t.lost ?? '-'}</td>
                           <td style={{ textAlign: 'center', padding: '0.6rem 0.3rem' }}>{t.goalDifference ?? t.goal_difference ?? '-'}</td>
-                          <td style={{ textAlign: 'center', padding: '0.6rem 0.3rem', fontWeight: '900', color: 'var(--accent-gold)' }}>{t.points ?? '-'}</td>
+                          <td style={{ textAlign: 'center', padding: '0.6rem 0.3rem', fontWeight: '900', color: '#D2A74F' }}>{t.points ?? '-'}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -2480,7 +2480,7 @@ function DashboardContent() {
         {activeTab === 'chaveamento' && currentUser && (
           <div className="tab-pane active" style={{ animation: 'fadeIn 0.4s ease-out' }}>
             <div style={{ marginBottom: '1rem' }}>
-              <h3 style={{ color: 'var(--accent-gold)' }}>Chaveamento da Copa 2026</h3>
+              <h3 style={{ color: '#D2A74F' }}>Chaveamento da Copa 2026</h3>
               <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
                 Visualização de testes dos confrontos de mata-mata. (Oculto para usuários finais)
               </p>
@@ -2489,7 +2489,7 @@ function DashboardContent() {
             <div style={{ display: 'flex', gap: '1.5rem', overflowX: 'auto', padding: '1rem 0' }}>
               {/* Fase de 32 (16 avos) */}
               <div style={{ flex: '0 0 240px', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                <h4 style={{ textAlign: 'center', color: 'var(--accent-gold)', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem', fontSize: '0.85rem' }}>16 avos (32 times)</h4>
+                <h4 style={{ textAlign: 'center', color: '#D2A74F', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem', fontSize: '0.85rem' }}>16 avos (32 times)</h4>
                 {confrontos.filter(c => c.grupo === 'R32').map(g => {
                   const hFlag = getFlagCode(g.home_team);
                   const aFlag = getFlagCode(g.away_team);
@@ -2520,7 +2520,7 @@ function DashboardContent() {
 
               {/* Oitavas */}
               <div style={{ flex: '0 0 240px', display: 'flex', flexDirection: 'column', gap: '2rem', justifyContent: 'space-around' }}>
-                <h4 style={{ textAlign: 'center', color: 'var(--accent-gold)', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem', fontSize: '0.85rem' }}>Oitavas de Final</h4>
+                <h4 style={{ textAlign: 'center', color: '#D2A74F', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem', fontSize: '0.85rem' }}>Oitavas de Final</h4>
                 {confrontos.filter(c => c.grupo === 'R16').map(g => {
                   const hFlag = getFlagCode(g.home_team);
                   const aFlag = getFlagCode(g.away_team);
@@ -2551,7 +2551,7 @@ function DashboardContent() {
 
               {/* Quartas */}
               <div style={{ flex: '0 0 240px', display: 'flex', flexDirection: 'column', gap: '4rem', justifyContent: 'space-around' }}>
-                <h4 style={{ textAlign: 'center', color: 'var(--accent-gold)', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem', fontSize: '0.85rem' }}>Quartas de Final</h4>
+                <h4 style={{ textAlign: 'center', color: '#D2A74F', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem', fontSize: '0.85rem' }}>Quartas de Final</h4>
                 {confrontos.filter(c => c.grupo === 'QF').map(g => {
                   const hFlag = getFlagCode(g.home_team);
                   const aFlag = getFlagCode(g.away_team);
@@ -2582,7 +2582,7 @@ function DashboardContent() {
 
               {/* Semifinais */}
               <div style={{ flex: '0 0 240px', display: 'flex', flexDirection: 'column', gap: '8rem', justifyContent: 'space-around' }}>
-                <h4 style={{ textAlign: 'center', color: 'var(--accent-gold)', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem', fontSize: '0.85rem' }}>Semifinais</h4>
+                <h4 style={{ textAlign: 'center', color: '#D2A74F', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem', fontSize: '0.85rem' }}>Semifinais</h4>
                 {confrontos.filter(c => c.grupo === 'SF').map(g => {
                   const hFlag = getFlagCode(g.home_team);
                   const aFlag = getFlagCode(g.away_team);
@@ -2613,7 +2613,7 @@ function DashboardContent() {
 
               {/* Final e Terceiro Lugar */}
               <div style={{ flex: '0 0 240px', display: 'flex', flexDirection: 'column', gap: '3rem', justifyContent: 'center' }}>
-                <h4 style={{ textAlign: 'center', color: 'var(--accent-gold)', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem', fontSize: '0.85rem' }}>Finais</h4>
+                <h4 style={{ textAlign: 'center', color: '#D2A74F', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem', fontSize: '0.85rem' }}>Finais</h4>
                 
                 {/* Final */}
                 {confrontos.filter(c => c.grupo === 'FINAL').map(g => {
@@ -2621,7 +2621,7 @@ function DashboardContent() {
                   const aFlag = getFlagCode(g.away_team);
                   return (
                     <div key={g.id} style={{ background: 'rgba(251, 191, 36, 0.1)', border: '1px solid var(--accent-gold)', borderRadius: '8px', padding: '0.75rem', fontSize: '0.75rem' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--accent-gold)', fontWeight: 'bold', marginBottom: '0.25rem', fontSize: '0.65rem' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', color: '#D2A74F', fontWeight: 'bold', marginBottom: '0.25rem', fontSize: '0.65rem' }}>
                         <span>FINAL (Jogo #{g.id})</span>
                         <span>{g.match_date}</span>
                       </div>
@@ -2725,7 +2725,7 @@ function DashboardContent() {
                                   href={`https://wa.me/${u.whatsapp.replace(/\D/g, '')}`}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  style={{ color: 'var(--accent-gold)', textDecoration: 'none', fontWeight: '600', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}
+                                  style={{ color: '#D2A74F', textDecoration: 'none', fontWeight: '600', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}
                                 >
                                   💬 {u.whatsapp}
                                 </a>
@@ -2816,7 +2816,7 @@ function DashboardContent() {
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem', textAlign: 'left' }}>
                       <span style={{ fontWeight: 'bold', color: 'var(--text-primary)', fontSize: '0.85rem' }}>{b.bettor_name}</span>
                       <span style={{ fontSize: '0.72rem', color: 'var(--text-secondary)' }}>
-                        Associado ao perfil: <strong style={{ color: 'var(--accent-gold)' }}>{b.username || 'Nenhum'}</strong>
+                        Associado ao perfil: <strong style={{  }}>{b.username || 'Nenhum'}</strong className="text-gold-gradient">
                       </span>
                     </div>
                     
@@ -2891,7 +2891,7 @@ function DashboardContent() {
 
             <button 
               className="btn-upload-bolao" 
-              style={{ backgroundColor: 'rgba(251,191,36,0.12)', color: 'var(--accent-gold)', border: '1px solid rgba(251,191,36,0.3)', marginBottom: '1.25rem', width: '100%', cursor: 'pointer', fontWeight: 'bold' }}
+              style={{ backgroundColor: 'rgba(251,191,36,0.12)', color: '#D2A74F', border: '1px solid rgba(251,191,36,0.3)', marginBottom: '1.25rem', width: '100%', cursor: 'pointer', fontWeight: 'bold' }}
               onClick={() => setActiveTab('gerenciar_usuarios')}
             >
               👥 Ir para o Gerenciador de Usuários
@@ -2907,7 +2907,7 @@ function DashboardContent() {
               flexDirection: 'column',
               gap: '1rem'
             }}>
-              <h4 style={{ fontSize: '0.85rem', color: 'var(--accent-gold)', margin: 0, fontWeight: 'bold' }}>⚙️ Painel de Ativações do Admin</h4>
+              <h4 style={{ fontSize: '0.85rem', color: '#D2A74F', margin: 0, fontWeight: 'bold' }}>⚙️ Painel de Ativações do Admin</h4>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1.5rem' }}>
                 <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.78rem', cursor: 'pointer' }}>
                   <input
@@ -3103,7 +3103,7 @@ function DashboardContent() {
                   }}
                   style={{
                     background: 'rgba(16,185,129,0.12)', border: '1px solid rgba(16,185,129,0.4)',
-                    color: 'var(--accent-gold)', padding: '0.4rem 1rem', borderRadius: '8px',
+                    color: '#D2A74F', padding: '0.4rem 1rem', borderRadius: '8px',
                     fontSize: '0.75rem', fontWeight: 'bold', cursor: 'pointer', alignSelf: 'flex-start'
                   }}
                 >
@@ -3170,7 +3170,7 @@ function DashboardContent() {
                   boxShadow: '0 20px 40px rgba(0,0,0,0.6)'
                 }}>
                   <div style={{ fontSize: '4rem', marginBottom: '1.25rem' }}>⏳</div>
-                  <h3 style={{ fontSize: '1.3rem', marginBottom: '0.85rem', color: 'var(--accent-gold)', fontWeight: 'bold' }}>
+                  <h3 style={{ fontSize: '1.3rem', marginBottom: '0.85rem', color: '#D2A74F', fontWeight: 'bold' }}>
                     Fase de Grupos em Andamento
                   </h3>
                   <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', lineHeight: '1.6', margin: 0 }}>
@@ -3184,7 +3184,7 @@ function DashboardContent() {
           return (
             <div className="tab-pane active" style={{ animation: 'fadeIn 0.4s ease-out' }}>
               <div style={{ marginBottom: '1.25rem' }}>
-                <h3 style={{ fontSize: '1.1rem', marginBottom: '0.2rem', color: 'var(--accent-gold)' }}>Apostas do Mata-Mata</h3>
+                <h3 style={{ fontSize: '1.1rem', marginBottom: '0.2rem', color: '#D2A74F' }}>Apostas do Mata-Mata</h3>
                 <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
                   Defina seus palpites para as fases decisivas da Copa 2026. Cada fase requer liberação/pagamento individual.
                 </p>
@@ -3234,13 +3234,13 @@ function DashboardContent() {
                   boxShadow: '0 20px 40px rgba(0,0,0,0.6)'
                 }}>
                   <div style={{ fontSize: '3.5rem', marginBottom: '1.25rem' }}>🔒</div>
-                  <h3 style={{ fontSize: '1.25rem', marginBottom: '0.85rem', color: 'var(--accent-gold)', fontWeight: 'bold' }}>
+                  <h3 style={{ fontSize: '1.25rem', marginBottom: '0.85rem', color: '#D2A74F', fontWeight: 'bold' }}>
                     Área Bloqueada - Taxa de Inscrição {activeStageConfig.name}
                   </h3>
                   <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', lineHeight: '1.6', marginBottom: '1rem' }}>
                     Para liberar seus palpites para a fase de <strong>{activeStageConfig.text}</strong>, faça o pagamento da taxa adicional desta etapa e envie o comprovante Pix para o Junior.
                   </p>
-                  <p style={{ fontSize: '0.78rem', color: 'var(--accent-gold)', background: 'rgba(251,191,36,0.08)', border: '1px dashed rgba(251,191,36,0.3)', padding: '0.75rem', borderRadius: '10px', marginTop: '0.2rem', marginBottom: '1.5rem', lineHeight: '1.4' }}>
+                  <p style={{ fontSize: '0.78rem', color: '#D2A74F', background: 'rgba(251,191,36,0.08)', border: '1px dashed rgba(251,191,36,0.3)', padding: '0.75rem', borderRadius: '10px', marginTop: '0.2rem', marginBottom: '1.5rem', lineHeight: '1.4' }}>
                     ⚠️ <strong>Nota:</strong> Cada PIX concede o direito a apenas um envio. Se você já realizou uma aposta para esta fase e deseja enviar outra, realize outro pagamento e solicite a liberação ao Administrador.
                   </p>
 
@@ -3421,7 +3421,7 @@ function DashboardContent() {
         {activeTab === 'jogadores' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
             <div style={{ textAlign: 'center', marginBottom: '0.5rem' }}>
-              <h2 style={{ fontSize: '1.4rem', fontWeight: '800', color: 'var(--accent-gold)', margin: '0 0 0.25rem 0' }}>🏃 JOGADORES CADASTRADOS</h2>
+              <h2 style={{ fontSize: '1.4rem', fontWeight: '800', color: '#D2A74F', margin: '0 0 0.25rem 0' }}>🏃 JOGADORES CADASTRADOS</h2>
               <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', margin: 0 }}>
                 Toque em um jogador para ver seus palpites e a seleção campeã escolhida.
               </p>
@@ -3468,12 +3468,12 @@ function DashboardContent() {
                         alignItems: 'center',
                         justifyContent: 'center'
                       }}>
-                        <Icons.User size={20} style={{ color: 'var(--accent-gold)' }} />
+                        <Icons.User size={20} style={{ color: '#D2A74F' }} />
                       </div>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
                         <span style={{ fontSize: '0.9rem', fontWeight: 'bold', color: 'var(--text-primary)' }}>{player.username}</span>
                         {player.campeao ? (
-                          <span style={{ fontSize: '0.7rem', color: 'var(--accent-gold)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <span style={{ fontSize: '0.7rem', color: '#D2A74F', display: 'flex', alignItems: 'center', gap: '4px' }}>
                             <img 
                               src={`https://flagcdn.com/w40/${Object.values(THEMES).find(t => t.nome === player.campeao)?.flag || 'br'}.png`} 
                               style={{ width: '14px', borderRadius: '2px' }} 
@@ -3489,7 +3489,7 @@ function DashboardContent() {
                     
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                       {playerBolao ? (
-                        <span style={{ fontSize: '0.68rem', background: 'rgba(16,185,129,0.1)', color: 'var(--accent-gold)', padding: '2px 8px', borderRadius: '999px', fontWeight: 'bold' }}>
+                        <span style={{ fontSize: '0.68rem', background: 'rgba(16,185,129,0.1)', , padding: '2px 8px', borderRadius: '999px', fontWeight: 'bold' }} className="text-gold-gradient">
                           Palpites Ativos
                         </span>
                       ) : (
@@ -3598,7 +3598,7 @@ function DashboardContent() {
                     marginTop: '0.25rem'
                   }}>
                     <span style={{ fontSize: '1.1rem' }}>🏆</span>
-                    <span style={{ fontSize: '0.78rem', fontWeight: 'bold', color: 'var(--accent-gold)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <span style={{ fontSize: '0.78rem', fontWeight: 'bold', color: '#D2A74F', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                       Campeão Escolhido: 
                       <img 
                         src={`https://flagcdn.com/w40/${Object.values(THEMES).find(t => t.nome === player.campeao)?.flag || 'br'}.png`} 
@@ -3661,7 +3661,7 @@ function DashboardContent() {
                               style={{ 
                                 fontSize: '0.78rem', 
                                 fontWeight: 'bold', 
-                                color: 'var(--accent-gold)', 
+                                color: '#D2A74F', 
                                 padding: '0.75rem 1rem',
                                 display: 'flex',
                                 justifyContent: 'space-between',
@@ -3687,7 +3687,7 @@ function DashboardContent() {
                                   }}>
                                     <span style={{ fontSize: '0.78rem', color: 'var(--text-primary)' }}>{bet.home} x {bet.away}</span>
                                     <div style={{ textAlign: 'right' }}>
-                                      <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--accent-gold)' }}>
+                                      <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: '#D2A74F' }}>
                                         Aposta: {bet.bet_home} - {bet.bet_away}
                                       </span>
                                       {bet.real_home !== null && (
@@ -3943,7 +3943,7 @@ function DashboardContent() {
                   display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem',
                   width: '100%', padding: '0.75rem', marginTop: '0.75rem',
                   background: 'rgba(59, 130, 246, 0.1)', border: '1px solid #3b82f6',
-                  borderRadius: '8px', color: 'var(--accent-gold)', fontWeight: '700', fontSize: '0.85rem',
+                  borderRadius: '8px', color: '#D2A74F', fontWeight: '700', fontSize: '0.85rem',
                   cursor: 'pointer'
                 }}>
                   📁 Carregar Foto do Celular
@@ -3972,7 +3972,7 @@ function DashboardContent() {
             )}
 
             {cameraStep === 3 && (
-              <div style={{ textAlign: 'center', padding: '2rem 0', color: 'var(--accent-gold)' }}>
+              <div style={{ textAlign: 'center', padding: '2rem 0', color: '#D2A74F' }}>
                 <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🎉</div>
                 <p style={{ fontWeight: 'bold' }}>Leitura concluída com sucesso!</p>
                 <span style={{ fontSize: '0.7rem', color: 'var(--text-primary)' }}>O bolão de {tempBettorName} foi adicionado ao ranking.</span>
@@ -4130,7 +4130,7 @@ function DashboardContent() {
                           </div>
                           <div style={{ textAlign: 'right' }}>
                             <span style={{
-                              fontSize: '1rem', fontWeight: '900', color: 'var(--accent-gold)'
+                              fontSize: '1rem', fontWeight: '900', color: '#D2A74F'
                             }}>
                               {item.bet_home} x {item.bet_away}
                             </span>
@@ -4305,8 +4305,8 @@ function DashboardContent() {
               </div>
               {/* Stats resumo */}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '0.5rem', marginBottom: '1rem' }}>
-                {[{ label: 'Total Pts', val: totalPts, color: 'var(--accent-gold)' },
-                  { label: '🎯 Exatos', val: exatos, color: 'var(--accent-gold)' },
+                {[{ label: 'Total Pts', val: totalPts, color: '#D2A74F' },
+                  { label: '🎯 Exatos', val: exatos, color: '#D2A74F' },
                   { label: '✅ Vencedor', val: corretos, color: '#60a5fa' },
                   { label: '❌ Erros', val: erros, color: '#f87171' }].map(s => (
                   <div key={s.label} style={{ background: 'var(--bg-card)', borderRadius: '8px', padding: '0.5rem', textAlign: 'center' }}>
@@ -4538,7 +4538,7 @@ function DashboardContent() {
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem',
               width: '100%', padding: '0.75rem', marginBottom: '0.75rem',
               background: 'rgba(59,130,246,0.1)', border: '1px solid #3b82f6',
-              borderRadius: '8px', color: 'var(--accent-gold)', fontWeight: '700', fontSize: '0.85rem', cursor: 'pointer'
+              borderRadius: '8px', color: '#D2A74F', fontWeight: '700', fontSize: '0.85rem', cursor: 'pointer'
             }}>
               📁 Escolher Nova Foto
             </label>
@@ -4624,8 +4624,8 @@ function DashboardContent() {
 
                <div style={{ background: 'var(--bg-card)', borderRadius: '12px', padding: '1rem', textAlign: 'center', marginBottom: '1.25rem' }}>
                 <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'block', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Pontuação Considerada</span>
-                <strong style={{ fontSize: '2rem', color: 'var(--accent-gold)', display: 'block', marginTop: '0.2rem' }}>{totalPts} pts</strong>
-                <span style={{ fontSize: '0.7rem', color: 'var(--accent-gold)' }}>Exibindo apenas jogos com acerto exato (+5) ou vencedor (+3)</span>
+                <strong style={{ fontSize: '2rem', color: '#D2A74F', display: 'block', marginTop: '0.2rem' }}>{totalPts} pts</strong>
+                <span style={{ fontSize: '0.7rem', color: '#D2A74F' }}>Exibindo apenas jogos com acerto exato (+5) ou vencedor (+3)</span>
                 
                 <button
                   onClick={() => {
@@ -4711,7 +4711,7 @@ function DashboardContent() {
               <div onClick={() => setShowBetConfirmation(false)} className="modal-close"><Icons.X size={20} /></div>
             </div>
             <p style={{ fontSize: '0.88rem', color: '#d1d5db', lineHeight: '1.5', marginBottom: '1rem' }}>
-              Deseja salvar seus palpites para a fase eliminatória? <strong style={{ color: 'var(--accent-gold)' }}>Você não poderá alterá-los após a confirmação!</strong>
+              Deseja salvar seus palpites para a fase eliminatória? <strong style={{ color: '#D2A74F' }}>Você não poderá alterá-los após a confirmação!</strong>
             </p>
             <div className="form-group" style={{ marginBottom: '1.25rem' }}>
               <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '0.4rem' }}>
@@ -5143,7 +5143,7 @@ function KnockoutBetsList({ playerUsername, koConfs, boloes, currentUser, curren
               style={{ 
                 fontSize: '0.78rem', 
                 fontWeight: 'bold', 
-                color: 'var(--accent-gold)', 
+                color: '#D2A74F', 
                 padding: '0.75rem 1rem',
                 display: 'flex',
                 justifyContent: 'space-between',
@@ -5172,7 +5172,7 @@ function KnockoutBetsList({ playerUsername, koConfs, boloes, currentUser, curren
                     }}>
                       <span style={{ fontSize: '0.78rem', color: 'var(--text-primary)' }}>{bet.home} x {bet.away}</span>
                       <div style={{ textAlign: 'right' }}>
-                        <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--accent-gold)' }}>
+                        <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: '#D2A74F' }}>
                           Aposta: {bet.bet_home} - {bet.bet_away}
                         </span>
                         {match.home_score !== null && match.home_score !== undefined && String(match.home_score) !== 'null' && (
