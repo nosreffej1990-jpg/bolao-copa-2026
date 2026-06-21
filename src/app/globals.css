@@ -4,59 +4,40 @@
    TEMA: Verde Clássico (padrão)
    ============================================ */
 :root,
-[data-theme="verde"] {
-    --bg-app: #060814;
-    --bg-header: #0b0f19;
-    --bg-card: #0f1322;
-    --bg-card-hover: #182038;
-    --border-color: rgba(255, 255, 255, 0.06);
-    --border-active: rgba(250, 204, 21, 0.4);
-    --primary-green: #fbbf24;
-    --soccer-green: #fbbf24;
-    --accent-gold: #fbbf24;
-    --accent-gold-hover: #f59e0b;
+[data-theme="verde"],
+[data-theme="brasil"] {
+    --bg-app: #021a11;
+    --bg-header: #01120a;
+    --bg-card: rgba(14, 30, 23, 0.65);
+    --bg-card-hover: rgba(20, 42, 32, 0.85);
+    --border-color: rgba(225, 182, 79, 0.2);
+    --border-active: #E1B64F;
+    --primary-green: #00e676;
+    --soccer-green: #00e676;
+    --accent-gold: #E1B64F;
+    --accent-gold-hover: #FFDF7A;
     --text-primary: #ffffff;
-    --text-secondary: #94a3b8;
-    --text-muted: #64748b;
-    --splash-bg: radial-gradient(circle at center, #141b2e, #060814);
-    --btn-primary-bg: linear-gradient(135deg, #fbbf24, #d97706);
-    --btn-primary-color: #000;
-    --nav-bg: #0b0f19;
-    --nav-border: rgba(255,255,255,0.06);
-    --nav-active: #fbbf24;
-    --card-glow: rgba(251, 191, 36, 0.05);
+    --text-secondary: #8aa69b;
+    --text-muted: #5e7a6f;
+    --splash-bg: radial-gradient(circle at center, rgba(14, 30, 23, 0.9), #01120a);
+    
+    /* Novo Ouro Unificado */
+    --gold-light: #FFDF7A;
+    --gold-mid: #E1B64F;
+    --gold-dark: #9C711D;
+    --btn-primary-bg: linear-gradient(to bottom, var(--gold-light) 0%, var(--gold-mid) 55%, var(--gold-dark) 100%);
+    --btn-primary-color: #0f1c14;
+    
+    --nav-bg: #01120a;
+    --nav-border: rgba(255, 255, 255, 0.06);
+    --nav-active: #E1B64F;
+    --card-glow: rgba(225, 182, 79, 0.08);
     --font-main: 'Outfit', sans-serif;
     --font-alt: 'Plus Jakarta Sans', sans-serif;
-    --shadow-premium: 0 10px 30px rgba(0, 0, 0, 0.5);
-    --radius-lg: 16px;
-    --radius-md: 12px;
-    --radius-sm: 8px;
-}
-
-/* ============================================
-   TEMA: Brasil 🇧🇷
-   ============================================ */
-[data-theme="brasil"] {
-    --bg-app: #060814;
-    --bg-header: #0b0f19;
-    --bg-card: #0f1322;
-    --bg-card-hover: #182038;
-    --border-color: rgba(255, 255, 255, 0.06);
-    --border-active: rgba(250, 204, 21, 0.4);
-    --primary-green: #fbbf24;
-    --soccer-green: #fbbf24;
-    --accent-gold: #fbbf24;
-    --accent-gold-hover: #f59e0b;
-    --text-primary: #ffffff;
-    --text-secondary: #94a3b8;
-    --text-muted: #64748b;
-    --splash-bg: radial-gradient(circle at center, #141b2e, #060814);
-    --btn-primary-bg: linear-gradient(135deg, #fbbf24, #d97706);
-    --btn-primary-color: #000;
-    --nav-bg: #0b0f19;
-    --nav-border: rgba(255,255,255,0.06);
-    --nav-active: #fbbf24;
-    --card-glow: rgba(251, 191, 36, 0.05);
+    --shadow-premium: 0 10px 30px rgba(0, 0, 0, 0.6);
+    --radius-lg: 22px;
+    --radius-md: 16px;
+    --radius-sm: 12px;
 }
 
 /* ============================================
@@ -577,6 +558,10 @@ body {
     margin-top: 0.5rem;
     font-size: 0.9rem;
     transition: all 0.2s ease;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
 }
 
 .btn-submit:active {

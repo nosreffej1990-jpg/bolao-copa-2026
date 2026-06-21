@@ -1655,24 +1655,49 @@ function DashboardContent() {
   return (
     <div className="dashboard-container" style={{ paddingBottom: '5.5rem' }}>
       {/* Header */}
-      <header className="dashboard-header" style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <div className="back-btn" onClick={() => router.push('/')}>
-          <Icons.ChevronLeft size={24} />
+      <header className="dashboard-header" style={{
+        position: 'relative',
+        display: 'grid',
+        gridTemplateColumns: '55px 1fr 85px',
+        alignItems: 'center',
+        padding: '10px 16px',
+        borderBottom: '1px solid var(--border-color)',
+        boxSizing: 'border-box'
+      }}>
+        <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
+          <div className="back-btn" onClick={() => router.push('/')} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+            <Icons.ChevronLeft size={24} style={{ color: 'var(--accent-gold)' }} />
+          </div>
         </div>
         
-        <div className="logo-mini" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-          <img src="/icons/logo-transparent.png" alt="Logo" style={{ width: '28px', height: '28px', objectFit: 'contain' }} />
-          <h2 style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-            BOLÃO COPA 2026
-            {isSupabaseConfigured ? (
-              <span title="Nuvem Sincronizada" style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', backgroundColor: 'var(--soccer-green)', boxShadow: '0 0 8px var(--soccer-green)' }}></span>
-            ) : (
-              <span title="Modo Demo: Salvo Localmente (LocalStorage)" style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', backgroundColor: 'var(--accent-gold)', boxShadow: '0 0 8px var(--accent-gold)', animation: 'pulse 1.5s infinite' }}></span>
-            )}
-          </h2>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+            <img src="/icons/logo-transparent.png" alt="Logo" style={{ width: '32px', height: '40px', objectFit: 'contain' }} />
+            <h2 style={{
+              margin: 0,
+              fontSize: '1.25rem',
+              fontWeight: '800',
+              letterSpacing: '0.5px',
+              lineHeight: '1.1',
+              background: 'linear-gradient(to bottom, var(--gold-light) 0%, var(--gold-mid) 55%, var(--gold-dark) 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              fontFamily: 'var(--font-main)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.35rem'
+            }}>
+              BOLÃO COPA 2026
+              {isSupabaseConfigured ? (
+                <span title="Nuvem Sincronizada" style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', backgroundColor: 'var(--soccer-green)', boxShadow: '0 0 8px var(--soccer-green)' }}></span>
+              ) : (
+                <span title="Modo Demo: Salvo Localmente (LocalStorage)" style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', backgroundColor: 'var(--accent-gold)', boxShadow: '0 0 8px var(--accent-gold)', animation: 'pulse 1.5s infinite' }}></span>
+              )}
+            </h2>
+          </div>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '0.5rem' }}>
           {currentUser && (
             <div 
               onClick={() => {
@@ -1690,8 +1715,7 @@ function DashboardContent() {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                background: 'rgba(255,255,255,0.05)',
-                marginRight: '0.25rem'
+                background: 'rgba(255,255,255,0.05)'
               }}
               title="Meu Perfil"
             >
@@ -1721,7 +1745,7 @@ function DashboardContent() {
             />
           )}
           {allowDrawerMenu && (
-            <button className="menu-toggle-btn" onClick={() => setIsDrawerOpen(true)}>
+            <button className="menu-toggle-btn" onClick={() => setIsDrawerOpen(true)} style={{ margin: 0 }}>
               <Icons.Menu size={20} />
             </button>
           )}
@@ -3449,6 +3473,11 @@ function DashboardContent() {
                         <span style={{ fontSize: '0.9rem', fontWeight: 'bold', color: '#fff' }}>{player.username}</span>
                         {player.campeao ? (
                           <span style={{ fontSize: '0.7rem', color: 'var(--accent-gold)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            <img 
+                              src={`https://flagcdn.com/w40/${Object.values(THEMES).find(t => t.nome === player.campeao)?.flag || 'br'}.png`} 
+                              style={{ width: '14px', borderRadius: '2px' }} 
+                              alt={player.campeao} 
+                            />
                             🏆 Campeão: <strong>{player.campeao}</strong>
                           </span>
                         ) : (
@@ -3568,8 +3597,14 @@ function DashboardContent() {
                     marginTop: '0.25rem'
                   }}>
                     <span style={{ fontSize: '1.1rem' }}>🏆</span>
-                    <span style={{ fontSize: '0.78rem', fontWeight: 'bold', color: 'var(--accent-gold)' }}>
-                      Campeão Escolhido: <strong style={{ color: '#fff' }}>{player.campeao}</strong>
+                    <span style={{ fontSize: '0.78rem', fontWeight: 'bold', color: 'var(--accent-gold)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                      Campeão Escolhido: 
+                      <img 
+                        src={`https://flagcdn.com/w40/${Object.values(THEMES).find(t => t.nome === player.campeao)?.flag || 'br'}.png`} 
+                        style={{ width: '16px', borderRadius: '2px' }} 
+                        alt={player.campeao} 
+                      />
+                      <strong style={{ color: '#fff' }}>{player.campeao}</strong>
                     </span>
                   </div>
                 ) : (
