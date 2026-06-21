@@ -626,7 +626,7 @@ export default function Home() {
                         boxShadow: '0 4px 20px rgba(251, 191, 36, 0.08)'
                       }}>
                         <span style={{ fontSize: '0.65rem', fontWeight: 'bold', color: '#FBBF24' }}>
-                          {formatMatchDate(g.match_date).date} {g.match_time ? g.match_time.slice(0, 5) : ''}
+                          {formatMatchDate(g.local_date).date} {g.local_date && g.local_date.includes(' ') ? g.local_date.split(' ')[1].slice(0, 5) : ''}
                         </span>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'center', width: '100%' }}>
                           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1, gap: '0.2rem' }}>

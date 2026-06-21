@@ -2085,6 +2085,12 @@ function DashboardContent() {
                    );
                   return bolaoTypeFilter === 'matamata' ? isKnockout : !isKnockout;
                 });
+                  filteredBoloes.sort((a, b) => {
+                    if (currentUser && a.username === currentUser) return -1;
+                    if (currentUser && b.username === currentUser) return 1;
+                    return (a.bettor_name || '').localeCompare(b.bettor_name || '');
+                  });
+
                 
                 if (filteredBoloes.length === 0) {
                   return (
@@ -2274,17 +2280,7 @@ function DashboardContent() {
                     ))}
                   </div>
                 )}
-                {/* Recalcular Pontuação */}
-                  <button onClick={handleRecalcular} style={{
-                    width: '100%', marginTop: '1.25rem', padding: '0.85rem',
-                    background: 'transparent',
-                    border: '1px solid var(--accent-gold)', borderRadius: '10px', color: 'var(--accent-gold)', fontWeight: '700', fontSize: '0.9rem', cursor: 'pointer',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem'
-                  }}>
-                    <Icons.RefreshCw size={18} /> Recalcular Pontuação
-                  </button>
-
-                  {/* Compartilhar Ranking */}
+                {/* Compartilhar Ranking */}
                 <button onClick={shareRanking} style={{
                   width: '100%', marginTop: '1.25rem', padding: '0.85rem',
                   background: 'var(--btn-primary-bg)',
@@ -2916,6 +2912,19 @@ function DashboardContent() {
                 Gerencie o comportamento do bolão, restaures e edições de textos do sistema.
               </p>
             </div>
+              <div style={{ marginBottom: '1.5rem' }}>
+                {/* Recalcular Pontuação */}
+                  <button onClick={handleRecalcular} style={{
+                    width: '100%', marginTop: '1.25rem', padding: '0.85rem',
+                    background: 'transparent',
+                    border: '1px solid var(--accent-gold)', borderRadius: '10px', color: 'var(--accent-gold)', fontWeight: '700', fontSize: '0.9rem', cursor: 'pointer',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem'
+                  }}>
+                    <Icons.RefreshCw size={18} /> Recalcular Pontuação
+                  </button>
+
+                  
+              </div>
 
             <button 
               className="btn-upload-bolao" 

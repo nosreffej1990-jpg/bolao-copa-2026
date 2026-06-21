@@ -189,7 +189,7 @@ export async function fetchAllGames() {
 export async function getFinishedMatches() {
   const games = await fetchAllGames();
   return games
-    .filter(g => g.finished === 'TRUE')
+    .filter(g => (g.finished === 'TRUE' || g.finished === true))
     .sort((a, b) => parseApiDate(b.local_date) - parseApiDate(a.local_date));
 }
 
@@ -197,7 +197,7 @@ export async function getFinishedMatches() {
 export async function getLiveMatches() {
   const games = await fetchAllGames();
   return games.filter(g =>
-    g.finished === 'FALSE' &&
+    (g.finished === 'FALSE' || g.finished === false) &&
     g.time_elapsed !== 'notstarted' &&
     g.time_elapsed !== 'finished'
   );
@@ -207,7 +207,7 @@ export async function getLiveMatches() {
 export async function getUpcomingMatches(limit = 15) {
   const games = await fetchAllGames();
   return games
-    .filter(g => g.finished === 'FALSE' && g.time_elapsed === 'notstarted')
+    .filter(g => (g.finished === 'FALSE' || g.finished === false) && g.time_elapsed === 'notstarted')
     .sort((a, b) => parseApiDate(a.local_date) - parseApiDate(b.local_date))
     .slice(0, limit);
 }
