@@ -1,0 +1,734 @@
+[
+  {
+    "id": "760449",
+    "uid": "s:600~l:606~e:760449",
+    "date": "2026-06-21T04:00Z",
+    "name": "Japan at Tunisia",
+    "shortName": "JPN @ TUN",
+    "season": {
+      "year": 2026,
+      "type": 13802,
+      "slug": "group-stage"
+    },
+    "competitions": [
+      {
+        "id": "760449",
+        "uid": "s:600~l:606~e:760449~c:760449",
+        "date": "2026-06-21T04:00Z",
+        "startDate": "2026-06-21T04:00Z",
+        "attendance": 51243,
+        "timeValid": true,
+        "recent": false,
+        "status": {
+          "clock": 5400,
+          "displayClock": "90'+7'",
+          "period": 2,
+          "type": {
+            "id": "28",
+            "name": "STATUS_FULL_TIME",
+            "state": "post",
+            "completed": true,
+            "description": "Full Time",
+            "detail": "FT",
+            "shortDetail": "FT"
+          }
+        },
+        "venue": {
+          "id": "6351",
+          "fullName": "Estadio BBVA",
+          "address": {
+            "city": "Guadalupe",
+            "country": "Mexico"
+          }
+        },
+        "format": {
+          "regulation": {
+            "periods": 2
+          }
+        },
+        "altGameNote": "FIFA World Cup, Group F",
+        "notes": [],
+        "geoBroadcasts": [
+          {
+            "type": {
+              "id": "1",
+              "shortName": "TV"
+            },
+            "market": {
+              "id": "1",
+              "type": "National"
+            },
+            "media": {
+              "shortName": "FS1"
+            },
+            "lang": "en",
+            "region": "us"
+          },
+          {
+            "type": {
+              "id": "1",
+              "shortName": "TV"
+            },
+            "market": {
+              "id": "1",
+              "type": "National"
+            },
+            "media": {
+              "shortName": "Tele"
+            },
+            "lang": "en",
+            "region": "us"
+          },
+          {
+            "type": {
+              "id": "4",
+              "shortName": "STREAMING"
+            },
+            "market": {
+              "id": "1",
+              "type": "National"
+            },
+            "media": {
+              "shortName": "FOX One"
+            },
+            "lang": "en",
+            "region": "us"
+          }
+        ],
+        "broadcasts": [
+          {
+            "market": "national",
+            "names": [
+              "FS1",
+              "Tele",
+              "FOX One"
+            ]
+          }
+        ],
+        "broadcast": "",
+        "competitors": [
+          {
+            "id": "659",
+            "uid": "s:600~t:659",
+            "type": "team",
+            "order": 0,
+            "homeAway": "home",
+            "winner": false,
+            "advance": false,
+            "form": "LLLLD",
+            "score": "0",
+            "records": [
+              {
+                "name": "All Splits",
+                "type": "total",
+                "summary": "0-0-2",
+                "abbreviation": "Total"
+              }
+            ],
+            "team": {
+              "id": "659",
+              "uid": "s:600~t:659",
+              "abbreviation": "TUN",
+              "displayName": "Tunisia",
+              "shortDisplayName": "Tunisia",
+              "name": "Tunisia",
+              "location": "Tunisia",
+              "color": "D20300",
+              "alternateColor": "ffffff",
+              "isActive": true,
+              "logo": "https://a.espncdn.com/i/teamlogos/countries/500/tun.png",
+              "links": [
+                {
+                  "rel": [
+                    "clubhouse",
+                    "desktop",
+                    "team"
+                  ],
+                  "href": "https://www.espn.com/soccer/team/_/id/659/tunisia",
+                  "text": "Clubhouse",
+                  "isExternal": false,
+                  "isPremium": false,
+                  "isHidden": false
+                },
+                {
+                  "rel": [
+                    "stats",
+                    "desktop",
+                    "team"
+                  ],
+                  "href": "https://www.espn.com/soccer/team/stats/_/id/659/tunisia",
+                  "text": "Stats",
+                  "isExternal": false,
+                  "isPremium": false,
+                  "isHidden": false
+                },
+                {
+                  "rel": [
+                    "stats",
+                    "sportscenter",
+                    "app",
+                    "team"
+                  ],
+                  "href": "sportscenter://x-callback-url/showClubhouse?uid=s:600~t:659&section=stats",
+                  "text": "Stats",
+                  "isExternal": false,
+                  "isPremium": false,
+                  "isHidden": false
+                },
+                {
+                  "rel": [
+                    "schedule",
+                    "desktop",
+                    "team"
+                  ],
+                  "href": "https://www.espn.com/soccer/team/fixtures/_/id/659/tunisia",
+                  "text": "Fixtures",
+                  "isExternal": false,
+                  "isPremium": false,
+                  "isHidden": false
+                },
+                {
+                  "rel": [
+                    "schedule",
+                    "sportscenter",
+                    "app",
+                    "team"
+                  ],
+                  "href": "sportscenter://x-callback-url/showClubhouse?uid=s:600~t:659&section=scores",
+                  "text": "Fixtures",
+                  "isExternal": false,
+                  "isPremium": false,
+                  "isHidden": false
+                },
+                {
+                  "rel": [
+                    "squad",
+                    "desktop",
+                    "team"
+                  ],
+                  "href": "https://www.espn.com/soccer/team/squad/_/id/659/tunisia",
+                  "text": "Squad",
+                  "isExternal": false,
+                  "isPremium": false,
+                  "isHidden": false
+                },
+                {
+                  "rel": [
+                    "squad",
+                    "sportscenter",
+                    "app",
+                    "team"
+                  ],
+                  "href": "sportscenter://x-callback-url/showClubhouse?uid=s:600~t:659&section=squad",
+                  "text": "Squad",
+                  "isExternal": false,
+                  "isPremium": false,
+                  "isHidden": false
+                }
+              ],
+              "venue": {
+                "id": "11153"
+              }
+            },
+            "statistics": [
+              {
+                "name": "appearances",
+                "abbreviation": "APP",
+                "displayValue": "0"
+              },
+              {
+                "name": "foulsCommitted",
+                "abbreviation": "FC",
+                "displayValue": "8"
+              },
+              {
+                "name": "wonCorners",
+                "abbreviation": "CW",
+                "displayValue": "3"
+              },
+              {
+                "name": "goalAssists",
+                "abbreviation": "A",
+                "displayValue": "0"
+              },
+              {
+                "name": "possessionPct",
+                "abbreviation": "PP",
+                "displayValue": "37.9"
+              },
+              {
+                "name": "shotAssists",
+                "abbreviation": "SHAST",
+                "displayValue": "1"
+              },
+              {
+                "name": "shotsOnTarget",
+                "abbreviation": "SOG",
+                "displayValue": "0"
+              },
+              {
+                "name": "totalGoals",
+                "abbreviation": "G",
+                "displayValue": "0"
+              },
+              {
+                "name": "totalShots",
+                "abbreviation": "SHOT",
+                "displayValue": "2"
+              }
+            ]
+          },
+          {
+            "id": "627",
+            "uid": "s:600~t:627",
+            "type": "team",
+            "order": 1,
+            "homeAway": "away",
+            "winner": true,
+            "advance": true,
+            "form": "WDWWW",
+            "score": "4",
+            "records": [
+              {
+                "name": "All Splits",
+                "type": "total",
+                "summary": "1-1-0",
+                "abbreviation": "Total"
+              }
+            ],
+            "team": {
+              "id": "627",
+              "uid": "s:600~t:627",
+              "abbreviation": "JPN",
+              "displayName": "Japan",
+              "shortDisplayName": "Japan",
+              "name": "Japan",
+              "location": "Japan",
+              "color": "000555",
+              "alternateColor": "000555",
+              "isActive": true,
+              "logo": "https://a.espncdn.com/i/teamlogos/countries/500/jpn.png",
+              "links": [
+                {
+                  "rel": [
+                    "clubhouse",
+                    "desktop",
+                    "team"
+                  ],
+                  "href": "https://www.espn.com/soccer/team/_/id/627/japan",
+                  "text": "Clubhouse",
+                  "isExternal": false,
+                  "isPremium": false,
+                  "isHidden": false
+                },
+                {
+                  "rel": [
+                    "stats",
+                    "desktop",
+                    "team"
+                  ],
+                  "href": "https://www.espn.com/soccer/team/stats/_/id/627/japan",
+                  "text": "Stats",
+                  "isExternal": false,
+                  "isPremium": false,
+                  "isHidden": false
+                },
+                {
+                  "rel": [
+                    "stats",
+                    "sportscenter",
+                    "app",
+                    "team"
+                  ],
+                  "href": "sportscenter://x-callback-url/showClubhouse?uid=s:600~t:627&section=stats",
+                  "text": "Stats",
+                  "isExternal": false,
+                  "isPremium": false,
+                  "isHidden": false
+                },
+                {
+                  "rel": [
+                    "schedule",
+                    "desktop",
+                    "team"
+                  ],
+                  "href": "https://www.espn.com/soccer/team/fixtures/_/id/627/japan",
+                  "text": "Fixtures",
+                  "isExternal": false,
+                  "isPremium": false,
+                  "isHidden": false
+                },
+                {
+                  "rel": [
+                    "schedule",
+                    "sportscenter",
+                    "app",
+                    "team"
+                  ],
+                  "href": "sportscenter://x-callback-url/showClubhouse?uid=s:600~t:627&section=scores",
+                  "text": "Fixtures",
+                  "isExternal": false,
+                  "isPremium": false,
+                  "isHidden": false
+                },
+                {
+                  "rel": [
+                    "squad",
+                    "desktop",
+                    "team"
+                  ],
+                  "href": "https://www.espn.com/soccer/team/squad/_/id/627/japan",
+                  "text": "Squad",
+                  "isExternal": false,
+                  "isPremium": false,
+                  "isHidden": false
+                },
+                {
+                  "rel": [
+                    "squad",
+                    "sportscenter",
+                    "app",
+                    "team"
+                  ],
+                  "href": "sportscenter://x-callback-url/showClubhouse?uid=s:600~t:627&section=squad",
+                  "text": "Squad",
+                  "isExternal": false,
+                  "isPremium": false,
+                  "isHidden": false
+                }
+              ],
+              "venue": {
+                "id": "10488"
+              }
+            },
+            "statistics": [
+              {
+                "name": "appearances",
+                "abbreviation": "APP",
+                "displayValue": "0"
+              },
+              {
+                "name": "foulsCommitted",
+                "abbreviation": "FC",
+                "displayValue": "15"
+              },
+              {
+                "name": "wonCorners",
+                "abbreviation": "CW",
+                "displayValue": "5"
+              },
+              {
+                "name": "goalAssists",
+                "abbreviation": "A",
+                "displayValue": "4"
+              },
+              {
+                "name": "possessionPct",
+                "abbreviation": "PP",
+                "displayValue": "62.1"
+              },
+              {
+                "name": "shotAssists",
+                "abbreviation": "SHAST",
+                "displayValue": "9"
+              },
+              {
+                "name": "shotsOnTarget",
+                "abbreviation": "SOG",
+                "displayValue": "5"
+              },
+              {
+                "name": "totalGoals",
+                "abbreviation": "G",
+                "displayValue": "4"
+              },
+              {
+                "name": "totalShots",
+                "abbreviation": "SHOT",
+                "displayValue": "11"
+              }
+            ]
+          }
+        ],
+        "details": [
+          {
+            "type": {
+              "id": "70",
+              "text": "Goal"
+            },
+            "clock": {
+              "value": 207,
+              "displayValue": "4'"
+            },
+            "team": {
+              "id": "627"
+            },
+            "scoreValue": 1,
+            "scoringPlay": true,
+            "redCard": false,
+            "yellowCard": false,
+            "penaltyKick": false,
+            "ownGoal": false,
+            "shootout": false,
+            "athletesInvolved": [
+              {
+                "id": "219362",
+                "displayName": "Daichi Kamada",
+                "shortName": "D. Kamada",
+                "fullName": "Daichi Kamada",
+                "jersey": "15",
+                "team": {
+                  "id": "627"
+                },
+                "links": [
+                  {
+                    "rel": [
+                      "playercard",
+                      "desktop",
+                      "athlete"
+                    ],
+                    "href": "https://www.espn.com/soccer/player/_/id/219362/daichi-kamada",
+                    "isHidden": false
+                  }
+                ],
+                "position": "CF-L"
+              }
+            ]
+          },
+          {
+            "type": {
+              "id": "70",
+              "text": "Goal"
+            },
+            "clock": {
+              "value": 1805,
+              "displayValue": "31'"
+            },
+            "team": {
+              "id": "627"
+            },
+            "scoreValue": 1,
+            "scoringPlay": true,
+            "redCard": false,
+            "yellowCard": false,
+            "penaltyKick": false,
+            "ownGoal": false,
+            "shootout": false,
+            "athletesInvolved": [
+              {
+                "id": "274277",
+                "displayName": "Ayase Ueda",
+                "shortName": "A. Ueda",
+                "fullName": "Ayase Ueda",
+                "jersey": "18",
+                "team": {
+                  "id": "627"
+                },
+                "links": [
+                  {
+                    "rel": [
+                      "playercard",
+                      "desktop",
+                      "athlete"
+                    ],
+                    "href": "https://www.espn.com/soccer/player/_/id/274277/ayase-ueda",
+                    "isHidden": false
+                  }
+                ],
+                "position": "F"
+              }
+            ]
+          },
+          {
+            "type": {
+              "id": "70",
+              "text": "Goal"
+            },
+            "clock": {
+              "value": 4086,
+              "displayValue": "69'"
+            },
+            "team": {
+              "id": "627"
+            },
+            "scoreValue": 1,
+            "scoringPlay": true,
+            "redCard": false,
+            "yellowCard": false,
+            "penaltyKick": false,
+            "ownGoal": false,
+            "shootout": false,
+            "athletesInvolved": [
+              {
+                "id": "219350",
+                "displayName": "Junya Ito",
+                "shortName": "J. Ito",
+                "fullName": "Junya Ito",
+                "jersey": "14",
+                "team": {
+                  "id": "627"
+                },
+                "links": [
+                  {
+                    "rel": [
+                      "playercard",
+                      "desktop",
+                      "athlete"
+                    ],
+                    "href": "https://www.espn.com/soccer/player/_/id/219350/junya-ito",
+                    "isHidden": false
+                  }
+                ],
+                "position": "CF-R"
+              }
+            ]
+          },
+          {
+            "type": {
+              "id": "137",
+              "text": "Goal - Header"
+            },
+            "clock": {
+              "value": 4976,
+              "displayValue": "83'"
+            },
+            "team": {
+              "id": "627"
+            },
+            "scoreValue": 1,
+            "scoringPlay": true,
+            "redCard": false,
+            "yellowCard": false,
+            "penaltyKick": false,
+            "ownGoal": false,
+            "shootout": false,
+            "athletesInvolved": [
+              {
+                "id": "274277",
+                "displayName": "Ayase Ueda",
+                "shortName": "A. Ueda",
+                "fullName": "Ayase Ueda",
+                "jersey": "18",
+                "team": {
+                  "id": "627"
+                },
+                "links": [
+                  {
+                    "rel": [
+                      "playercard",
+                      "desktop",
+                      "athlete"
+                    ],
+                    "href": "https://www.espn.com/soccer/player/_/id/274277/ayase-ueda",
+                    "isHidden": false
+                  }
+                ],
+                "position": "F"
+              }
+            ]
+          }
+        ],
+        "headlines": [
+          {
+            "description": " A dominant Japan produced the biggest margin of victory for an Asian nation in a World Cup match as they beat Tunisia 4-0",
+            "type": "Recap",
+            "shortLinkText": "Japan rout Tunisia 4-0, eliminate Hervé Renard from the World Cup"
+          }
+        ],
+        "odds": [
+          null
+        ],
+        "wasSuspended": false,
+        "playByPlayAvailable": true,
+        "playByPlayAthletes": true
+      }
+    ],
+    "status": {
+      "clock": 5400,
+      "displayClock": "90'+7'",
+      "period": 2,
+      "type": {
+        "id": "28",
+        "name": "STATUS_FULL_TIME",
+        "state": "post",
+        "completed": true,
+        "description": "Full Time",
+        "detail": "FT",
+        "shortDetail": "FT"
+      }
+    },
+    "venue": {
+      "displayName": "Estadio BBVA"
+    },
+    "links": [
+      {
+        "language": "en-US",
+        "rel": [
+          "summary",
+          "desktop",
+          "event"
+        ],
+        "href": "https://www.espn.com/soccer/match/_/gameId/760449/japan-tunisia",
+        "text": "Summary",
+        "shortText": "Summary",
+        "isExternal": false,
+        "isPremium": false,
+        "isHidden": false
+      },
+      {
+        "language": "en-US",
+        "rel": [
+          "highlights",
+          "desktop"
+        ],
+        "href": "https://www.espn.com/soccer/video/_/gameId/760449",
+        "text": "Highlights",
+        "shortText": "Highlights",
+        "isExternal": false,
+        "isPremium": false
+      },
+      {
+        "language": "en-US",
+        "rel": [
+          "recap",
+          "desktop",
+          "event"
+        ],
+        "href": "https://www.espn.com/soccer/report/_/gameId/760449",
+        "text": "Report",
+        "shortText": "Report",
+        "isExternal": false,
+        "isPremium": false,
+        "isHidden": false
+      },
+      {
+        "language": "en-US",
+        "rel": [
+          "stats",
+          "desktop",
+          "event"
+        ],
+        "href": "https://www.espn.com/soccer/matchstats/_/gameId/760449",
+        "text": "Statistics",
+        "shortText": "Statistics",
+        "isExternal": false,
+        "isPremium": false,
+        "isHidden": false
+      },
+      {
+        "language": "en-US",
+        "rel": [
+          "bracket",
+          "desktop",
+          "event"
+        ],
+        "href": "https://www.espn.com/soccer/bracket/_/season/2026/league/fifa.world",
+        "text": "Bracket",
+        "shortText": "Bracket",
+        "isExternal": false,
+        "isPremium": false,
+        "isHidden": false
+      }
+    ]
+  }
+]
