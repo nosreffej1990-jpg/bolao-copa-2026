@@ -5,26 +5,26 @@
    ============================================ */
 :root,
 [data-theme="verde"] {
-    --bg-app: #060907;
-    --bg-header: #07190f;
-    --bg-card: #0d1e15;
-    --bg-card-hover: #142a1e;
+    --bg-app: #060814;
+    --bg-header: #0b0f19;
+    --bg-card: #0f1322;
+    --bg-card-hover: #182038;
     --border-color: rgba(255, 255, 255, 0.06);
     --border-active: rgba(250, 204, 21, 0.4);
-    --primary-green: #0ea5e9;
-    --soccer-green: #10b981;
+    --primary-green: #fbbf24;
+    --soccer-green: #fbbf24;
     --accent-gold: #fbbf24;
     --accent-gold-hover: #f59e0b;
     --text-primary: #ffffff;
     --text-secondary: #94a3b8;
     --text-muted: #64748b;
-    --splash-bg: radial-gradient(circle at center, #0c2b18, #050f09);
-    --btn-primary-bg: linear-gradient(135deg, #10b981, #059669);
+    --splash-bg: radial-gradient(circle at center, #141b2e, #060814);
+    --btn-primary-bg: linear-gradient(135deg, #fbbf24, #d97706);
     --btn-primary-color: #000;
-    --nav-bg: #080f0b;
+    --nav-bg: #0b0f19;
     --nav-border: rgba(255,255,255,0.06);
     --nav-active: #fbbf24;
-    --card-glow: rgba(16, 185, 129, 0.08);
+    --card-glow: rgba(251, 191, 36, 0.05);
     --font-main: 'Outfit', sans-serif;
     --font-alt: 'Plus Jakarta Sans', sans-serif;
     --shadow-premium: 0 10px 30px rgba(0, 0, 0, 0.5);
@@ -37,26 +37,26 @@
    TEMA: Brasil 🇧🇷
    ============================================ */
 [data-theme="brasil"] {
-    --bg-app: #031308;
-    --bg-header: #010703;
-    --bg-card: rgba(4, 30, 13, 0.55);
-    --bg-card-hover: rgba(6, 42, 19, 0.7);
-    --border-color: rgba(255, 215, 0, 0.12);
-    --border-active: rgba(255, 215, 0, 0.5);
-    --primary-green: #00A86B;
-    --soccer-green: #00A86B;
-    --accent-gold: #FFD700;
-    --accent-gold-hover: #FFC200;
+    --bg-app: #060814;
+    --bg-header: #0b0f19;
+    --bg-card: #0f1322;
+    --bg-card-hover: #182038;
+    --border-color: rgba(255, 255, 255, 0.06);
+    --border-active: rgba(250, 204, 21, 0.4);
+    --primary-green: #fbbf24;
+    --soccer-green: #fbbf24;
+    --accent-gold: #fbbf24;
+    --accent-gold-hover: #f59e0b;
     --text-primary: #ffffff;
-    --text-secondary: #a3e0b0;
-    --text-muted: #5a9e6a;
-    --splash-bg: radial-gradient(circle at center, #052611, #010a04);
-    --btn-primary-bg: linear-gradient(135deg, #FFD700, #FFA500);
-    --btn-primary-color: #010703;
-    --nav-bg: #010703;
-    --nav-border: rgba(255, 215, 0, 0.12);
-    --nav-active: #FFD700;
-    --card-glow: rgba(0, 168, 107, 0.05);
+    --text-secondary: #94a3b8;
+    --text-muted: #64748b;
+    --splash-bg: radial-gradient(circle at center, #141b2e, #060814);
+    --btn-primary-bg: linear-gradient(135deg, #fbbf24, #d97706);
+    --btn-primary-color: #000;
+    --nav-bg: #0b0f19;
+    --nav-border: rgba(255,255,255,0.06);
+    --nav-active: #fbbf24;
+    --card-glow: rgba(251, 191, 36, 0.05);
 }
 
 /* ============================================

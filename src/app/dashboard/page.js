@@ -2799,29 +2799,37 @@ function DashboardContent() {
                       <select
                         value={b.username || ''}
                         onChange={async (e) => {
-                          const target = e.target.value;
+                          const target = e.target.value === '' ? null : e.target.value;
                           try {
-                            const res = await fetch('/api/usuarios', {
-                              method: 'POST',
-                              headers: { 'Content-Type': 'application/json' },
-                              body: JSON.stringify({
-                                action: 'linkBolao',
-                                username: currentUser,
-                                password: localStorage.getItem('copa26_pass'),
-                                bolaoId: b.id,
-                                targetUsername: target
-                              })
-                            });
-                            if (res.ok) {
+                            if (!isSupabaseConfigured) {
+                              await supabase.from('boloes').update({ username: target }).eq('id', b.id);
                               setToastMsg(`Bolão de ${b.bettor_name} associado a ${target || 'Ninguém'}!`);
                               setToastType('success');
-                              fetchInitialData();
+                              fetchData();
                             } else {
-                              const err = await res.json();
-                              alert('Erro ao associar: ' + err.error);
+                              const res = await fetch('/api/usuarios', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                  action: 'linkBolao',
+                                  username: currentUser,
+                                  password: localStorage.getItem('copa26_pass'),
+                                  bolaoId: b.id,
+                                  targetUsername: target
+                                })
+                              });
+                              if (res.ok) {
+                                setToastMsg(`Bolão de ${b.bettor_name} associado a ${target || 'Ninguém'}!`);
+                                setToastType('success');
+                                fetchData();
+                              } else {
+                                const err = await res.json();
+                                alert('Erro ao associar: ' + err.error);
+                              }
                             }
                           } catch (err) {
                             console.error(err);
+                            alert('Erro ao associar: ' + err.message);
                           }
                         }}
                         style={{
@@ -3805,21 +3813,29 @@ function DashboardContent() {
                 className="btn-submit"
                 onClick={async () => {
                   try {
-                    const userPass = localStorage.getItem('copa26_pass');
-                    const res = await fetch('/api/usuarios', {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({
-                        action: 'updateProfile',
-                        username: currentUser,
-                        password: userPass,
-                        avatarUrl: tempAvatar,
-                        statusMsg: tempStatus
-                      })
-                    });
-                    const data = await res.json();
-                    if (!res.ok) {
-                      throw new Error(data.error || 'Erro ao atualizar perfil');
+                    if (!isSupabaseConfigured) {
+                      const { error } = await supabase.from('usuarios').update({ 
+                        avatar_url: tempAvatar, 
+                        status: tempStatus 
+                      }).eq('username', currentUser);
+                      if (error) throw new Error(error);
+                    } else {
+                      const userPass = localStorage.getItem('copa26_pass');
+                      const res = await fetch('/api/usuarios', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                          action: 'updateProfile',
+                          username: currentUser,
+                          password: userPass,
+                          avatarUrl: tempAvatar,
+                          statusMsg: tempStatus
+                        })
+                      });
+                      const data = await res.json();
+                      if (!res.ok) {
+                        throw new Error(data.error || 'Erro ao atualizar perfil');
+                      }
                     }
                     
                     // Update local state
@@ -4903,7 +4919,7 @@ function DashboardContent() {
           {toastMsg}
         </div>
       )}
-      {/* Bottom Tab Bar (Post-Login) */}
+      {/* Bottom Tab Bar (Conditional for Guest vs Authenticated User) */}
       <div style={{
         position: 'fixed',
         bottom: 0,
@@ -4922,56 +4938,84 @@ function DashboardContent() {
         borderTopLeftRadius: '16px',
         borderTopRightRadius: '16px'
       }}>
-        <div 
-          onClick={() => setActiveTab('boloes')}
-          style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.2rem', cursor: 'pointer', flex: 1 }}
-        >
-          <Icons.Home size={20} style={{ color: activeTab === 'boloes' ? 'var(--accent-gold)' : 'var(--text-secondary)' }} />
-          <span style={{ fontSize: '0.65rem', fontWeight: 'bold', color: activeTab === 'boloes' ? 'var(--accent-gold)' : 'var(--text-secondary)' }}>Palpites</span>
-        </div>
-        <div 
-          onClick={() => setActiveTab('apostas_elim')}
-          style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.2rem', cursor: 'pointer', flex: 1 }}
-        >
-          <Icons.List size={20} style={{ color: activeTab === 'apostas_elim' ? 'var(--accent-gold)' : 'var(--text-secondary)' }} />
-          <span style={{ fontSize: '0.65rem', fontWeight: 'bold', color: activeTab === 'apostas_elim' ? 'var(--accent-gold)' : 'var(--text-secondary)' }}>Apostar</span>
-        </div>
-        <div 
-          onClick={() => setActiveTab('ranking')}
-          style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.2rem', cursor: 'pointer', flex: 1 }}
-        >
-          <Icons.Trophy size={20} style={{ color: activeTab === 'ranking' ? 'var(--accent-gold)' : 'var(--text-secondary)' }} />
-          <span style={{ fontSize: '0.65rem', fontWeight: 'bold', color: activeTab === 'ranking' ? 'var(--accent-gold)' : 'var(--text-secondary)' }}>Classificação</span>
-        </div>
-        <div 
-          onClick={() => setActiveTab('jogadores')}
-          style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.2rem', cursor: 'pointer', flex: 1 }}
-        >
-          <Icons.User size={20} style={{ color: activeTab === 'jogadores' ? 'var(--accent-gold)' : 'var(--text-secondary)' }} />
-          <span style={{ fontSize: '0.65rem', fontWeight: 'bold', color: activeTab === 'jogadores' ? 'var(--accent-gold)' : 'var(--text-secondary)' }}>Jogadores</span>
-        </div>
-        {(currentUserRole === 'Admin' || currentUserRole === 'Moderador') && (
-          <div 
-            onClick={() => {
-              if (currentUserRole === 'Admin') {
-                setActiveTab('configuracoes');
-              } else {
-                setActiveTab('gerenciar_usuarios');
-              }
-            }}
-            style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.2rem', cursor: 'pointer', flex: 1 }}
-          >
-            <Icons.Settings size={20} style={{ color: (activeTab === 'configuracoes' || activeTab === 'gerenciar_usuarios') ? 'var(--accent-gold)' : 'var(--text-secondary)' }} />
-            <span style={{ fontSize: '0.65rem', fontWeight: 'bold', color: (activeTab === 'configuracoes' || activeTab === 'gerenciar_usuarios') ? 'var(--accent-gold)' : 'var(--text-secondary)' }}>Config</span>
-          </div>
+        {!currentUser ? (
+          <>
+            <div 
+              onClick={() => router.push('/')}
+              style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.2rem', cursor: 'pointer', flex: 1 }}
+            >
+              <Icons.Home size={20} style={{ color: 'var(--text-secondary)' }} />
+              <span style={{ fontSize: '0.65rem', fontWeight: 'bold', color: 'var(--text-secondary)' }}>Início</span>
+            </div>
+            <div 
+              onClick={() => setActiveTab('ranking')}
+              style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.2rem', cursor: 'pointer', flex: 1 }}
+            >
+              <Icons.Trophy size={20} style={{ color: activeTab === 'ranking' ? 'var(--accent-gold)' : 'var(--text-secondary)' }} />
+              <span style={{ fontSize: '0.65rem', fontWeight: 'bold', color: activeTab === 'ranking' ? 'var(--accent-gold)' : 'var(--text-secondary)' }}>Classificação</span>
+            </div>
+            <div 
+              onClick={() => router.push('/?login=true')}
+              style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.2rem', cursor: 'pointer', flex: 1 }}
+            >
+              <Icons.User size={20} style={{ color: 'var(--text-secondary)' }} />
+              <span style={{ fontSize: '0.65rem', fontWeight: 'bold', color: 'var(--text-secondary)' }}>Login</span>
+            </div>
+          </>
+        ) : (
+          <>
+            <div 
+              onClick={() => setActiveTab('boloes')}
+              style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.2rem', cursor: 'pointer', flex: 1 }}
+            >
+              <Icons.Home size={20} style={{ color: activeTab === 'boloes' ? 'var(--accent-gold)' : 'var(--text-secondary)' }} />
+              <span style={{ fontSize: '0.65rem', fontWeight: 'bold', color: activeTab === 'boloes' ? 'var(--accent-gold)' : 'var(--text-secondary)' }}>Palpites</span>
+            </div>
+            <div 
+              onClick={() => setActiveTab('apostas_elim')}
+              style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.2rem', cursor: 'pointer', flex: 1 }}
+            >
+              <Icons.List size={20} style={{ color: activeTab === 'apostas_elim' ? 'var(--accent-gold)' : 'var(--text-secondary)' }} />
+              <span style={{ fontSize: '0.65rem', fontWeight: 'bold', color: activeTab === 'apostas_elim' ? 'var(--accent-gold)' : 'var(--text-secondary)' }}>Apostar</span>
+            </div>
+            <div 
+              onClick={() => setActiveTab('ranking')}
+              style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.2rem', cursor: 'pointer', flex: 1 }}
+            >
+              <Icons.Trophy size={20} style={{ color: activeTab === 'ranking' ? 'var(--accent-gold)' : 'var(--text-secondary)' }} />
+              <span style={{ fontSize: '0.65rem', fontWeight: 'bold', color: activeTab === 'ranking' ? 'var(--accent-gold)' : 'var(--text-secondary)' }}>Classificação</span>
+            </div>
+            <div 
+              onClick={() => setActiveTab('jogadores')}
+              style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.2rem', cursor: 'pointer', flex: 1 }}
+            >
+              <Icons.User size={20} style={{ color: activeTab === 'jogadores' ? 'var(--accent-gold)' : 'var(--text-secondary)' }} />
+              <span style={{ fontSize: '0.65rem', fontWeight: 'bold', color: activeTab === 'jogadores' ? 'var(--accent-gold)' : 'var(--text-secondary)' }}>Jogadores</span>
+            </div>
+            {(currentUserRole === 'Admin' || currentUserRole === 'Moderador') && (
+              <div 
+                onClick={() => {
+                  if (currentUserRole === 'Admin') {
+                    setActiveTab('configuracoes');
+                  } else {
+                    setActiveTab('gerenciar_usuarios');
+                  }
+                }}
+                style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.2rem', cursor: 'pointer', flex: 1 }}
+              >
+                <Icons.Settings size={20} style={{ color: (activeTab === 'configuracoes' || activeTab === 'gerenciar_usuarios') ? 'var(--accent-gold)' : 'var(--text-secondary)' }} />
+                <span style={{ fontSize: '0.65rem', fontWeight: 'bold', color: (activeTab === 'configuracoes' || activeTab === 'gerenciar_usuarios') ? 'var(--accent-gold)' : 'var(--text-secondary)' }}>Config</span>
+              </div>
+            )}
+            <div 
+              onClick={handleLogout}
+              style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.2rem', cursor: 'pointer', flex: 1 }}
+            >
+              <Icons.LogOut size={20} style={{ color: 'var(--text-secondary)' }} />
+              <span style={{ fontSize: '0.65rem', fontWeight: 'bold', color: 'var(--text-secondary)' }}>Logout</span>
+            </div>
+          </>
         )}
-        <div 
-          onClick={handleLogout}
-          style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.2rem', cursor: 'pointer', flex: 1 }}
-        >
-          <Icons.LogOut size={20} style={{ color: 'var(--text-secondary)' }} />
-          <span style={{ fontSize: '0.65rem', fontWeight: 'bold', color: 'var(--text-secondary)' }}>Logout</span>
-        </div>
       </div>
 
       <FirstLaunchOverlay />

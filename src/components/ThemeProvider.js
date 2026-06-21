@@ -4,7 +4,7 @@ import { createContext, useContext, useEffect, useState } from 'react';
 
 // Color definitions for all 48 nations in World Cup 2026
 export const THEMES = {
-  brasil: { id: 'brasil', nome: 'Brasil', emoji: '🇧🇷', flag: 'br', primary: '#00A86B', secondary: '#FFD700', bg: '#052e12' },
+  brasil: { id: 'brasil', nome: 'Brasil', emoji: '🇧🇷', flag: 'br', primary: '#fbbf24', secondary: '#fbbf24', bg: '#060913' },
   mexico: { id: 'mexico', nome: 'México', emoji: '🇲🇽', flag: 'mx', primary: '#12a154', secondary: '#c91b2c', bg: '#042110' },
   africa_do_sul: { id: 'africa_do_sul', nome: 'África do Sul', emoji: '🇿🇦', flag: 'za', primary: '#007a4d', secondary: '#ffb612', bg: '#022417' },
   coreia_do_sul: { id: 'coreia_do_sul', nome: 'Coreia do Sul', emoji: '🇰🇷', flag: 'kr', primary: '#cd2e3a', secondary: '#0047a0', bg: '#0e1828' },

@@ -290,8 +290,13 @@ export const supabase = isSupabaseConfigured ? supabaseClient : {
         const result = {
           data: db[table] || [],
           error: null,
-          eq: (field, val) => {
-            const dataFiltered = (db[table] || []).filter(item => item[field] === val);
+           eq: (field, val) => {
+            const dataFiltered = (db[table] || []).filter(item => {
+              const itemVal = item[field];
+              return (typeof itemVal === 'string' && typeof val === 'string')
+                ? itemVal.toLowerCase() === val.toLowerCase()
+                : itemVal === val;
+            });
             return { data: dataFiltered, error: null };
           },
           order: (field, options) => {
@@ -338,7 +343,11 @@ export const supabase = isSupabaseConfigured ? supabaseClient : {
           eq: async (field, val) => {
             const list = db[table] || [];
             list.forEach((item, idx) => {
-              if (item[field] === val) {
+              const itemVal = item[field];
+              const match = (typeof itemVal === 'string' && typeof val === 'string')
+                ? itemVal.toLowerCase() === val.toLowerCase()
+                : itemVal === val;
+              if (match) {
                 list[idx] = { ...item, ...updatedFields };
               }
             });
