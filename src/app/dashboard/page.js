@@ -2834,7 +2834,7 @@ function DashboardContent() {
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem', textAlign: 'left' }}>
                       <span style={{ fontWeight: 'bold', color: 'var(--text-primary)', fontSize: '0.85rem' }}>{b.bettor_name}</span>
                       <span style={{ fontSize: '0.72rem', color: 'var(--text-secondary)' }}>
-                        Associado ao perfil: <strong style={{  }}>{b.username || 'Nenhum'}</strong className="text-gold-gradient">
+                        Associado ao perfil: <strong className="text-gold-gradient" style={{  }}>{b.username || 'Nenhum'}</strong>
                       </span>
                     </div>
                     
