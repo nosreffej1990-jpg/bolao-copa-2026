@@ -1749,9 +1749,15 @@ function DashboardContent() {
               )}
             </div>
           )}
-          {activeThemeObj && (
+          {(currentUserObj?.campeao || boloes.find(b => b.username === currentUser)?.campeao || activeThemeObj) && (
             <img
-              src={`https://flagcdn.com/w40/${activeThemeObj.flag}.png`}
+              src={`https://flagcdn.com/w40/${(() => {
+                const champ = currentUserObj?.campeao || boloes.find(b => b.username === currentUser)?.campeao;
+                if (champ) {
+                  return getFlagCode(champ);
+                }
+                return activeThemeObj?.flag || 'br';
+              })()}.png`}
               alt="Tema"
               title={`Tema: ${activeThemeObj.nome}`}
               style={{
@@ -2105,7 +2111,7 @@ function DashboardContent() {
                     <div className="bolao-card-top">
                       <div style={{ position: 'relative', display: 'inline-block' }}>
                         <img
-                          src={b.avatar_url && b.avatar_url.startsWith('data:') ? b.avatar_url : `https://api.dicebear.com/7.x/identicon/svg?seed=${b.bettor_name}`}
+                          src={((usersList && usersList.find(u => u.username === b.username)?.avatar_url) || `https://api.dicebear.com/7.x/identicon/svg?seed=${b.bettor_name}`)}
                           className="bolao-avatar"
                           alt="avatar"
                           style={{ width: '48px', height: '48px', borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--border-color)' }}
@@ -3526,7 +3532,7 @@ function DashboardContent() {
                     
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                       {playerBolao ? (
-                        <span style={{ fontSize: '0.68rem', background: 'rgba(16,185,129,0.1)', padding: '2px 8px', borderRadius: '999px', fontWeight: 'bold' }} className="text-gold-gradient">
+                        <span style={{ fontSize: '0.68rem', background: 'rgba(16,185,129,0.1)', color: '#10b981', padding: '2px 8px', borderRadius: '999px', fontWeight: 'bold' }}>
                           Palpites Ativos
                         </span>
                       ) : (
