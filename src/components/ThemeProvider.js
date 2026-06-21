@@ -56,92 +56,17 @@ export const THEMES = {
 
 const ThemeContext = createContext({ theme: 'brasil', setTheme: () => {} });
 
-// Helper to lighten hex color
-function lightenColor(hex, percent) {
-  const num = parseInt(hex.replace("#",""), 16),
-    amt = Math.round(2.55 * percent),
-    R = (num >> 16) + amt,
-    G = (num >> 8 & 0x00FF) + amt,
-    B = (num & 0x0000FF) + amt;
-  return "#" + (0x1000000 + (R<255?R<0?0:R:255)*0x10000 + (G<255?G<0?0:G:255)*0x100 + (B<255?B<0?0:B:255)).toString(16).slice(1);
-}
-
-// Helper to darken hex color
-function darkenColor(hex, percent) {
-  const num = parseInt(hex.replace("#",""), 16),
-    amt = Math.round(2.55 * percent),
-    R = (num >> 16) - amt,
-    G = (num >> 8 & 0x00FF) - amt,
-    B = (num & 0x0000FF) - amt;
-  return "#" + (0x1000000 + (R<255?R<0?0:R:255)*0x10000 + (G<255?G<0?0:G:255)*0x100 + (B<255?B<0?0:B:255)).toString(16).slice(1);
-}
-
-// Helper to convert hex to RGB values
-function hexToRgb(hex) {
-  const num = parseInt(hex.replace("#",""), 16);
-  return `${num >> 16}, ${num >> 8 & 0x00FF}, ${num & 0x0000FF}`;
-}
-
 export function ThemeProvider({ children }) {
   const [theme, setThemeState] = useState('brasil');
 
-  const applyThemeVariables = (themeId) => {
-    const t = THEMES[themeId] || THEMES['brasil'];
-    const root = document.documentElement;
-    
-    // Background variables
-    const bgApp = t.bg;
-    const bgHeader = darkenColor(bgApp, 15);
-    const bgCard = lightenColor(bgApp, 6);
-    const bgCardHover = lightenColor(bgApp, 12);
-    const borderCard = 'rgba(255, 255, 255, 0.08)';
-    const borderActive = `rgba(${hexToRgb(t.secondary)}, 0.4)`;
-    
-    root.style.setProperty('--bg-app', bgApp);
-    root.style.setProperty('--bg-header', bgHeader);
-    root.style.setProperty('--bg-card', bgCard);
-    root.style.setProperty('--bg-card-hover', bgCardHover);
-    root.style.setProperty('--border-color', borderCard);
-    root.style.setProperty('--border-active', borderActive);
-    
-    // Brand colors
-    root.style.setProperty('--primary-green', t.primary);
-    root.style.setProperty('--soccer-green', t.primary);
-    root.style.setProperty('--accent-gold', t.secondary);
-    root.style.setProperty('--accent-gold-hover', lightenColor(t.secondary, 8));
-    root.style.setProperty('--text-primary', '#ffffff');
-    root.style.setProperty('--text-secondary', lightenColor(t.primary, 35));
-    root.style.setProperty('--text-muted', lightenColor(t.bg, 25));
-    
-    // Custom specific components variables
-    root.style.setProperty('--splash-bg', `radial-gradient(circle at center, ${bgCard}, ${bgHeader})`);
-    
-    if (themeId === 'brasil') {
-      root.style.setProperty('--btn-primary-bg', `linear-gradient(to bottom, var(--gold-light) 0%, var(--gold-mid) 55%, var(--gold-dark) 100%)`);
-      root.style.setProperty('--btn-primary-color', '#0f1c14');
-    } else {
-      root.style.setProperty('--btn-primary-bg', `linear-gradient(135deg, ${t.primary}, ${t.secondary})`);
-      root.style.setProperty('--btn-primary-color', '#000000');
-    }
-    
-    root.style.setProperty('--nav-bg', bgHeader);
-    root.style.setProperty('--nav-border', borderCard);
-    root.style.setProperty('--nav-active', t.secondary);
-    root.style.setProperty('--card-glow', `rgba(${hexToRgb(t.primary)}, 0.1)`);
-    
-    root.setAttribute('data-theme', themeId);
-  };
-
   useEffect(() => {
-    const saved = localStorage.getItem('copa26_theme') || 'carbono';
+    const saved = localStorage.getItem('copa26_theme') || 'brasil';
     setThemeState(saved);
-    applyThemeVariables(saved);
   }, []);
 
   const setTheme = (id) => {
     setThemeState(id);
     localStorage.setItem('copa26_theme', id);
-    applyThemeVariables(id);
   };
 
   return (

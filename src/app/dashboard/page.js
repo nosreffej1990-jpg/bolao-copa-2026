@@ -2019,8 +2019,8 @@ function DashboardContent() {
                     <Icons.Camera size={14} />
                     Upar Bolão
                   </button>
-                  <button className="btn-upload-bolao" style={{ backgroundColor: 'rgba(255, 255, 255, 0.08)', color: '#fff', border: '1px solid var(--border-color)' }} onClick={startManualUpload}>
-                    <Icons.Plus size={14} style={{ color: '#fff' }} />
+                  <button className="btn-upload-bolao" style={{ backgroundColor: 'rgba(255, 255, 255, 0.08)', color: 'var(--text-primary)', border: '1px solid var(--border-color)' }} onClick={startManualUpload}>
+                    <Icons.Plus size={14} style={{ color: 'var(--text-primary)' }} />
                     Cadastrar Manualmente
                   </button>
                 </div>
@@ -2201,7 +2201,7 @@ function DashboardContent() {
                       <div className="podium-box">
                         <span className="podium-name">{top3[1].name}</span>
                         <span className="podium-pts">{top3[1].pts} pts</span>
-                        <span style={{ fontSize: '0.65rem', color: '#94a3b8', fontWeight: 'bold' }}>2º Lugar</span>
+                        <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)', fontWeight: 'bold' }}>2º Lugar</span>
                       </div>
                     </div>
                   )}
@@ -2260,7 +2260,7 @@ function DashboardContent() {
                 <button onClick={shareRanking} style={{
                   width: '100%', marginTop: '1.25rem', padding: '0.85rem',
                   background: 'linear-gradient(135deg, #25D366, #128C7E)',
-                  border: 'none', borderRadius: '10px', color: '#fff',
+                  border: 'none', borderRadius: '10px', color: 'var(--text-primary)',
                   fontWeight: '700', fontSize: '0.9rem', cursor: 'pointer',
                   display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem'
                 }}>
@@ -2280,7 +2280,7 @@ function DashboardContent() {
                 <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Placares oficiais • Atualizado a cada 60s</p>
               </div>
               {apiLive.length > 0 && (
-                <span style={{ background: '#ef4444', color: '#fff', fontSize: '0.65rem', fontWeight: 'bold', padding: '0.2rem 0.5rem', borderRadius: '999px', animation: 'pulse 1.5s infinite' }}>🔴 AO VIVO</span>
+                <span style={{ background: '#ef4444', color: 'var(--text-primary)', fontSize: '0.65rem', fontWeight: 'bold', padding: '0.2rem 0.5rem', borderRadius: '999px', animation: 'pulse 1.5s infinite' }}>🔴 AO VIVO</span>
               )}
             </div>
 
@@ -2490,13 +2490,13 @@ function DashboardContent() {
             <div style={{ display: 'flex', gap: '1.5rem', overflowX: 'auto', padding: '1rem 0' }}>
               {/* Fase de 32 (16 avos) */}
               <div style={{ flex: '0 0 240px', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                <h4 style={{ textAlign: 'center', color: 'var(--soccer-green)', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '0.5rem', fontSize: '0.85rem' }}>16 avos (32 times)</h4>
+                <h4 style={{ textAlign: 'center', color: 'var(--soccer-green)', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem', fontSize: '0.85rem' }}>16 avos (32 times)</h4>
                 {confrontos.filter(c => c.grupo === 'R32').map(g => {
                   const hFlag = getFlagCode(g.home_team);
                   const aFlag = getFlagCode(g.away_team);
                   return (
                     <div key={g.id} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '0.5rem', fontSize: '0.75rem' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', color: '#94a3b8', marginBottom: '0.25rem', fontSize: '0.65rem' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-muted)', marginBottom: '0.25rem', fontSize: '0.65rem' }}>
                         <span>Jogo #{g.id}</span>
                         <span>{g.match_date}</span>
                       </div>
@@ -2521,13 +2521,13 @@ function DashboardContent() {
 
               {/* Oitavas */}
               <div style={{ flex: '0 0 240px', display: 'flex', flexDirection: 'column', gap: '2rem', justifyContent: 'space-around' }}>
-                <h4 style={{ textAlign: 'center', color: 'var(--soccer-green)', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '0.5rem', fontSize: '0.85rem' }}>Oitavas de Final</h4>
+                <h4 style={{ textAlign: 'center', color: 'var(--soccer-green)', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem', fontSize: '0.85rem' }}>Oitavas de Final</h4>
                 {confrontos.filter(c => c.grupo === 'R16').map(g => {
                   const hFlag = getFlagCode(g.home_team);
                   const aFlag = getFlagCode(g.away_team);
                   return (
                     <div key={g.id} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '0.5rem', fontSize: '0.75rem' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', color: '#94a3b8', marginBottom: '0.25rem', fontSize: '0.65rem' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-muted)', marginBottom: '0.25rem', fontSize: '0.65rem' }}>
                         <span>Jogo #{g.id}</span>
                         <span>{g.match_date}</span>
                       </div>
@@ -2552,13 +2552,13 @@ function DashboardContent() {
 
               {/* Quartas */}
               <div style={{ flex: '0 0 240px', display: 'flex', flexDirection: 'column', gap: '4rem', justifyContent: 'space-around' }}>
-                <h4 style={{ textAlign: 'center', color: 'var(--soccer-green)', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '0.5rem', fontSize: '0.85rem' }}>Quartas de Final</h4>
+                <h4 style={{ textAlign: 'center', color: 'var(--soccer-green)', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem', fontSize: '0.85rem' }}>Quartas de Final</h4>
                 {confrontos.filter(c => c.grupo === 'QF').map(g => {
                   const hFlag = getFlagCode(g.home_team);
                   const aFlag = getFlagCode(g.away_team);
                   return (
                     <div key={g.id} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '0.5rem', fontSize: '0.75rem' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', color: '#94a3b8', marginBottom: '0.25rem', fontSize: '0.65rem' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-muted)', marginBottom: '0.25rem', fontSize: '0.65rem' }}>
                         <span>Jogo #{g.id}</span>
                         <span>{g.match_date}</span>
                       </div>
@@ -2583,13 +2583,13 @@ function DashboardContent() {
 
               {/* Semifinais */}
               <div style={{ flex: '0 0 240px', display: 'flex', flexDirection: 'column', gap: '8rem', justifyContent: 'space-around' }}>
-                <h4 style={{ textAlign: 'center', color: 'var(--soccer-green)', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '0.5rem', fontSize: '0.85rem' }}>Semifinais</h4>
+                <h4 style={{ textAlign: 'center', color: 'var(--soccer-green)', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem', fontSize: '0.85rem' }}>Semifinais</h4>
                 {confrontos.filter(c => c.grupo === 'SF').map(g => {
                   const hFlag = getFlagCode(g.home_team);
                   const aFlag = getFlagCode(g.away_team);
                   return (
                     <div key={g.id} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '0.5rem', fontSize: '0.75rem' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', color: '#94a3b8', marginBottom: '0.25rem', fontSize: '0.65rem' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-muted)', marginBottom: '0.25rem', fontSize: '0.65rem' }}>
                         <span>Jogo #{g.id}</span>
                         <span>{g.match_date}</span>
                       </div>
@@ -2614,7 +2614,7 @@ function DashboardContent() {
 
               {/* Final e Terceiro Lugar */}
               <div style={{ flex: '0 0 240px', display: 'flex', flexDirection: 'column', gap: '3rem', justifyContent: 'center' }}>
-                <h4 style={{ textAlign: 'center', color: 'var(--soccer-green)', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '0.5rem', fontSize: '0.85rem' }}>Finais</h4>
+                <h4 style={{ textAlign: 'center', color: 'var(--soccer-green)', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem', fontSize: '0.85rem' }}>Finais</h4>
                 
                 {/* Final */}
                 {confrontos.filter(c => c.grupo === 'FINAL').map(g => {
@@ -2650,7 +2650,7 @@ function DashboardContent() {
                   const aFlag = getFlagCode(g.away_team);
                   return (
                     <div key={g.id} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '0.5rem', fontSize: '0.75rem', marginTop: '2rem' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', color: '#94a3b8', marginBottom: '0.25rem', fontSize: '0.65rem' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-muted)', marginBottom: '0.25rem', fontSize: '0.65rem' }}>
                         <span>3º Lugar (Jogo #{g.id})</span>
                         <span>{g.match_date}</span>
                       </div>
@@ -2680,13 +2680,13 @@ function DashboardContent() {
         {activeTab === 'gerenciar_usuarios' && currentUser && (currentUserRole === 'Admin' || currentUserRole === 'Moderador') && (
           <div className="tab-pane active" style={{ animation: 'fadeIn 0.4s ease-out' }}>
             <div style={{ marginBottom: '1.25rem' }}>
-              <h3 style={{ fontSize: '1.1rem', marginBottom: '0.2rem', color: '#fff' }}>Gerenciamento de Jogadores</h3>
+              <h3 style={{ fontSize: '1.1rem', marginBottom: '0.2rem', color: 'var(--text-primary)' }}>Gerenciamento de Jogadores</h3>
               <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
                 Aprove os novos cadastros dos jogadores que enviaram o comprovante PIX.
               </p>
             </div>
 
-            <div style={{ overflowX: 'auto', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border-color)', borderRadius: '12px' }}>
+            <div style={{ overflowX: 'auto', background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '12px' }}>
               {(() => {
                 const stages = [
                   { key: 'approved', label: 'Grupos', btnColor: 'linear-gradient(135deg, var(--soccer-green), #10b981)' },
@@ -2700,7 +2700,7 @@ function DashboardContent() {
                 return (
                   <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.8rem', color: '#e2e8f0' }}>
                     <thead>
-                      <tr style={{ borderBottom: '1px solid var(--border-color)', background: 'rgba(255,255,255,0.04)' }}>
+                      <tr style={{ borderBottom: '1px solid var(--border-color)', background: 'var(--bg-card)' }}>
                         <th style={{ padding: '0.75rem 1rem', textAlign: 'left', color: 'var(--text-secondary)' }}>Usuário</th>
                         <th style={{ padding: '0.75rem 1rem', textAlign: 'left', color: 'var(--text-secondary)' }}>WhatsApp</th>
                         <th style={{ padding: '0.75rem 1rem', textAlign: 'center', color: 'var(--text-secondary)' }}>Perfil</th>
@@ -2796,7 +2796,7 @@ function DashboardContent() {
 
             {/* Seção de Conciliação de Bolões */}
             <div style={{ marginTop: '2.5rem', borderTop: '1px solid var(--border-color)', paddingTop: '1.5rem' }}>
-              <h3 style={{ fontSize: '1.1rem', marginBottom: '0.2rem', color: '#fff' }}>Conciliar Bolões com Usuários</h3>
+              <h3 style={{ fontSize: '1.1rem', marginBottom: '0.2rem', color: 'var(--text-primary)' }}>Conciliar Bolões com Usuários</h3>
               <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '1.25rem' }}>
                 Associe as cartelas de bolão digitalizadas aos usuários jogadores cadastrados para que as apostas apareçam no perfil deles.
               </p>
@@ -2804,7 +2804,7 @@ function DashboardContent() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
                 {boloes.map((b) => (
                   <div key={b.id} style={{
-                    background: 'rgba(255,255,255,0.02)',
+                    background: 'var(--bg-card)',
                     border: '1px solid var(--border-color)',
                     borderRadius: '12px',
                     padding: '1rem',
@@ -2815,7 +2815,7 @@ function DashboardContent() {
                     gap: '1rem'
                   }}>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem', textAlign: 'left' }}>
-                      <span style={{ fontWeight: 'bold', color: '#fff', fontSize: '0.85rem' }}>{b.bettor_name}</span>
+                      <span style={{ fontWeight: 'bold', color: 'var(--text-primary)', fontSize: '0.85rem' }}>{b.bettor_name}</span>
                       <span style={{ fontSize: '0.72rem', color: 'var(--text-secondary)' }}>
                         Associado ao perfil: <strong style={{ color: 'var(--accent-gold)' }}>{b.username || 'Nenhum'}</strong>
                       </span>
@@ -2860,7 +2860,7 @@ function DashboardContent() {
                         }}
                         style={{
                           background: '#111827',
-                          color: '#fff',
+                          color: 'var(--text-primary)',
                           border: '1px solid var(--border-color)',
                           borderRadius: '8px',
                           padding: '0.45rem 0.75rem',
@@ -2884,7 +2884,7 @@ function DashboardContent() {
         {activeTab === 'configuracoes' && currentUser && currentUserRole === 'Admin' && (
           <div className="tab-pane active" style={{ animation: 'fadeIn 0.4s ease-out' }}>
             <div style={{ marginBottom: '1.25rem' }}>
-              <h3 style={{ fontSize: '1.1rem', marginBottom: '0.2rem', color: '#fff' }}>Painel de Configurações</h3>
+              <h3 style={{ fontSize: '1.1rem', marginBottom: '0.2rem', color: 'var(--text-primary)' }}>Painel de Configurações</h3>
               <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
                 Gerencie o comportamento do bolão, restaures e edições de textos do sistema.
               </p>
@@ -2899,7 +2899,7 @@ function DashboardContent() {
             </button>
 
             <div style={{
-              background: 'rgba(255,255,255,0.02)',
+              background: 'var(--bg-card)',
               border: '1px solid var(--border-color)',
               borderRadius: '12px',
               padding: '1.5rem',
@@ -3174,7 +3174,7 @@ function DashboardContent() {
                   <h3 style={{ fontSize: '1.3rem', marginBottom: '0.85rem', color: 'var(--accent-gold)', fontWeight: 'bold' }}>
                     Fase de Grupos em Andamento
                   </h3>
-                  <p style={{ fontSize: '0.9rem', color: '#cbd5e1', lineHeight: '1.6', margin: 0 }}>
+                  <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', lineHeight: '1.6', margin: 0 }}>
                     Ainda estamos na Fase de Grupos. Os palpites do Mata-Mata serão liberados em breve pelo Administrador!
                   </p>
                 </div>
@@ -3238,7 +3238,7 @@ function DashboardContent() {
                   <h3 style={{ fontSize: '1.25rem', marginBottom: '0.85rem', color: 'var(--accent-gold)', fontWeight: 'bold' }}>
                     Área Bloqueada - Taxa de Inscrição {activeStageConfig.name}
                   </h3>
-                  <p style={{ fontSize: '0.88rem', color: '#cbd5e1', lineHeight: '1.6', marginBottom: '1rem' }}>
+                  <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', lineHeight: '1.6', marginBottom: '1rem' }}>
                     Para liberar seus palpites para a fase de <strong>{activeStageConfig.text}</strong>, faça o pagamento da taxa adicional desta etapa e envie o comprovante Pix para o Junior.
                   </p>
                   <p style={{ fontSize: '0.78rem', color: 'var(--accent-gold)', background: 'rgba(251,191,36,0.08)', border: '1px dashed rgba(251,191,36,0.3)', padding: '0.75rem', borderRadius: '10px', marginTop: '0.2rem', marginBottom: '1.5rem', lineHeight: '1.4' }}>
@@ -3246,7 +3246,7 @@ function DashboardContent() {
                   </p>
 
                   <div style={{
-                    background: 'rgba(255,255,255,0.05)',
+                    background: 'var(--bg-card)',
                     border: '1px dashed rgba(255,255,255,0.1)',
                     borderRadius: '12px',
                     padding: '0.75rem',
@@ -3259,7 +3259,7 @@ function DashboardContent() {
                     alert('Chave Pix copiada!');
                   }}>
                     Chave Pix (Celular Junior):<br/>
-                    <strong style={{ color: '#fff', fontSize: '0.9rem' }}>+55 22 99797-3476 📋 (Copiar)</strong>
+                    <strong style={{ color: 'var(--text-primary)', fontSize: '0.9rem' }}>+55 22 99797-3476 📋 (Copiar)</strong>
                   </div>
 
                   <a
@@ -3268,7 +3268,7 @@ function DashboardContent() {
                     rel="noopener noreferrer"
                     style={{
                       display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem',
-                      background: '#25D366', color: '#fff', padding: '0.85rem', borderRadius: '12px',
+                      background: '#25D366', color: 'var(--text-primary)', padding: '0.85rem', borderRadius: '12px',
                       fontWeight: 'bold', textDecoration: 'none', fontSize: '0.92rem',
                       boxShadow: '0 4px 12px rgba(37,211,102,0.3)'
                     }}
@@ -3303,7 +3303,7 @@ function DashboardContent() {
                       return (
                         <div key={phase.title}>
                           <h4 style={{
-                            color: '#fff', borderBottom: '1px solid rgba(255,255,255,0.1)',
+                            color: 'var(--text-primary)', borderBottom: '1px solid var(--border-color)',
                             paddingBottom: '0.5rem', marginBottom: '1rem', fontSize: '0.9rem',
                             fontWeight: 'bold', display: 'flex', justifyContent: 'space-between'
                           }}>
@@ -3392,7 +3392,7 @@ function DashboardContent() {
                       }}>
                         <div style={{ display: 'flex', flexDirection: 'column' }}>
                           <span style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', fontWeight: 'bold' }}>Palpites Preenchidos</span>
-                          <strong style={{ fontSize: '1rem', color: '#fff' }}>{filledCount} / {knockoutMatches.length} Jogos</strong>
+                          <strong style={{ fontSize: '1rem', color: 'var(--text-primary)' }}>{filledCount} / {knockoutMatches.length} Jogos</strong>
                         </div>
 
                         <button
@@ -3440,7 +3440,7 @@ function DashboardContent() {
                       setActiveTab('detalhes_jogador');
                     }}
                     style={{
-                      background: 'rgba(255, 255, 255, 0.02)',
+                      background: 'var(--bg-card)',
                       border: '1px solid var(--border-color)',
                       borderRadius: '16px',
                       padding: '1.25rem',
@@ -3472,7 +3472,7 @@ function DashboardContent() {
                         <Icons.User size={20} style={{ color: 'var(--accent-gold)' }} />
                       </div>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
-                        <span style={{ fontSize: '0.9rem', fontWeight: 'bold', color: '#fff' }}>{player.username}</span>
+                        <span style={{ fontSize: '0.9rem', fontWeight: 'bold', color: 'var(--text-primary)' }}>{player.username}</span>
                         {player.campeao ? (
                           <span style={{ fontSize: '0.7rem', color: 'var(--accent-gold)', display: 'flex', alignItems: 'center', gap: '4px' }}>
                             <img 
@@ -3494,7 +3494,7 @@ function DashboardContent() {
                           Palpites Ativos
                         </span>
                       ) : (
-                        <span style={{ fontSize: '0.68rem', background: 'rgba(255,255,255,0.05)', color: 'var(--text-secondary)', padding: '2px 8px', borderRadius: '999px' }}>
+                        <span style={{ fontSize: '0.68rem', background: 'var(--bg-card)', color: 'var(--text-secondary)', padding: '2px 8px', borderRadius: '999px' }}>
                           Sem Palpites
                         </span>
                       )}
@@ -3525,7 +3525,7 @@ function DashboardContent() {
                 <button
                   onClick={() => { setActiveTab('jogadores'); setSelectedPlayerDetails(null); }}
                   style={{
-                    background: 'rgba(255, 255, 255, 0.05)',
+                    background: 'var(--bg-card)',
                     border: '1px solid var(--border-color)',
                     borderRadius: '50%',
                     width: '36px',
@@ -3533,13 +3533,13 @@ function DashboardContent() {
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    color: '#fff',
+                    color: 'var(--text-primary)',
                     cursor: 'pointer'
                   }}
                 >
                   <Icons.ChevronLeft size={20} />
                 </button>
-                <span style={{ fontSize: '1rem', fontWeight: 'bold', color: '#fff' }}>Voltar para Jogadores</span>
+                <span style={{ fontSize: '1rem', fontWeight: 'bold', color: 'var(--text-primary)' }}>Voltar para Jogadores</span>
               </div>
 
               {/* Profile Card */}
@@ -3577,12 +3577,12 @@ function DashboardContent() {
                 </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
-                  <h3 style={{ fontSize: '1.25rem', fontWeight: '800', color: '#fff', margin: 0 }}>{player.username}</h3>
+                  <h3 style={{ fontSize: '1.25rem', fontWeight: '800', color: 'var(--text-primary)', margin: 0 }}>{player.username}</h3>
                   <span style={{ fontSize: '0.72rem', color: 'var(--text-secondary)' }}>{player.role || 'Jogador'}</span>
                 </div>
 
                 {player.status && (
-                  <p style={{ fontSize: '0.8rem', color: '#cbd5e1', fontStyle: 'italic', background: 'rgba(255,255,255,0.04)', padding: '0.5rem 1rem', borderRadius: '10px', margin: 0, maxWidth: '280px' }}>
+                  <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontStyle: 'italic', background: 'var(--bg-card)', padding: '0.5rem 1rem', borderRadius: '10px', margin: 0, maxWidth: '280px' }}>
                     "{player.status}"
                   </p>
                 )}
@@ -3606,7 +3606,7 @@ function DashboardContent() {
                         style={{ width: '16px', borderRadius: '2px' }} 
                         alt={player.campeao} 
                       />
-                      <strong style={{ color: '#fff' }}>{player.campeao}</strong>
+                      <strong style={{ color: 'var(--text-primary)' }}>{player.campeao}</strong>
                     </span>
                   </div>
                 ) : (
@@ -3630,9 +3630,9 @@ function DashboardContent() {
                       cursor: 'pointer'
                     }}
                   >
-                    <span style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#fff', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <span style={{ fontSize: '0.85rem', fontWeight: 'bold', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                       ⚽ FASE DE GRUPOS 
-                      <span style={{ fontSize: '0.7rem', padding: '1px 6px', background: 'rgba(255,255,255,0.1)', borderRadius: '10px', color: 'var(--text-secondary)' }}>
+                      <span style={{ fontSize: '0.7rem', padding: '1px 6px', background: 'var(--bg-card-hover)', borderRadius: '10px', color: 'var(--text-secondary)' }}>
                         {playerBoloes.filter(b => !b.bets_data || !b.bets_data.some(bd => bd.match_id >= 73)).length} cartela(s)
                       </span>
                     </span>
@@ -3648,7 +3648,7 @@ function DashboardContent() {
                           <div key={bol.id} style={{ 
                             border: '1px solid rgba(255,255,255,0.08)',
                             borderRadius: '10px',
-                            background: 'rgba(255, 255, 255, 0.02)',
+                            background: 'var(--bg-card)',
                             overflow: 'hidden'
                           }}>
                             <div 
@@ -3686,7 +3686,7 @@ function DashboardContent() {
                                     padding: '0.5rem 0.75rem', borderRadius: '8px',
                                     background: 'rgba(255,255,255,0.01)', border: '1px solid rgba(255,255,255,0.03)'
                                   }}>
-                                    <span style={{ fontSize: '0.78rem', color: '#fff' }}>{bet.home} x {bet.away}</span>
+                                    <span style={{ fontSize: '0.78rem', color: 'var(--text-primary)' }}>{bet.home} x {bet.away}</span>
                                     <div style={{ textAlign: 'right' }}>
                                       <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--accent-gold)' }}>
                                         Aposta: {bet.bet_home} - {bet.bet_away}
@@ -3727,7 +3727,7 @@ function DashboardContent() {
                       cursor: 'pointer'
                     }}
                   >
-                    <span style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#fff', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <span style={{ fontSize: '0.85rem', fontWeight: 'bold', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                       🏆 PALPITES DO MATA-MATA
                     </span>
                     <Icons.ChevronRight size={18} style={{ color: 'var(--text-secondary)', transform: expandedSection === 'matamata' ? 'rotate(90deg)' : 'none', transition: 'transform 0.2s' }} />
@@ -3806,9 +3806,9 @@ function DashboardContent() {
 
                 <label htmlFor="avatar-upload" style={{
                   display: 'inline-flex', alignItems: 'center', gap: '0.5rem',
-                  padding: '0.5rem 1rem', background: 'rgba(255,255,255,0.05)',
+                  padding: '0.5rem 1rem', background: 'var(--bg-card)',
                   border: '1px solid var(--border-color)', borderRadius: '8px',
-                  color: '#fff', fontSize: '0.78rem', fontWeight: 'bold', cursor: 'pointer'
+                  color: 'var(--text-primary)', fontSize: '0.78rem', fontWeight: 'bold', cursor: 'pointer'
                 }}>
                   📷 Alterar Foto de Perfil
                 </label>
@@ -3944,7 +3944,7 @@ function DashboardContent() {
                   display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem',
                   width: '100%', padding: '0.75rem', marginTop: '0.75rem',
                   background: 'rgba(59, 130, 246, 0.1)', border: '1px solid #3b82f6',
-                  borderRadius: '8px', color: '#3b82f6', fontWeight: '700', fontSize: '0.85rem',
+                  borderRadius: '8px', color: 'var(--accent-gold)', fontWeight: '700', fontSize: '0.85rem',
                   cursor: 'pointer'
                 }}>
                   📁 Carregar Foto do Celular
@@ -3976,7 +3976,7 @@ function DashboardContent() {
               <div style={{ textAlign: 'center', padding: '2rem 0', color: 'var(--soccer-green)' }}>
                 <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🎉</div>
                 <p style={{ fontWeight: 'bold' }}>Leitura concluída com sucesso!</p>
-                <span style={{ fontSize: '0.7rem', color: '#fff' }}>O bolão de {tempBettorName} foi adicionado ao ranking.</span>
+                <span style={{ fontSize: '0.7rem', color: 'var(--text-primary)' }}>O bolão de {tempBettorName} foi adicionado ao ranking.</span>
               </div>
             )}
           </div>
@@ -4013,7 +4013,7 @@ function DashboardContent() {
                   <p style={{ fontSize: '0.75rem', fontWeight: 'bold' }}>{g.home_team_name_en}</p>
                 </div>
                 <div style={{ textAlign: 'center' }}>
-                  <div style={{ fontSize: '2rem', fontWeight: '900', color: '#fff', letterSpacing: '4px' }}>
+                  <div style={{ fontSize: '2rem', fontWeight: '900', color: 'var(--text-primary)', letterSpacing: '4px' }}>
                     {((g.finished === 'TRUE' || g.finished === true || g.time_elapsed === 'finished' || (g.time_elapsed && g.time_elapsed !== 'notstarted')) && g.home_score !== undefined && g.home_score !== null && g.home_score !== '' && String(g.home_score) !== 'null') ? `${g.home_score} — ${g.away_score}` : 'vs'}
                   </div>
                   <span style={{ fontSize: '0.6rem', color: (g.finished === 'TRUE' || g.finished === true || g.time_elapsed === 'finished') ? 'var(--soccer-green)' : 'var(--accent-gold)', fontWeight: 'bold' }}>
@@ -4067,7 +4067,7 @@ function DashboardContent() {
                   )}
 
                   {/* Info do jogo */}
-                  <div style={{ background: 'rgba(255,255,255,0.04)', borderRadius: '8px', padding: '0.75rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                  <div style={{ background: 'var(--bg-card)', borderRadius: '8px', padding: '0.75rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem' }}>
                       <span style={{ color: 'var(--text-secondary)' }}>Data</span>
                       <span style={{ fontWeight: 'bold' }}>{date} às {time}</span>
@@ -4263,7 +4263,7 @@ function DashboardContent() {
               </div>
             </div>
             <p style={{ fontSize: '0.85rem', marginBottom: '1rem', color: 'var(--text-secondary)' }}>
-              Você está excluindo o bolão de <strong style={{ color: '#fff' }}>{showDeleteModal.bettor_name}</strong>. Esta ação é irreversível e zerará os pontos deste participante.
+              Você está excluindo o bolão de <strong style={{ color: 'var(--text-primary)' }}>{showDeleteModal.bettor_name}</strong>. Esta ação é irreversível e zerará os pontos deste participante.
             </p>
             <div className="form-group">
               <label>Confirme sua senha para continuar</label>
@@ -4310,7 +4310,7 @@ function DashboardContent() {
                   { label: '🎯 Exatos', val: exatos, color: 'var(--soccer-green)' },
                   { label: '✅ Vencedor', val: corretos, color: '#60a5fa' },
                   { label: '❌ Erros', val: erros, color: '#f87171' }].map(s => (
-                  <div key={s.label} style={{ background: 'rgba(255,255,255,0.05)', borderRadius: '8px', padding: '0.5rem', textAlign: 'center' }}>
+                  <div key={s.label} style={{ background: 'var(--bg-card)', borderRadius: '8px', padding: '0.5rem', textAlign: 'center' }}>
                     <div style={{ fontSize: '1.1rem', fontWeight: '900', color: s.color }}>{s.val}</div>
                     <div style={{ fontSize: '0.6rem', color: 'var(--text-secondary)' }}>{s.label}</div>
                   </div>
@@ -4321,7 +4321,7 @@ function DashboardContent() {
                 {calculatedBets.map((bet, idx) => {
                   const ptsColor = bet.pts === 5 ? 'var(--soccer-green)' : bet.pts === 3 ? 'var(--accent-gold)' : bet.pts === 0 ? '#f87171' : 'var(--text-muted)';
                   return (
-                    <div key={idx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.5rem 0.6rem', borderRadius: '8px', background: 'rgba(255,255,255,0.04)' }}>
+                    <div key={idx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.5rem 0.6rem', borderRadius: '8px', background: 'var(--bg-card)' }}>
                       <div style={{ flex: 1 }}>
                         <p style={{ fontSize: '0.78rem', fontWeight: '600' }}>{bet.home} vs {bet.away}</p>
                         <p style={{ fontSize: '0.65rem', color: 'var(--text-secondary)' }}>Chutou: {bet.bet_home} x {bet.bet_away}{bet.real_home !== null && bet.real_home !== undefined ? ` | Real: ${bet.real_home} x ${bet.real_away}` : ' | Pendente'}</p>
@@ -4448,7 +4448,7 @@ function DashboardContent() {
                     display: 'flex',
                     flexDirection: 'column',
                     padding: '0.75rem',
-                    background: 'rgba(255,255,255,0.02)',
+                    background: 'var(--bg-card)',
                     border: '1px solid var(--border-color)',
                     borderRadius: '10px',
                     gap: '0.5rem'
@@ -4459,7 +4459,7 @@ function DashboardContent() {
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flex: 1, minWidth: 0 }}>
-                        <img src={`https://flagcdn.com/w80/${hFlag}.png`} style={{ width: '28px', height: '20px', borderRadius: '4px', objectFit: 'cover', border: '1px solid rgba(255,255,255,0.1)' }} alt={bet.home} />
+                        <img src={`https://flagcdn.com/w80/${hFlag}.png`} style={{ width: '28px', height: '20px', borderRadius: '4px', objectFit: 'cover', border: '1px solid var(--border-color)' }} alt={bet.home} />
                         <span style={{ fontSize: '0.8rem', fontWeight: 'bold', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{bet.home}</span>
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', justifyContent: 'center' }}>
@@ -4489,7 +4489,7 @@ function DashboardContent() {
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flex: 1, minWidth: 0, justifyContent: 'flex-end', textAlign: 'right' }}>
                         <span style={{ fontSize: '0.8rem', fontWeight: 'bold', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{bet.away}</span>
-                        <img src={`https://flagcdn.com/w80/${aFlag}.png`} style={{ width: '28px', height: '20px', borderRadius: '4px', objectFit: 'cover', border: '1px solid rgba(255,255,255,0.1)' }} alt={bet.away} />
+                        <img src={`https://flagcdn.com/w80/${aFlag}.png`} style={{ width: '28px', height: '20px', borderRadius: '4px', objectFit: 'cover', border: '1px solid var(--border-color)' }} alt={bet.away} />
                       </div>
                     </div>
                   </div>
@@ -4503,7 +4503,7 @@ function DashboardContent() {
                 Progresso: <strong>{wizardBets.filter(b => b.bet_home !== '' && b.bet_away !== '' && b.bet_home !== null && b.bet_away !== null).length}/72</strong> jogos
               </span>
               <div style={{ display: 'flex', gap: '0.5rem' }}>
-                <button className="btn-upload-bolao" style={{ backgroundColor: 'rgba(255,255,255,0.05)', color: 'var(--text-secondary)' }} onClick={() => setShowWizardModal(false)}>
+                <button className="btn-upload-bolao" style={{ backgroundColor: 'var(--bg-card)', color: 'var(--text-secondary)' }} onClick={() => setShowWizardModal(false)}>
                   Cancelar
                 </button>
                 <button className="btn-upload-bolao" style={{ backgroundColor: 'var(--soccer-green)', color: '#000' }} onClick={saveWizardBolao}>
@@ -4539,7 +4539,7 @@ function DashboardContent() {
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem',
               width: '100%', padding: '0.75rem', marginBottom: '0.75rem',
               background: 'rgba(59,130,246,0.1)', border: '1px solid #3b82f6',
-              borderRadius: '8px', color: '#3b82f6', fontWeight: '700', fontSize: '0.85rem', cursor: 'pointer'
+              borderRadius: '8px', color: 'var(--accent-gold)', fontWeight: '700', fontSize: '0.85rem', cursor: 'pointer'
             }}>
               📁 Escolher Nova Foto
             </label>
@@ -4579,7 +4579,7 @@ function DashboardContent() {
               <input
                 type="text"
                 className="score-field"
-                style={{ width: '100%', padding: '0.75rem', fontSize: '1rem', borderRadius: '8px', color: '#fff', backgroundColor: 'rgba(255,255,255,0.05)', border: '1px solid var(--border-color)' }}
+                style={{ width: '100%', padding: '0.75rem', fontSize: '1rem', borderRadius: '8px', color: 'var(--text-primary)', backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-color)' }}
                 value={editNameInput}
                 onChange={e => setEditNameInput(e.target.value)}
                 placeholder="Nome do apostador"
@@ -4589,7 +4589,7 @@ function DashboardContent() {
             <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
               <button 
                 className="btn-upload-bolao" 
-                style={{ backgroundColor: 'rgba(255,255,255,0.05)', color: 'var(--text-secondary)', padding: '0.5rem 1rem', borderRadius: '6px', border: 'none', cursor: 'pointer' }} 
+                style={{ backgroundColor: 'var(--bg-card)', color: 'var(--text-secondary)', padding: '0.5rem 1rem', borderRadius: '6px', border: 'none', cursor: 'pointer' }} 
                 onClick={() => setEditNameModal(null)}
               >
                 Cancelar
@@ -4623,7 +4623,7 @@ function DashboardContent() {
                 <div onClick={() => setShowRankingDetailsModal(null)} className="modal-close"><Icons.X size={20} /></div>
               </div>
 
-               <div style={{ background: 'rgba(255,255,255,0.05)', borderRadius: '12px', padding: '1rem', textAlign: 'center', marginBottom: '1.25rem' }}>
+               <div style={{ background: 'var(--bg-card)', borderRadius: '12px', padding: '1rem', textAlign: 'center', marginBottom: '1.25rem' }}>
                 <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'block', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Pontuação Considerada</span>
                 <strong style={{ fontSize: '2rem', color: 'var(--accent-gold)', display: 'block', marginTop: '0.2rem' }}>{totalPts} pts</strong>
                 <span style={{ fontSize: '0.7rem', color: 'var(--soccer-green)' }}>Exibindo apenas jogos com acerto exato (+5) ou vencedor (+3)</span>
@@ -4644,7 +4644,7 @@ function DashboardContent() {
                     width: '100%',
                     padding: '0.65rem',
                     background: '#25D366',
-                    color: '#fff',
+                    color: 'var(--text-primary)',
                     border: 'none',
                     borderRadius: '10px',
                     fontWeight: 'bold',
@@ -4680,9 +4680,9 @@ function DashboardContent() {
                         border: `1px solid ${exact ? 'rgba(16,185,129,0.2)' : 'rgba(251,191,36,0.15)'}`
                       }}>
                         <div style={{ flex: 1 }}>
-                          <p style={{ fontSize: '0.82rem', fontWeight: 'bold', color: '#fff' }}>{bet.home} vs {bet.away}</p>
+                          <p style={{ fontSize: '0.82rem', fontWeight: 'bold', color: 'var(--text-primary)' }}>{bet.home} vs {bet.away}</p>
                           <p style={{ fontSize: '0.68rem', color: '#9ca3af', marginTop: '0.15rem' }}>
-                            Aposta: <strong style={{ color: '#fff' }}>{bet.bet_home} x {bet.bet_away}</strong> | Oficial: <strong style={{ color: '#fff' }}>{bet.real_home} x {bet.real_away}</strong>
+                            Aposta: <strong style={{ color: 'var(--text-primary)' }}>{bet.bet_home} x {bet.bet_away}</strong> | Oficial: <strong style={{ color: 'var(--text-primary)' }}>{bet.real_home} x {bet.real_away}</strong>
                           </p>
                         </div>
                         <div style={{ textAlign: 'right' }}>
@@ -4731,7 +4731,7 @@ function DashboardContent() {
             <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
               <button 
                 className="btn-upload-bolao" 
-                style={{ backgroundColor: 'rgba(255,255,255,0.05)', color: 'var(--text-secondary)' }}
+                style={{ backgroundColor: 'var(--bg-card)', color: 'var(--text-secondary)' }}
                 onClick={() => setShowBetConfirmation(false)}
               >
                 Revisar
@@ -4807,7 +4807,7 @@ function DashboardContent() {
               transition: 'all 0.3s ease'
             }}></div>
 
-            <h3 style={{ fontSize: '1.2rem', marginBottom: '0.5rem', color: '#fff' }}>Processando suas Apostas...</h3>
+            <h3 style={{ fontSize: '1.2rem', marginBottom: '0.5rem', color: 'var(--text-primary)' }}>Processando suas Apostas...</h3>
             <p style={{ fontSize: '0.78rem', color: '#9ca3af' }}>Validando e gerando seu recibo oficial</p>
 
             <svg viewBox="0 0 100 120" style={{ width: '120px', height: '140px', margin: '1.5rem auto', filter: 'drop-shadow(0 0 15px rgba(0,0,0,0.5))' }}>
@@ -4922,7 +4922,7 @@ function DashboardContent() {
                 }}
               />
             </div>
-            <h3 style={{ fontSize: '1.3rem', color: '#fff', fontWeight: '900', letterSpacing: '0.5px', marginBottom: '1rem', textTransform: 'uppercase' }}>
+            <h3 style={{ fontSize: '1.3rem', color: 'var(--text-primary)', fontWeight: '900', letterSpacing: '0.5px', marginBottom: '1rem', textTransform: 'uppercase' }}>
               {paquetaTitle}
             </h3>
             <p style={{ fontSize: '0.88rem', color: '#d1d5db', lineHeight: '1.6', marginBottom: '1.75rem' }}>
@@ -4964,9 +4964,9 @@ function DashboardContent() {
         transform: 'translateX(-50%)',
         width: '100%',
         maxWidth: '480px',
-        background: 'rgba(10, 20, 15, 0.95)',
+        background: 'rgba(11, 15, 25, 0.95)',
         backdropFilter: 'blur(10px)',
-        borderTop: '1px solid rgba(255, 255, 255, 0.08)',
+        borderTop: '1px solid var(--border-color)',
         display: 'flex',
         justifyContent: 'space-around',
         padding: '0.65rem 0.5rem',
@@ -5130,7 +5130,7 @@ function KnockoutBetsList({ playerUsername, koConfs, boloes, currentUser, curren
           <div key={bol.id} style={{ 
             border: '1px solid rgba(255,255,255,0.08)',
             borderRadius: '10px',
-            background: 'rgba(255, 255, 255, 0.02)',
+            background: 'var(--bg-card)',
             overflow: 'hidden'
           }}>
             <div 
@@ -5171,7 +5171,7 @@ function KnockoutBetsList({ playerUsername, koConfs, boloes, currentUser, curren
                       padding: '0.5rem 0.75rem', borderRadius: '8px',
                       background: 'rgba(255,255,255,0.01)', border: '1px solid rgba(255,255,255,0.03)'
                     }}>
-                      <span style={{ fontSize: '0.78rem', color: '#fff' }}>{bet.home} x {bet.away}</span>
+                      <span style={{ fontSize: '0.78rem', color: 'var(--text-primary)' }}>{bet.home} x {bet.away}</span>
                       <div style={{ textAlign: 'right' }}>
                         <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--accent-gold)' }}>
                           Aposta: {bet.bet_home} - {bet.bet_away}
@@ -5196,7 +5196,7 @@ function KnockoutBetsList({ playerUsername, koConfs, boloes, currentUser, curren
 
 export default function Dashboard() {
   return (
-    <Suspense fallback={<div style={{ color: '#fff', padding: '2rem', textAlign: 'center' }}>Carregando Painel...</div>}>
+    <Suspense fallback={<div style={{ color: 'var(--text-primary)', padding: '2rem', textAlign: 'center' }}>Carregando Painel...</div>}>
       <DashboardContent />
     </Suspense>
   );
