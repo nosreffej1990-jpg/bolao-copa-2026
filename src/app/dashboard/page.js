@@ -3405,7 +3405,7 @@ function DashboardContent() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
               {usersList.map((player) => {
                 // Find if the player has a bolão
-                const playerBolao = boloes.find(b => b.username.toLowerCase() === player.username.toLowerCase());
+                const playerBolao = boloes.find(b => b.username && b.username.toLowerCase() === player.username.toLowerCase());
                 return (
                   <div
                     key={player.id}
