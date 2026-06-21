@@ -1,0 +1,128 @@
+        {activeTab === 'ranking' && (
+          <div>
+            <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
+              <h3 style={{ fontSize: '1.15rem', marginBottom: '0.2rem' }}>Classificação do Bolão</h3>
+              <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Pontuação calculada pelos bolões cadastrados</p>
+            </div>
+
+            {/* Seletor de Fases da Classificação */}
+            <div style={{ display: 'flex', gap: '0.4rem', overflowX: 'auto', paddingBottom: '0.8rem', marginBottom: '1rem', scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}>
+              {[
+                { id: 'groups', label: 'Fase de Grupos' },
+                { id: 'r32', label: '1/16 (32 avos)' },
+                { id: 'r16', label: '1/8 (oitavas)' },
+                { id: 'qf', label: 'Quartas' },
+                { id: 'sf', label: 'Semifinal' },
+                { id: 'final', label: 'Final' }
+              ].map(s => (
+                <button
+                  key={s.id}
+                  onClick={() => setRankingStage(s.id)}
+                  style={{
+                    padding: '0.4rem 0.8rem',
+                    borderRadius: '999px',
+                    fontSize: '0.75rem',
+                    fontWeight: '700',
+                    border: 'none',
+                    cursor: 'pointer',
+                    whiteSpace: 'nowrap',
+                    background: rankingStage === s.id ? 'var(--accent-gold)' : 'rgba(255,255,255,0.08)',
+                    color: rankingStage === s.id ? '#000' : '#cbd5e1',
+                    transition: 'all 0.2s'
+                  }}
+                >
+                  {s.label}
+                </button>
+              ))}
+            </div>
+
+            {ranking.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '3rem 1rem' }}>
+                <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🏆</div>
+                <p style={{ fontWeight: 'bold', marginBottom: '0.5rem' }}>Nenhum bolão cadastrado ainda</p>
+                <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Faça login e cadastre os bolões para ver a classificação aqui.</span>
+              </div>
+            ) : (
+              <>
+                {/* Podiums */}
+                <div className="podium-container">
+                  {top3[1] && (
+                    <div 
+                      className="podium-column second" 
+                      onClick={() => handleRankingClick(top3[1])}
+                      style={{ cursor: 'pointer' }}
+                    >
+                      <img src={top3[1].avatar} className="podium-avatar" alt="2nd" />
+                      <div className="podium-box">
+                        <span className="podium-name">{top3[1].name}</span>
+                        <span className="podium-pts">{top3[1].pts} pts</span>
+                        <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)', fontWeight: 'bold' }}>2º Lugar</span>
+                      </div>
+                    </div>
+                  )}
+                  {top3[0] && (
+                    <div 
+                      className="podium-column first" 
+                      onClick={() => handleRankingClick(top3[0])}
+                      style={{ cursor: 'pointer' }}
+                    >
+                      <span className="podium-crown">👑</span>
+                      <img src={top3[0].avatar} className="podium-avatar" alt="1st" />
+                      <div className="podium-box">
+                        <span className="podium-name">{top3[0].name}</span>
+                        <span className="podium-pts">{top3[0].pts} pts</span>
+                        <span style={{ fontSize: '0.65rem', color: '#D2A74F', fontWeight: 'bold' }}>1º Lugar</span>
+                      </div>
+                    </div>
+                  )}
+                  {top3[2] && (
+                    <div 
+                      className="podium-column third" 
+                      onClick={() => handleRankingClick(top3[2])}
+                      style={{ cursor: 'pointer' }}
+                    >
+                      <img src={top3[2].avatar} className="podium-avatar" alt="3rd" />
+                      <div className="podium-box">
+                        <span className="podium-name">{top3[2].name}</span>
+                        <span className="podium-pts">{top3[2].pts} pts</span>
+                        <span style={{ fontSize: '0.65rem', color: '#b45309', fontWeight: 'bold' }}>3º Lugar</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+                {restRank.length > 0 && (
+                  <div className="ranking-list">
+                    {restRank.map(item => (
+                      <div 
+                        className="ranking-item" 
+                        key={item.name}
+                        onClick={() => handleRankingClick(item)}
+                        style={{ cursor: 'pointer', transition: 'transform 0.2s' }}
+                        onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.02)'}
+                        onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                      >
+                        <div className="ranking-item-left">
+                          <span className="ranking-num">{item.rank}º</span>
+                          <img src={item.avatar} className="ranking-avatar" alt="player" />
+                          <span className="ranking-name">{item.name}</span>
+                        </div>
+                        <span className="ranking-pts">{item.pts} pts</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {/* Compartilhar Ranking */}
+                <button onClick={shareRanking} style={{
+                  width: '100%', marginTop: '1.25rem', padding: '0.85rem',
+                  background: 'var(--btn-primary-bg)',
+                  border: 'none', borderRadius: '10px', color: 'var(--btn-primary-color)', fontWeight: '700', fontSize: '0.9rem', cursor: 'pointer', textShadow: '0 1px 2px rgba(255,255,255, 0.4)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem'
+                }}>
+                  📤 Compartilhar Ranking no WhatsApp
+                </button>
+              </>
+            )}
+          </div>
+        )}
+
+            {/* 4. Resultados via API */}
