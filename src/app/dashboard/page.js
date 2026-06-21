@@ -3507,7 +3507,7 @@ function DashboardContent() {
                     
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                       {playerBolao ? (
-                        <span style={{ fontSize: '0.68rem', background: 'rgba(16,185,129,0.1)', , padding: '2px 8px', borderRadius: '999px', fontWeight: 'bold' }} className="text-gold-gradient">
+                        <span style={{ fontSize: '0.68rem', background: 'rgba(16,185,129,0.1)', padding: '2px 8px', borderRadius: '999px', fontWeight: 'bold' }} className="text-gold-gradient">
                           Palpites Ativos
                         </span>
                       ) : (
