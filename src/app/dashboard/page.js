@@ -5003,31 +5003,45 @@ function DashboardContent() {
           <>
             <div 
               onClick={() => setActiveTab('boloes')}
-              style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.2rem', cursor: 'pointer', flex: 1 }}
+              style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.15rem', cursor: 'pointer', flex: 1 }}
             >
-              <Icons.Home size={20} style={{ color: activeTab === 'boloes' ? 'var(--accent-gold)' : 'var(--text-secondary)' }} />
-              <span style={{ fontSize: '0.65rem', fontWeight: 'bold', color: activeTab === 'boloes' ? 'var(--accent-gold)' : 'var(--text-secondary)' }}>Palpites</span>
+              <Icons.Home size={18} style={{ color: activeTab === 'boloes' ? 'var(--accent-gold)' : 'var(--text-secondary)' }} />
+              <span style={{ fontSize: '0.55rem', fontWeight: 'bold', color: activeTab === 'boloes' ? 'var(--accent-gold)' : 'var(--text-secondary)' }}>Palpites</span>
             </div>
             <div 
               onClick={() => setActiveTab('apostas_elim')}
-              style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.2rem', cursor: 'pointer', flex: 1 }}
+              style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.15rem', cursor: 'pointer', flex: 1 }}
             >
-              <Icons.List size={20} style={{ color: activeTab === 'apostas_elim' ? 'var(--accent-gold)' : 'var(--text-secondary)' }} />
-              <span style={{ fontSize: '0.65rem', fontWeight: 'bold', color: activeTab === 'apostas_elim' ? 'var(--accent-gold)' : 'var(--text-secondary)' }}>Apostar</span>
+              <Icons.List size={18} style={{ color: activeTab === 'apostas_elim' ? 'var(--accent-gold)' : 'var(--text-secondary)' }} />
+              <span style={{ fontSize: '0.55rem', fontWeight: 'bold', color: activeTab === 'apostas_elim' ? 'var(--accent-gold)' : 'var(--text-secondary)' }}>Apostar</span>
             </div>
             <div 
               onClick={() => setActiveTab('ranking')}
-              style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.2rem', cursor: 'pointer', flex: 1 }}
+              style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.15rem', cursor: 'pointer', flex: 1 }}
             >
-              <Icons.Trophy size={20} style={{ color: activeTab === 'ranking' ? 'var(--accent-gold)' : 'var(--text-secondary)' }} />
-              <span style={{ fontSize: '0.65rem', fontWeight: 'bold', color: activeTab === 'ranking' ? 'var(--accent-gold)' : 'var(--text-secondary)' }}>Classificação</span>
+              <Icons.Trophy size={18} style={{ color: activeTab === 'ranking' ? 'var(--accent-gold)' : 'var(--text-secondary)' }} />
+              <span style={{ fontSize: '0.55rem', fontWeight: 'bold', color: activeTab === 'ranking' ? 'var(--accent-gold)' : 'var(--text-secondary)' }}>Classific.</span>
+            </div>
+            <div 
+              onClick={() => setActiveTab('placares_geral')}
+              style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.15rem', cursor: 'pointer', flex: 1 }}
+            >
+              <Icons.CheckSquare size={18} style={{ color: activeTab === 'placares_geral' ? 'var(--accent-gold)' : 'var(--text-secondary)' }} />
+              <span style={{ fontSize: '0.55rem', fontWeight: 'bold', color: activeTab === 'placares_geral' ? 'var(--accent-gold)' : 'var(--text-secondary)' }}>Resultados</span>
+            </div>
+            <div 
+              onClick={() => setActiveTab('confrontos_geral')}
+              style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.15rem', cursor: 'pointer', flex: 1 }}
+            >
+              <Icons.Calendar size={18} style={{ color: activeTab === 'confrontos_geral' ? 'var(--accent-gold)' : 'var(--text-secondary)' }} />
+              <span style={{ fontSize: '0.55rem', fontWeight: 'bold', color: activeTab === 'confrontos_geral' ? 'var(--accent-gold)' : 'var(--text-secondary)' }}>Confrontos</span>
             </div>
             <div 
               onClick={() => setActiveTab('jogadores')}
-              style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.2rem', cursor: 'pointer', flex: 1 }}
+              style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.15rem', cursor: 'pointer', flex: 1 }}
             >
-              <Icons.User size={20} style={{ color: activeTab === 'jogadores' ? 'var(--accent-gold)' : 'var(--text-secondary)' }} />
-              <span style={{ fontSize: '0.65rem', fontWeight: 'bold', color: activeTab === 'jogadores' ? 'var(--accent-gold)' : 'var(--text-secondary)' }}>Jogadores</span>
+              <Icons.User size={18} style={{ color: activeTab === 'jogadores' ? 'var(--accent-gold)' : 'var(--text-secondary)' }} />
+              <span style={{ fontSize: '0.55rem', fontWeight: 'bold', color: activeTab === 'jogadores' ? 'var(--accent-gold)' : 'var(--text-secondary)' }}>Jogadores</span>
             </div>
             {(currentUserRole === 'Admin' || currentUserRole === 'Moderador') && (
               <div 
@@ -5038,18 +5052,18 @@ function DashboardContent() {
                     setActiveTab('gerenciar_usuarios');
                   }
                 }}
-                style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.2rem', cursor: 'pointer', flex: 1 }}
+                style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.15rem', cursor: 'pointer', flex: 1 }}
               >
-                <Icons.Settings size={20} style={{ color: (activeTab === 'configuracoes' || activeTab === 'gerenciar_usuarios') ? 'var(--accent-gold)' : 'var(--text-secondary)' }} />
-                <span style={{ fontSize: '0.65rem', fontWeight: 'bold', color: (activeTab === 'configuracoes' || activeTab === 'gerenciar_usuarios') ? 'var(--accent-gold)' : 'var(--text-secondary)' }}>Config</span>
+                <Icons.Settings size={18} style={{ color: (activeTab === 'configuracoes' || activeTab === 'gerenciar_usuarios') ? 'var(--accent-gold)' : 'var(--text-secondary)' }} />
+                <span style={{ fontSize: '0.55rem', fontWeight: 'bold', color: (activeTab === 'configuracoes' || activeTab === 'gerenciar_usuarios') ? 'var(--accent-gold)' : 'var(--text-secondary)' }}>Config</span>
               </div>
             )}
             <div 
               onClick={handleLogout}
-              style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.2rem', cursor: 'pointer', flex: 1 }}
+              style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.15rem', cursor: 'pointer', flex: 1 }}
             >
-              <Icons.LogOut size={20} style={{ color: 'var(--text-secondary)' }} />
-              <span style={{ fontSize: '0.65rem', fontWeight: 'bold', color: 'var(--text-secondary)' }}>Logout</span>
+              <Icons.LogOut size={18} style={{ color: 'var(--text-secondary)' }} />
+              <span style={{ fontSize: '0.55rem', fontWeight: 'bold', color: 'var(--text-secondary)' }}>Sair</span>
             </div>
           </>
         )}

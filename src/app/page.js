@@ -761,7 +761,21 @@ export default function Home() {
                        ⚠️ {errorMsg}
                      </p>
                    )}
-                   <button type="submit" className="btn-submit">ENTRAR NO BOLÃO</button>
+                    <button type="submit" className="btn-submit" style={{ 
+                      display: 'flex', 
+                      justifyContent: 'center', 
+                      alignItems: 'center', 
+                      textAlign: 'center',
+                      background: 'rgba(255, 255, 255, 0.05)',
+                      border: '1px solid #E1B64F',
+                      backgroundImage: 'linear-gradient(to bottom, #FFDF7A 0%, #E1B64F 55%, #9C711D 100%)',
+                      WebkitBackgroundClip: 'text',
+                      WebkitTextFillColor: 'transparent',
+                      fontWeight: '800',
+                      letterSpacing: '1px'
+                    }}>
+                      ENTRAR NO BOLÃO
+                    </button>
                    {allowRegister ? (
                      <button
                        type="button"
