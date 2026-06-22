@@ -406,7 +406,19 @@ function DashboardContent() {
     setConfrontos(confs);
 
     const { data: bols } = await supabase.from('boloes').select('*');
-    setBoloes(bols || []);
+    let mergedBols = bols || [];
+    if (isSb && typeof window !== 'undefined') {
+      const sbBolsRaw = localStorage.getItem('copa26_boloes_sandbox');
+      if (sbBolsRaw) {
+        try {
+          const sbBols = JSON.parse(sbBolsRaw);
+          mergedBols = [...mergedBols, ...sbBols];
+        } catch (e) {
+          console.error('Erro ao ler sandbox bolões:', e);
+        }
+      }
+    }
+    setBoloes(mergedBols);
 
     const { data: users } = await supabase.from('usuarios').select('*');
     const uList = users || [];
@@ -834,6 +846,54 @@ function DashboardContent() {
               pts: null
             };
           });
+
+          if (sandboxMode) {
+            // Save locally
+            const localSbBolsRaw = localStorage.getItem('copa26_boloes_sandbox');
+            let localSbBols = [];
+            if (localSbBolsRaw) {
+              try {
+                localSbBols = JSON.parse(localSbBolsRaw);
+              } catch (e) {
+                console.error(e);
+              }
+            }
+
+            const newBolao = {
+              id: Date.now(),
+              username: currentUser,
+              bettor_name: finalBettorName,
+              photo_url: 'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?q=80&w=375&auto=format&fit=crop',
+              bets_data: betsData,
+              created_at: new Date().toISOString()
+            };
+
+            localSbBols.push(newBolao);
+            localStorage.setItem('copa26_boloes_sandbox', JSON.stringify(localSbBols));
+
+            // Generate PDF Receipt Data
+            const pdfData = knockoutMatches.map(m => {
+              const b = knockoutBets[m.id];
+              return {
+                match_id: m.id,
+                home_team: m.home_team,
+                away_team: m.away_team,
+                home_score: parseInt(b.home),
+                away_score: parseInt(b.away)
+              };
+            });
+
+            // Generate Receipt PDF
+            await generatePDFReceipt(pdfData, currentUser);
+
+            // Merge new local bolão to state
+            setBoloes(prev => [...prev, newBolao]);
+
+            setBettingLoading(false);
+            setShowPaquetaModal(true); // Open humor popup
+            showToast('Palpites salvos localmente no Sandbox! 🏆');
+            return;
+          }
 
           const password = localStorage.getItem('copa26_pass') || '';
 
@@ -1367,6 +1427,435 @@ function DashboardContent() {
       const players = Object.values(scoreMap);
       return players.sort((a, b) => b.pts - a.pts).map((p, idx) => ({ ...p, rank: idx + 1 }));
     }
+  };
+
+  const assign3rdPlacedTeams = (qualified3rds) => {
+    const spots = [
+      { matchId: 74, groups: ['A', 'B', 'C', 'D', 'F'] },
+      { matchId: 77, groups: ['C', 'D', 'F', 'G', 'H'] },
+      { matchId: 79, groups: ['C', 'E', 'F', 'H', 'I'] },
+      { matchId: 80, groups: ['E', 'H', 'I', 'J', 'K'] },
+      { matchId: 81, groups: ['B', 'E', 'F', 'I', 'J'] },
+      { matchId: 82, groups: ['A', 'E', 'H', 'I', 'J'] },
+      { matchId: 85, groups: ['E', 'F', 'G', 'I', 'J'] },
+      { matchId: 87, groups: ['D', 'E', 'I', 'J', 'L'] }
+    ];
+
+    const assignment = {};
+    const usedTeams = new Set();
+
+    function backtrack(spotIdx) {
+      if (spotIdx === spots.length) return true;
+      const spot = spots[spotIdx];
+      for (let i = 0; i < qualified3rds.length; i++) {
+        const team = qualified3rds[i];
+        if (usedTeams.has(team.team)) continue;
+        if (spot.groups.includes(team.group)) {
+          assignment[spot.matchId] = team;
+          usedTeams.add(team.team);
+          if (backtrack(spotIdx + 1)) return true;
+          delete assignment[spot.matchId];
+          usedTeams.delete(team.team);
+        }
+      }
+      return false;
+    }
+
+    if (!backtrack(0)) {
+      const assigned = new Set();
+      spots.forEach(spot => {
+        let found = qualified3rds.find(t => !assigned.has(t.team) && spot.groups.includes(t.group));
+        if (!found) {
+          found = qualified3rds.find(t => !assigned.has(t.team));
+        }
+        if (found) {
+          assignment[spot.matchId] = found;
+          assigned.add(found.team);
+        }
+      });
+    }
+
+    return assignment;
+  };
+
+  const simulateMatchScores = (matchIds, confrontosList) => {
+    return confrontosList.map(c => {
+      if (matchIds.includes(c.id)) {
+        const hasFinishedScore = c.finished && c.home_score !== null && c.away_score !== null;
+        if (hasFinishedScore) return c;
+
+        let hScore = Math.floor(Math.random() * 4);
+        let aScore = Math.floor(Math.random() * 4);
+        while (hScore === aScore) {
+          hScore = Math.floor(Math.random() * 4);
+          aScore = Math.floor(Math.random() * 4);
+        }
+
+        return {
+          ...c,
+          home_score: hScore,
+          away_score: aScore,
+          finished: true
+        };
+      }
+      return c;
+    });
+  };
+
+  const getMatchWinner = (match) => {
+    if (!match) return 'A definir';
+    if (match.home_score > match.away_score) return match.home_team;
+    return match.away_team;
+  };
+
+  const getMatchLoser = (match) => {
+    if (!match) return 'A definir';
+    if (match.home_score < match.away_score) return match.home_team;
+    return match.away_team;
+  };
+
+  const simulateR32 = () => {
+    const standings = calculateGroupStandings(confrontos);
+    const winners = {};
+    const runnersUp = {};
+    const thirdPlaced = [];
+
+    standings.forEach(g => {
+      const gName = g.group;
+      if (g.teams && g.teams.length >= 3) {
+        winners[gName] = g.teams[0].team;
+        runnersUp[gName] = g.teams[1].team;
+        thirdPlaced.push({
+          team: g.teams[2].team,
+          group: gName,
+          points: g.teams[2].points,
+          goalDifference: g.teams[2].goalDifference,
+          gf: g.teams[2].gf
+        });
+      }
+    });
+
+    if (Object.keys(winners).length < 12) {
+      showToast('Grupos incompletos para emular a R32!', 'error');
+      return;
+    }
+
+    thirdPlaced.sort((a, b) => {
+      if (b.points !== a.points) return b.points - a.points;
+      if (b.goalDifference !== a.goalDifference) return b.goalDifference - a.goalDifference;
+      if (b.gf !== a.gf) return b.gf - a.gf;
+      return a.team.localeCompare(b.team);
+    });
+
+    const qualified3rds = thirdPlaced.slice(0, 8);
+    const assigned3rds = assign3rdPlacedTeams(qualified3rds);
+
+    const nextConfs = confrontos.map(m => {
+      if (m.id >= 73 && m.id <= 88) {
+        let home = m.home_team;
+        let away = m.away_team;
+
+        if (m.id === 73) home = runnersUp['A'];
+        else if (m.id === 74) home = winners['E'];
+        else if (m.id === 75) home = winners['F'];
+        else if (m.id === 76) home = winners['C'];
+        else if (m.id === 77) home = winners['I'];
+        else if (m.id === 78) home = runnersUp['E'];
+        else if (m.id === 79) home = winners['A'];
+        else if (m.id === 80) home = winners['L'];
+        else if (m.id === 81) home = winners['D'];
+        else if (m.id === 82) home = winners['G'];
+        else if (m.id === 83) home = runnersUp['K'];
+        else if (m.id === 84) home = winners['H'];
+        else if (m.id === 85) home = winners['B'];
+        else if (m.id === 86) home = winners['J'];
+        else if (m.id === 87) home = winners['K'];
+        else if (m.id === 88) home = runnersUp['D'];
+
+        if (m.id === 73) away = runnersUp['B'];
+        else if (m.id === 74) away = assigned3rds[74]?.team || 'A definir';
+        else if (m.id === 75) away = runnersUp['C'];
+        else if (m.id === 76) away = runnersUp['F'];
+        else if (m.id === 77) away = assigned3rds[77]?.team || 'A definir';
+        else if (m.id === 78) away = runnersUp['I'];
+        else if (m.id === 79) away = assigned3rds[79]?.team || 'A definir';
+        else if (m.id === 80) away = assigned3rds[80]?.team || 'A definir';
+        else if (m.id === 81) away = assigned3rds[81]?.team || 'A definir';
+        else if (m.id === 82) away = assigned3rds[82]?.team || 'A definir';
+        else if (m.id === 83) away = runnersUp['L'];
+        else if (m.id === 84) away = runnersUp['J'];
+        else if (m.id === 85) away = assigned3rds[85]?.team || 'A definir';
+        else if (m.id === 86) away = runnersUp['H'];
+        else if (m.id === 87) away = assigned3rds[87]?.team || 'A definir';
+        else if (m.id === 88) away = runnersUp['G'];
+
+        return {
+          ...m,
+          home_team: home || 'A definir',
+          away_team: away || 'A definir',
+          home_code: getFlagCode(home) || 'placeholder',
+          away_code: getFlagCode(away) || 'placeholder',
+          home_score: null,
+          away_score: null,
+          finished: false
+        };
+      } else if (m.id >= 89 && m.id <= 104) {
+        let orig = defaultConfrontos.find(dc => dc.id === m.id);
+        return {
+          ...m,
+          home_team: orig ? orig.home_team : m.home_team,
+          away_team: orig ? orig.away_team : m.away_team,
+          home_code: 'placeholder',
+          away_code: 'placeholder',
+          home_score: null,
+          away_score: null,
+          finished: false
+        };
+      }
+      return m;
+    });
+
+    localStorage.setItem('copa26_confrontos_sandbox', JSON.stringify(nextConfs));
+    setConfrontos(nextConfs);
+    showToast('Fase de 1/16 de Final (R32) emulada com sucesso! 🧪');
+  };
+
+  const simulateR16 = () => {
+    const r32Ids = Array.from({ length: 16 }, (_, i) => 73 + i);
+    let nextConfs = simulateMatchScores(r32Ids, confrontos);
+
+    const winners = {};
+    r32Ids.forEach(id => {
+      const m = nextConfs.find(c => c.id === id);
+      winners[id] = getMatchWinner(m);
+    });
+
+    nextConfs = nextConfs.map(m => {
+      if (m.id >= 89 && m.id <= 96) {
+        let home = m.home_team;
+        let away = m.away_team;
+
+        if (m.id === 89) { home = winners[74]; away = winners[77]; }
+        else if (m.id === 90) { home = winners[73]; away = winners[75]; }
+        else if (m.id === 91) { home = winners[76]; away = winners[78]; }
+        else if (m.id === 92) { home = winners[79]; away = winners[80]; }
+        else if (m.id === 93) { home = winners[83]; away = winners[84]; }
+        else if (m.id === 94) { home = winners[81]; away = winners[82]; }
+        else if (m.id === 95) { home = winners[86]; away = winners[88]; }
+        else if (m.id === 96) { home = winners[85]; away = winners[87]; }
+
+        return {
+          ...m,
+          home_team: home || 'A definir',
+          away_team: away || 'A definir',
+          home_code: getFlagCode(home) || 'placeholder',
+          away_code: getFlagCode(away) || 'placeholder',
+          home_score: null,
+          away_score: null,
+          finished: false
+        };
+      } else if (m.id >= 97 && m.id <= 104) {
+        let orig = defaultConfrontos.find(dc => dc.id === m.id);
+        return {
+          ...m,
+          home_team: orig ? orig.home_team : m.home_team,
+          away_team: orig ? orig.away_team : m.away_team,
+          home_code: 'placeholder',
+          away_code: 'placeholder',
+          home_score: null,
+          away_score: null,
+          finished: false
+        };
+      }
+      return m;
+    });
+
+    localStorage.setItem('copa26_confrontos_sandbox', JSON.stringify(nextConfs));
+    setConfrontos(nextConfs);
+    showToast('Fase Oitavas de Final emulada com sucesso! 🧪');
+  };
+
+  const simulateQF = () => {
+    const hasR32Teams = confrontos.some(c => c.id >= 73 && c.id <= 88 && c.home_team !== 'Runner-up Group A' && c.home_team !== 'Winner Group E');
+    if (!hasR32Teams) {
+      showToast('Por favor, emule a Fase R32 primeiro!', 'error');
+      return;
+    }
+
+    const r32Ids = Array.from({ length: 16 }, (_, i) => 73 + i);
+    const r16Ids = Array.from({ length: 8 }, (_, i) => 89 + i);
+    
+    let nextConfs = simulateMatchScores(r32Ids, confrontos);
+    nextConfs = simulateMatchScores(r16Ids, nextConfs);
+
+    const winners = {};
+    r16Ids.forEach(id => {
+      const m = nextConfs.find(c => c.id === id);
+      winners[id] = getMatchWinner(m);
+    });
+
+    nextConfs = nextConfs.map(m => {
+      if (m.id >= 97 && m.id <= 100) {
+        let home = m.home_team;
+        let away = m.away_team;
+
+        if (m.id === 97) { home = winners[89]; away = winners[90]; }
+        else if (m.id === 98) { home = winners[93]; away = winners[94]; }
+        else if (m.id === 99) { home = winners[91]; away = winners[92]; }
+        else if (m.id === 100) { home = winners[95]; away = winners[96]; }
+
+        return {
+          ...m,
+          home_team: home || 'A definir',
+          away_team: away || 'A definir',
+          home_code: getFlagCode(home) || 'placeholder',
+          away_code: getFlagCode(away) || 'placeholder',
+          home_score: null,
+          away_score: null,
+          finished: false
+        };
+      } else if (m.id >= 101 && m.id <= 104) {
+        let orig = defaultConfrontos.find(dc => dc.id === m.id);
+        return {
+          ...m,
+          home_team: orig ? orig.home_team : m.home_team,
+          away_team: orig ? orig.away_team : m.away_team,
+          home_code: 'placeholder',
+          away_code: 'placeholder',
+          home_score: null,
+          away_score: null,
+          finished: false
+        };
+      }
+      return m;
+    });
+
+    localStorage.setItem('copa26_confrontos_sandbox', JSON.stringify(nextConfs));
+    setConfrontos(nextConfs);
+    showToast('Fase Quartas de Final emulada com sucesso! 🧪');
+  };
+
+  const simulateSF = () => {
+    const hasR16Teams = confrontos.some(c => c.id >= 89 && c.id <= 96 && !c.home_team.includes('Winner Match'));
+    if (!hasR16Teams) {
+      showToast('Por favor, emule a Fase Oitavas primeiro!', 'error');
+      return;
+    }
+
+    const r32Ids = Array.from({ length: 16 }, (_, i) => 73 + i);
+    const r16Ids = Array.from({ length: 8 }, (_, i) => 89 + i);
+    const qfIds = Array.from({ length: 4 }, (_, i) => 97 + i);
+
+    let nextConfs = simulateMatchScores(r32Ids, confrontos);
+    nextConfs = simulateMatchScores(r16Ids, nextConfs);
+    nextConfs = simulateMatchScores(qfIds, nextConfs);
+
+    const winners = {};
+    qfIds.forEach(id => {
+      const m = nextConfs.find(c => c.id === id);
+      winners[id] = getMatchWinner(m);
+    });
+
+    nextConfs = nextConfs.map(m => {
+      if (m.id >= 101 && m.id <= 102) {
+        let home = m.home_team;
+        let away = m.away_team;
+
+        if (m.id === 101) { home = winners[97]; away = winners[98]; }
+        else if (m.id === 102) { home = winners[99]; away = winners[100]; }
+
+        return {
+          ...m,
+          home_team: home || 'A definir',
+          away_team: away || 'A definir',
+          home_code: getFlagCode(home) || 'placeholder',
+          away_code: getFlagCode(away) || 'placeholder',
+          home_score: null,
+          away_score: null,
+          finished: false
+        };
+      } else if (m.id >= 103 && m.id <= 104) {
+        let orig = defaultConfrontos.find(dc => dc.id === m.id);
+        return {
+          ...m,
+          home_team: orig ? orig.home_team : m.home_team,
+          away_team: orig ? orig.away_team : m.away_team,
+          home_code: 'placeholder',
+          away_code: 'placeholder',
+          home_score: null,
+          away_score: null,
+          finished: false
+        };
+      }
+      return m;
+    });
+
+    localStorage.setItem('copa26_confrontos_sandbox', JSON.stringify(nextConfs));
+    setConfrontos(nextConfs);
+    showToast('Fase Semifinais emulada com sucesso! 🧪');
+  };
+
+  const simulateFinals = () => {
+    const hasQFTeams = confrontos.some(c => c.id >= 97 && c.id <= 100 && !c.home_team.includes('Winner Match'));
+    if (!hasQFTeams) {
+      showToast('Por favor, emule a Fase Quartas primeiro!', 'error');
+      return;
+    }
+
+    const r32Ids = Array.from({ length: 16 }, (_, i) => 73 + i);
+    const r16Ids = Array.from({ length: 8 }, (_, i) => 89 + i);
+    const qfIds = Array.from({ length: 4 }, (_, i) => 97 + i);
+    const sfIds = Array.from({ length: 2 }, (_, i) => 101 + i);
+
+    let nextConfs = simulateMatchScores(r32Ids, confrontos);
+    nextConfs = simulateMatchScores(r16Ids, nextConfs);
+    nextConfs = simulateMatchScores(qfIds, nextConfs);
+    nextConfs = simulateMatchScores(sfIds, nextConfs);
+
+    const winners = {};
+    const losers = {};
+    sfIds.forEach(id => {
+      const m = nextConfs.find(c => c.id === id);
+      winners[id] = getMatchWinner(m);
+      losers[id] = getMatchLoser(m);
+    });
+
+    nextConfs = nextConfs.map(m => {
+      if (m.id === 103) {
+        const home = losers[101];
+        const away = losers[102];
+        return {
+          ...m,
+          home_team: home || 'A definir',
+          away_team: away || 'A definir',
+          home_code: getFlagCode(home) || 'placeholder',
+          away_code: getFlagCode(away) || 'placeholder',
+          home_score: null,
+          away_score: null,
+          finished: false
+        };
+      } else if (m.id === 104) {
+        const home = winners[101];
+        const away = winners[102];
+        return {
+          ...m,
+          home_team: home || 'A definir',
+          away_team: away || 'A definir',
+          home_code: getFlagCode(home) || 'placeholder',
+          away_code: getFlagCode(away) || 'placeholder',
+          home_score: null,
+          away_score: null,
+          finished: false
+        };
+      }
+      return m;
+    });
+
+    nextConfs = simulateMatchScores([103, 104], nextConfs);
+
+    localStorage.setItem('copa26_confrontos_sandbox', JSON.stringify(nextConfs));
+    setConfrontos(nextConfs);
+    showToast('Fase Final emulada com sucesso! O campeão foi definido. 🏆🧪');
   };
 
   const handleRankingClick = (item) => {
@@ -2515,9 +3004,9 @@ function DashboardContent() {
           };
 
           const activeStageConfig = stagesConfig[knockoutStage] || stagesConfig.r32;
-          const isApprovedForActiveStage = currentUserRole === 'Admin' || (currentUserObj && currentUserObj[activeStageConfig.key]);
+          const isApprovedForActiveStage = currentUserRole === 'Admin' || (currentUserObj && currentUserObj[activeStageConfig.key]) || sandboxMode;
           const isUserAdminOrMod = currentUserRole === 'Admin' || currentUserRole === 'Moderador';
-          if (!mataMataPublic && !isUserAdminOrMod) {
+          if (!mataMataPublic && !isUserAdminOrMod && !sandboxMode) {
             return (
               <div className="tab-pane active" style={{ animation: 'fadeIn 0.4s ease-out' }}>
                 <div style={{
@@ -2582,6 +3071,56 @@ function DashboardContent() {
                   );
                 })}
               </div>
+
+              {sandboxMode && (
+                <div style={{
+                  background: 'rgba(210, 167, 79, 0.05)',
+                  border: '1px dashed var(--accent-gold)',
+                  borderRadius: '12px',
+                  padding: '0.75rem 1rem',
+                  marginBottom: '1.25rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: '1rem',
+                  animation: 'fadeIn 0.3s ease-out'
+                }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
+                    <span style={{ fontSize: '0.8rem', fontWeight: 'bold', color: 'var(--accent-gold)' }}>🧪 Modo Sandbox Ativo</span>
+                    <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>
+                      {knockoutStage === 'r32' 
+                        ? 'Simula a fase 1/16 de Final seguindo a classificação atual dos grupos.' 
+                        : `Simula de forma aleatória os resultados da fase anterior e traz os vencedores para a fase de ${activeStageConfig.label}.`}
+                    </span>
+                  </div>
+                  <button 
+                    onClick={() => {
+                      if (knockoutStage === 'r32') simulateR32();
+                      else if (knockoutStage === 'r16') simulateR16();
+                      else if (knockoutStage === 'qf') simulateQF();
+                      else if (knockoutStage === 'sf') simulateSF();
+                      else if (knockoutStage === 'final') simulateFinals();
+                    }}
+                    style={{
+                      background: 'var(--accent-gold)',
+                      color: '#000',
+                      border: 'none',
+                      borderRadius: '8px',
+                      padding: '0.5rem 1rem',
+                      fontSize: '0.75rem',
+                      fontWeight: 'bold',
+                      cursor: 'pointer',
+                      whiteSpace: 'nowrap',
+                      boxShadow: '0 4px 10px rgba(210, 167, 79, 0.2)',
+                      transition: 'all 0.2s'
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.02)'}
+                    onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                  >
+                    ⚡ Simular Confrontos
+                  </button>
+                </div>
+              )}
 
               {!isApprovedForActiveStage ? (
                 <div style={{
