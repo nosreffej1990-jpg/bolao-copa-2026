@@ -40,3 +40,10 @@ Extraímos lógicas utilitárias complexas do frontend para hooks reutilizáveis
 - **Placares Não Iniciados**: Partidas futuras não registram mais pontuações com base em placares em branco ou `0x0` falsos. A marcação só é avaliada em partidas finalizadas ou AO VIVO.
 - **Identificação Individual do Mata-Mata**: Cada envio de mata-mata exige nome descritivo (ex: "Apostador - Aposta 1") permitindo múltiplos envios controlados pelo Pix.
 - **Animação da Taça**: Progresso de carregamento animado com transições suaves de 120ms (onda dourada).
+
+---
+
+## 6. Correção na Listagem de Jogadores e Persistência de Configurações
+- **Carregamento da Lista de Jogadores**: Corrigida a função `fetchData` no dashboard para buscar dados da tabela `usuarios` do banco de dados e alimentar o estado `usersList`, resolvendo o carregamento infinito na página de Jogadores.
+- **Persistência de Configurações**: Adicionada a leitura das configurações na tabela `config` ao inicializar o dashboard, sincronizando os estados (`mataMataPublic`, `allowRegister`, `allowGroupUpload`, `allowDrawerMenu`, `paquetaTitle` e `paquetaBody`) e garantindo que as alterações salvas pelo administrador permaneçam após recarregar a página.
+- **Sincronização do Usuário Atual**: Adicionada a atualização automática do objeto de usuário e do nível de permissão (role) a partir do banco de dados na inicialização do painel.

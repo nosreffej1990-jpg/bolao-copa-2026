@@ -392,10 +392,34 @@ function DashboardContent() {
     const { data: bols } = await supabase.from('boloes').select('*');
     setBoloes(bols || []);
 
+    const { data: users } = await supabase.from('usuarios').select('*');
+    const uList = users || [];
+    setUsersList(uList);
+
+    const { data: configs } = await supabase.from('config').select('*');
+    if (configs && configs.length > 0) {
+      configs.forEach(cfg => {
+        if (cfg.key === 'mata_mata_public') setMataMataPublic(cfg.value === 'true');
+        if (cfg.key === 'allow_register') setAllowRegister(cfg.value === 'true');
+        if (cfg.key === 'allow_group_upload') setAllowGroupUpload(cfg.value === 'true');
+        if (cfg.key === 'allow_drawer_menu') setAllowDrawerMenu(cfg.value === 'true');
+        if (cfg.key === 'paqueta_title') setPaquetaTitle(cfg.value);
+        if (cfg.key === 'paqueta_body') setPaquetaBody(cfg.value);
+      });
+    }
+
     // Load user's saved predictions if logged in
     if (typeof window !== 'undefined') {
       const user = localStorage.getItem('copa26_user');
       if (user) {
+        if (uList.length > 0) {
+          const found = uList.find(u => u.username.toLowerCase() === user.toLowerCase());
+          if (found) {
+            setCurrentUserObj(found);
+            setCurrentUserRole(found.role || 'Jogador');
+            localStorage.setItem('copa26_role', found.role || 'Jogador');
+          }
+        }
         const { data: palps } = await supabase.from('palpites').select('*').eq('username', user);
         const palpsMap = {};
         (palps || []).forEach(p => {
