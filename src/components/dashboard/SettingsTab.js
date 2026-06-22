@@ -1,5 +1,6 @@
 import React from 'react';
 import * as Icons from 'lucide-react';
+import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 
 export default function SettingsTab({
   handleRecalcular,
@@ -9,9 +10,11 @@ export default function SettingsTab({
   allowDrawerMenu, setAllowDrawerMenu,
   paquetaTitle, setPaquetaTitle,
   paquetaBody, setPaquetaBody,
-  saveConfig,
   handleRestoreConfrontosOnly,
-  handleResetDatabase
+  handleResetDatabase,
+  setActiveTab,
+  currentUser,
+  showToast
 }) {
   return (
     <div className="tab-pane active" style={{ animation: 'fadeIn 0.4s ease-out' }}>

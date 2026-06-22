@@ -2362,9 +2362,11 @@ function DashboardContent() {
             allowDrawerMenu={allowDrawerMenu} setAllowDrawerMenu={setAllowDrawerMenu}
             paquetaTitle={paquetaTitle} setPaquetaTitle={setPaquetaTitle}
             paquetaBody={paquetaBody} setPaquetaBody={setPaquetaBody}
-            saveConfig={saveConfig}
             handleRestoreConfrontosOnly={handleRestoreConfrontosOnly}
             handleResetDatabase={handleResetDatabase}
+            setActiveTab={setActiveTab}
+            currentUser={currentUser}
+            showToast={showToast}
           />
         )}
 
