@@ -403,7 +403,15 @@ function DashboardContent() {
       const { data } = await supabase.from('confrontos').select('*');
       confs = data || [];
     }
-    setConfrontos(confs);
+    const allMatchesMap = {};
+    defaultConfrontos.forEach(m => {
+      allMatchesMap[m.id] = { ...m };
+    });
+    confs.forEach(m => {
+      allMatchesMap[m.id] = { ...m };
+    });
+    const complete = Object.values(allMatchesMap).sort((a, b) => a.id - b.id);
+    setConfrontos(complete);
 
     const { data: bols } = await supabase.from('boloes').select('*');
     let mergedBols = bols || [];
@@ -1514,8 +1522,20 @@ function DashboardContent() {
     return match.away_team;
   };
 
+  const getCompleteConfs = (list) => {
+    const allMatchesMap = {};
+    defaultConfrontos.forEach(m => {
+      allMatchesMap[m.id] = { ...m };
+    });
+    (list || []).forEach(m => {
+      allMatchesMap[m.id] = { ...m };
+    });
+    return Object.values(allMatchesMap).sort((a, b) => a.id - b.id);
+  };
+
   const simulateR32 = () => {
-    const standings = calculateGroupStandings(confrontos);
+    const completeConfs = getCompleteConfs(confrontos);
+    const standings = calculateGroupStandings(completeConfs);
     const winners = {};
     const runnersUp = {};
     const thirdPlaced = [];
@@ -1550,7 +1570,7 @@ function DashboardContent() {
     const qualified3rds = thirdPlaced.slice(0, 8);
     const assigned3rds = assign3rdPlacedTeams(qualified3rds);
 
-    const nextConfs = confrontos.map(m => {
+    const nextConfs = completeConfs.map(m => {
       if (m.id >= 73 && m.id <= 88) {
         let home = m.home_team;
         let away = m.away_team;
@@ -1621,8 +1641,9 @@ function DashboardContent() {
   };
 
   const simulateR16 = () => {
+    const completeConfs = getCompleteConfs(confrontos);
     const r32Ids = Array.from({ length: 16 }, (_, i) => 73 + i);
-    let nextConfs = simulateMatchScores(r32Ids, confrontos);
+    let nextConfs = simulateMatchScores(r32Ids, completeConfs);
 
     const winners = {};
     r32Ids.forEach(id => {
@@ -1676,7 +1697,8 @@ function DashboardContent() {
   };
 
   const simulateQF = () => {
-    const hasR32Teams = confrontos.some(c => c.id >= 73 && c.id <= 88 && c.home_team !== 'Runner-up Group A' && c.home_team !== 'Winner Group E');
+    const completeConfs = getCompleteConfs(confrontos);
+    const hasR32Teams = completeConfs.some(c => c.id >= 73 && c.id <= 88 && c.home_team !== 'Runner-up Group A' && c.home_team !== 'Winner Group E');
     if (!hasR32Teams) {
       showToast('Por favor, emule a Fase R32 primeiro!', 'error');
       return;
@@ -1685,7 +1707,7 @@ function DashboardContent() {
     const r32Ids = Array.from({ length: 16 }, (_, i) => 73 + i);
     const r16Ids = Array.from({ length: 8 }, (_, i) => 89 + i);
     
-    let nextConfs = simulateMatchScores(r32Ids, confrontos);
+    let nextConfs = simulateMatchScores(r32Ids, completeConfs);
     nextConfs = simulateMatchScores(r16Ids, nextConfs);
 
     const winners = {};
@@ -1736,7 +1758,8 @@ function DashboardContent() {
   };
 
   const simulateSF = () => {
-    const hasR16Teams = confrontos.some(c => c.id >= 89 && c.id <= 96 && !c.home_team.includes('Winner Match'));
+    const completeConfs = getCompleteConfs(confrontos);
+    const hasR16Teams = completeConfs.some(c => c.id >= 89 && c.id <= 96 && !c.home_team.includes('Winner Match'));
     if (!hasR16Teams) {
       showToast('Por favor, emule a Fase Oitavas primeiro!', 'error');
       return;
@@ -1746,7 +1769,7 @@ function DashboardContent() {
     const r16Ids = Array.from({ length: 8 }, (_, i) => 89 + i);
     const qfIds = Array.from({ length: 4 }, (_, i) => 97 + i);
 
-    let nextConfs = simulateMatchScores(r32Ids, confrontos);
+    let nextConfs = simulateMatchScores(r32Ids, completeConfs);
     nextConfs = simulateMatchScores(r16Ids, nextConfs);
     nextConfs = simulateMatchScores(qfIds, nextConfs);
 
@@ -1796,7 +1819,8 @@ function DashboardContent() {
   };
 
   const simulateFinals = () => {
-    const hasQFTeams = confrontos.some(c => c.id >= 97 && c.id <= 100 && !c.home_team.includes('Winner Match'));
+    const completeConfs = getCompleteConfs(confrontos);
+    const hasQFTeams = completeConfs.some(c => c.id >= 97 && c.id <= 100 && !c.home_team.includes('Winner Match'));
     if (!hasQFTeams) {
       showToast('Por favor, emule a Fase Quartas primeiro!', 'error');
       return;
@@ -1807,7 +1831,7 @@ function DashboardContent() {
     const qfIds = Array.from({ length: 4 }, (_, i) => 97 + i);
     const sfIds = Array.from({ length: 2 }, (_, i) => 101 + i);
 
-    let nextConfs = simulateMatchScores(r32Ids, confrontos);
+    let nextConfs = simulateMatchScores(r32Ids, completeConfs);
     nextConfs = simulateMatchScores(r16Ids, nextConfs);
     nextConfs = simulateMatchScores(qfIds, nextConfs);
     nextConfs = simulateMatchScores(sfIds, nextConfs);
