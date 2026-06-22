@@ -47,3 +47,15 @@ Extraímos lógicas utilitárias complexas do frontend para hooks reutilizáveis
 - **Carregamento da Lista de Jogadores**: Corrigida a função `fetchData` no dashboard para buscar dados da tabela `usuarios` do banco de dados e alimentar o estado `usersList`, resolvendo o carregamento infinito na página de Jogadores.
 - **Persistência de Configurações**: Adicionada a leitura das configurações na tabela `config` ao inicializar o dashboard, sincronizando os estados (`mataMataPublic`, `allowRegister`, `allowGroupUpload`, `allowDrawerMenu`, `paquetaTitle` e `paquetaBody`) e garantindo que as alterações salvas pelo administrador permaneçam após recarregar a página.
 - **Sincronização do Usuário Atual**: Adicionada a atualização automática do objeto de usuário e do nível de permissão (role) a partir do banco de dados na inicialização do painel.
+
+---
+
+## 7. Melhorias Adicionais de UX, Avatares e Modo Sandbox
+- **Achatamento dos Botões Centrais**: Reduzimos o tamanho e o espaçamento vertical dos 4 botões centrais de atalho na página inicial (`src/app/page.js`), tornando o design mais compacto ("achatado") e equilibrado.
+- **Avatares na Página de Jogadores**: Agora, a página de jogadores cadastrados exibe a foto de perfil salva pelo jogador (da coluna `avatar_url` da tabela `usuarios`) ao lado do seu nome. Caso o usuário não possua foto cadastrada, um ícone de usuário padrão é mantido.
+- **Modo Sandbox para o Admin (Mata-Mata)**:
+  - Adicionado um interruptor *"Ativar Modo Sandbox (Apenas Local)"* nas Ações do Desenvolvedor na aba de Configurações do painel.
+  - Quando ativado, uma barra informativa amber/laranja surge no topo indicando que o modo de testes está ligado.
+  - Permite que o Admin clique em qualquer confronto diretamente a partir do chaveamento visual (fase de grupos ou mata-mata) para abrir o modal de detalhes do jogo.
+  - Habilita uma aba exclusiva `🧪 Sandbox` no modal onde o Admin pode simular nomes de equipes (para avançar no mata-mata) e placares de gols.
+  - Os resultados simulados são mantidos localmente via `localStorage` e refletem imediatamente na classificação dos grupos e no chaveamento geral da tela, de forma 100% isolada e sem interferir no banco de dados de produção.

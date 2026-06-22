@@ -14,7 +14,9 @@ export default function SettingsTab({
   handleResetDatabase,
   setActiveTab,
   currentUser,
-  showToast
+  showToast,
+  sandboxMode, setSandboxMode,
+  fetchData, confrontos
 }) {
   return (
     <div className="tab-pane active" style={{ animation: 'fadeIn 0.4s ease-out' }}>
@@ -263,7 +265,29 @@ export default function SettingsTab({
               {currentUser === 'Jefferson' && (
                 <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '1rem', marginTop: '0.5rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                   <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--text-secondary)' }}>⚠ Ações do Desenvolvedor (Jefferson)</span>
-                  <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                  
+                  {/* Sandbox Mode Toggle */}
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.78rem', cursor: 'pointer', margin: '0.25rem 0' }}>
+                    <input
+                      type="checkbox"
+                      checked={sandboxMode}
+                      onChange={(e) => {
+                        const val = e.target.checked;
+                        setSandboxMode(val);
+                        localStorage.setItem('copa26_sandbox', String(val));
+                        if (val) {
+                          localStorage.setItem('copa26_confrontos_sandbox', JSON.stringify(confrontos));
+                        } else {
+                          localStorage.removeItem('copa26_confrontos_sandbox');
+                        }
+                        fetchData();
+                        showToast(val ? '🧪 Modo Sandbox Ativado! (Alterações locais apenas)' : 'Modo Sandbox Desativado.');
+                      }}
+                    />
+                    <span style={{ color: 'var(--accent-gold)', fontWeight: 'bold' }}>Ativar Modo Sandbox (Apenas Local)</span>
+                  </label>
+
+                  <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.5rem' }}>
                     <button className="btn-upload-bolao" style={{ backgroundColor: 'rgba(59, 130, 246, 0.12)', color: '#60a5fa', border: '1px solid rgba(59, 130, 246, 0.3)' }} onClick={handleRestoreConfrontosOnly}>
                       🔄 Restaurar Confrontos
                     </button>

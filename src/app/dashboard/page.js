@@ -270,6 +270,7 @@ function DashboardContent() {
   const [allowRegister, setAllowRegister] = useState(true);
   const [paquetaTitle, setPaquetaTitle] = useState('ESCOLHEU TUDO CERTO OU SAIU CHUTANDO IGUAL O PAQUETÁ? 🇧🇷⚽');
   const [paquetaBody, setPaquetaBody] = useState('Seus palpites do mata-mata foram processados com sucesso no banco de dados e o seu comprovante PDF foi gerado automaticamente! Boa sorte no Bolão da Copa 2026.');
+  const [sandboxMode, setSandboxMode] = useState(false);
   
   // Camera / OCR / Wizard states
   const [cameraStep, setCameraStep] = useState(1); // 1: choose, 2: capturing/ocr
@@ -292,6 +293,8 @@ function DashboardContent() {
         setCurrentUser(user);
         setCurrentUserRole(role);
       }
+      const sb = localStorage.getItem('copa26_sandbox') === 'true';
+      setSandboxMode(sb);
     }
 
     // Set tab from URL query params
@@ -386,8 +389,21 @@ function DashboardContent() {
   };
 
   const fetchData = async () => {
-    const { data: confs } = await supabase.from('confrontos').select('*');
-    setConfrontos(confs || []);
+    let confs;
+    const isSb = typeof window !== 'undefined' && localStorage.getItem('copa26_sandbox') === 'true';
+    if (isSb && typeof window !== 'undefined' && localStorage.getItem('copa26_confrontos_sandbox')) {
+      try {
+        confs = JSON.parse(localStorage.getItem('copa26_confrontos_sandbox'));
+      } catch (e) {
+        console.error('Erro ao ler sandbox confrontos:', e);
+      }
+    }
+    
+    if (!confs) {
+      const { data } = await supabase.from('confrontos').select('*');
+      confs = data || [];
+    }
+    setConfrontos(confs);
 
     const { data: bols } = await supabase.from('boloes').select('*');
     setBoloes(bols || []);
@@ -1374,6 +1390,48 @@ function DashboardContent() {
 
   return (
     <div className="dashboard-container" style={{ paddingBottom: '5.5rem' }}>
+      {/* Sandbox Warning Banner */}
+      {sandboxMode && (
+        <div style={{
+          background: 'linear-gradient(90deg, #b45309 0%, #d97706 50%, #b45309 100%)',
+          color: '#fff',
+          textAlign: 'center',
+          padding: '0.4rem 1rem',
+          fontSize: '0.72rem',
+          fontWeight: '900',
+          letterSpacing: '0.5px',
+          textTransform: 'uppercase',
+          boxShadow: '0 4px 12px rgba(217, 119, 6, 0.25)',
+          zIndex: 999,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '0.5rem'
+        }}>
+          <span>🧪 Modo Sandbox Ativado (Testes Locais)</span>
+          <button 
+            onClick={() => {
+              setSandboxMode(false);
+              localStorage.removeItem('copa26_sandbox');
+              localStorage.removeItem('copa26_confrontos_sandbox');
+              fetchData();
+              showToast('Modo Sandbox desativado.');
+            }}
+            style={{
+              background: 'rgba(0,0,0,0.3)',
+              border: 'none',
+              borderRadius: '4px',
+              color: '#fff',
+              padding: '2px 8px',
+              fontSize: '0.62rem',
+              fontWeight: 'bold',
+              cursor: 'pointer'
+            }}
+          >
+            Sair
+          </button>
+        </div>
+      )}
       {/* Header */}
       <header className="dashboard-header" style={{
         position: 'relative',
@@ -1979,7 +2037,7 @@ function DashboardContent() {
             <div style={{ marginBottom: '1rem' }}>
               <h3 style={{ color: '#D2A74F' }}>Chaveamento da Copa 2026</h3>
               <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                Visualização de testes dos confrontos de mata-mata. (Oculto para usuários finais)
+                Visualização de testes dos confrontos de mata-mata. (Oculto para usuários finais) {sandboxMode && '🧪 [MODO SANDBOX ATIVO - Clique em qualquer jogo para simular resultado]'}
               </p>
             </div>
             
@@ -1991,7 +2049,13 @@ function DashboardContent() {
                   const hFlag = getFlagCode(g.home_team);
                   const aFlag = getFlagCode(g.away_team);
                   return (
-                    <div key={g.id} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '0.5rem', fontSize: '0.75rem' }}>
+                    <div 
+                      key={g.id} 
+                      onClick={() => { setShowMatchModal(g); setMatchModalTab(currentUserRole === 'Admin' && sandboxMode ? 'sandbox' : 'detalhes'); }}
+                      style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '0.5rem', fontSize: '0.75rem', cursor: 'pointer', transition: 'all 0.2s' }}
+                      onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.08)'; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.03)'; }}
+                    >
                       <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-muted)', marginBottom: '0.25rem', fontSize: '0.65rem' }}>
                         <span>Jogo #{g.id}</span>
                         <span>{g.match_date}</span>
@@ -2022,7 +2086,13 @@ function DashboardContent() {
                   const hFlag = getFlagCode(g.home_team);
                   const aFlag = getFlagCode(g.away_team);
                   return (
-                    <div key={g.id} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '0.5rem', fontSize: '0.75rem' }}>
+                    <div 
+                      key={g.id} 
+                      onClick={() => { setShowMatchModal(g); setMatchModalTab(currentUserRole === 'Admin' && sandboxMode ? 'sandbox' : 'detalhes'); }}
+                      style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '0.5rem', fontSize: '0.75rem', cursor: 'pointer', transition: 'all 0.2s' }}
+                      onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.08)'; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.03)'; }}
+                    >
                       <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-muted)', marginBottom: '0.25rem', fontSize: '0.65rem' }}>
                         <span>Jogo #{g.id}</span>
                         <span>{g.match_date}</span>
@@ -2053,7 +2123,13 @@ function DashboardContent() {
                   const hFlag = getFlagCode(g.home_team);
                   const aFlag = getFlagCode(g.away_team);
                   return (
-                    <div key={g.id} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '0.5rem', fontSize: '0.75rem' }}>
+                    <div 
+                      key={g.id} 
+                      onClick={() => { setShowMatchModal(g); setMatchModalTab(currentUserRole === 'Admin' && sandboxMode ? 'sandbox' : 'detalhes'); }}
+                      style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '0.5rem', fontSize: '0.75rem', cursor: 'pointer', transition: 'all 0.2s' }}
+                      onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.08)'; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.03)'; }}
+                    >
                       <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-muted)', marginBottom: '0.25rem', fontSize: '0.65rem' }}>
                         <span>Jogo #{g.id}</span>
                         <span>{g.match_date}</span>
@@ -2084,7 +2160,13 @@ function DashboardContent() {
                   const hFlag = getFlagCode(g.home_team);
                   const aFlag = getFlagCode(g.away_team);
                   return (
-                    <div key={g.id} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '0.5rem', fontSize: '0.75rem' }}>
+                    <div 
+                      key={g.id} 
+                      onClick={() => { setShowMatchModal(g); setMatchModalTab(currentUserRole === 'Admin' && sandboxMode ? 'sandbox' : 'detalhes'); }}
+                      style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '0.5rem', fontSize: '0.75rem', cursor: 'pointer', transition: 'all 0.2s' }}
+                      onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.08)'; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.03)'; }}
+                    >
                       <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-muted)', marginBottom: '0.25rem', fontSize: '0.65rem' }}>
                         <span>Jogo #{g.id}</span>
                         <span>{g.match_date}</span>
@@ -2117,7 +2199,13 @@ function DashboardContent() {
                   const hFlag = getFlagCode(g.home_team);
                   const aFlag = getFlagCode(g.away_team);
                   return (
-                    <div key={g.id} style={{ background: 'rgba(251, 191, 36, 0.1)', border: '1px solid var(--accent-gold)', borderRadius: '8px', padding: '0.75rem', fontSize: '0.75rem' }}>
+                    <div 
+                      key={g.id} 
+                      onClick={() => { setShowMatchModal(g); setMatchModalTab(currentUserRole === 'Admin' && sandboxMode ? 'sandbox' : 'detalhes'); }}
+                      style={{ background: 'rgba(251, 191, 36, 0.1)', border: '1px solid var(--accent-gold)', borderRadius: '8px', padding: '0.75rem', fontSize: '0.75rem', cursor: 'pointer', transition: 'all 0.2s' }}
+                      onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(251, 191, 36, 0.15)'; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(251, 191, 36, 0.1)'; }}
+                    >
                       <div style={{ display: 'flex', justifyContent: 'space-between', color: '#D2A74F', fontWeight: 'bold', marginBottom: '0.25rem', fontSize: '0.65rem' }}>
                         <span>FINAL (Jogo #{g.id})</span>
                         <span>{g.match_date}</span>
@@ -2145,7 +2233,13 @@ function DashboardContent() {
                   const hFlag = getFlagCode(g.home_team);
                   const aFlag = getFlagCode(g.away_team);
                   return (
-                    <div key={g.id} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '0.5rem', fontSize: '0.75rem', marginTop: '2rem' }}>
+                    <div 
+                      key={g.id} 
+                      onClick={() => { setShowMatchModal(g); setMatchModalTab(currentUserRole === 'Admin' && sandboxMode ? 'sandbox' : 'detalhes'); }}
+                      style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '0.5rem', fontSize: '0.75rem', marginTop: '2rem', cursor: 'pointer', transition: 'all 0.2s' }}
+                      onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.08)'; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.03)'; }}
+                    >
                       <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-muted)', marginBottom: '0.25rem', fontSize: '0.65rem' }}>
                         <span>3º Lugar (Jogo #{g.id})</span>
                         <span>{g.match_date}</span>
@@ -2391,6 +2485,8 @@ function DashboardContent() {
             setActiveTab={setActiveTab}
             currentUser={currentUser}
             showToast={showToast}
+            sandboxMode={sandboxMode} setSandboxMode={setSandboxMode}
+            fetchData={fetchData} confrontos={confrontos}
           />
         )}
 
@@ -2731,9 +2827,15 @@ function DashboardContent() {
                         height: '42px',
                         display: 'flex',
                         alignItems: 'center',
-                        justifyContent: 'center'
+                        justifyContent: 'center',
+                        overflow: 'hidden',
+                        border: player.avatar_url ? '1px solid var(--accent-gold)' : 'none'
                       }}>
-                        <Icons.User size={20} style={{ color: '#D2A74F' }} />
+                        {player.avatar_url ? (
+                          <img src={player.avatar_url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="" />
+                        ) : (
+                          <Icons.User size={20} style={{ color: '#D2A74F' }} />
+                        )}
                       </div>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
                         <span style={{ fontSize: '0.9rem', fontWeight: 'bold', color: 'var(--text-primary)' }}>{player.username}</span>
@@ -3304,6 +3406,14 @@ function DashboardContent() {
                     background: matchModalTab === 'palpites' ? 'var(--accent-gold)' : 'rgba(255,255,255,0.07)',
                     color: matchModalTab === 'palpites' ? '#000' : '#cbd5e1' }}
                 >🏆 Palpites ({betStats.length})</button>
+                {currentUserRole === 'Admin' && sandboxMode && (
+                  <button
+                    onClick={() => setMatchModalTab('sandbox')}
+                    style={{ flex: 1, padding: '0.6rem', borderRadius: '8px', fontWeight: '700', fontSize: '0.8rem', cursor: 'pointer', border: 'none',
+                      background: matchModalTab === 'sandbox' ? 'var(--accent-gold)' : 'rgba(255,255,255,0.07)',
+                      color: matchModalTab === 'sandbox' ? '#000' : '#cbd5e1' }}
+                  >🧪 Sandbox</button>
+                )}
               </div>
 
               {/* Tab: Detalhes */}
@@ -3351,6 +3461,123 @@ function DashboardContent() {
                       </span>
                     </div>
                   </div>
+                </div>
+              )}
+
+              {/* Tab: Sandbox */}
+              {matchModalTab === 'sandbox' && currentUserRole === 'Admin' && sandboxMode && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem', background: 'rgba(255,255,255,0.02)', padding: '1rem', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
+                  <h4 style={{ color: 'var(--accent-gold)', margin: '0 0 0.5rem 0', fontSize: '0.85rem' }}>🧪 Simular Resultado (Local)</h4>
+                  
+                  <div style={{ display: 'flex', gap: '0.75rem' }}>
+                    <div style={{ flex: 1 }}>
+                      <label style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>Time Casa</label>
+                      <input
+                        type="text"
+                        className="form-control"
+                        style={{ fontSize: '0.8rem', padding: '0.45rem' }}
+                        defaultValue={g.home_team}
+                        id="sandbox_home_team"
+                      />
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <label style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>Time Fora</label>
+                      <input
+                        type="text"
+                        className="form-control"
+                        style={{ fontSize: '0.8rem', padding: '0.45rem' }}
+                        defaultValue={g.away_team}
+                        id="sandbox_away_team"
+                      />
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '0.75rem' }}>
+                    <div style={{ flex: 1 }}>
+                      <label style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>Placar Casa</label>
+                      <input
+                        type="number"
+                        className="form-control"
+                        style={{ fontSize: '0.8rem', padding: '0.45rem' }}
+                        defaultValue={g.home_score !== null ? g.home_score : ''}
+                        placeholder="Não iniciado"
+                        id="sandbox_home_score"
+                      />
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <label style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>Placar Fora</label>
+                      <input
+                        type="number"
+                        className="form-control"
+                        style={{ fontSize: '0.8rem', padding: '0.45rem' }}
+                        defaultValue={g.away_score !== null ? g.away_score : ''}
+                        placeholder="Não iniciado"
+                        id="sandbox_away_score"
+                      />
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <input
+                      type="checkbox"
+                      defaultChecked={g.finished === 'TRUE' || g.finished === true}
+                      id="sandbox_finished"
+                      style={{ width: 'auto' }}
+                    />
+                    <label htmlFor="sandbox_finished" style={{ fontSize: '0.75rem', color: 'var(--text-primary)', cursor: 'pointer' }}>Partida Encerrada</label>
+                  </div>
+
+                  <button
+                    onClick={() => {
+                      const homeTeam = document.getElementById('sandbox_home_team').value;
+                      const awayTeam = document.getElementById('sandbox_away_team').value;
+                      const homeScoreRaw = document.getElementById('sandbox_home_score').value;
+                      const awayScoreRaw = document.getElementById('sandbox_away_score').value;
+                      const isFinished = document.getElementById('sandbox_finished').checked;
+
+                      const nextHomeScore = homeScoreRaw !== '' ? parseInt(homeScoreRaw) : null;
+                      const nextAwayScore = awayScoreRaw !== '' ? parseInt(awayScoreRaw) : null;
+
+                      const nextConfs = confrontos.map(c => {
+                        if (c.id === g.id) {
+                          return {
+                            ...c,
+                            home_team: homeTeam,
+                            away_team: awayTeam,
+                            home_code: getFlagCode(homeTeam) || 'placeholder',
+                            away_code: getFlagCode(awayTeam) || 'placeholder',
+                            home_score: nextHomeScore,
+                            away_score: nextAwayScore,
+                            finished: isFinished
+                          };
+                        }
+                        return c;
+                      });
+
+                      localStorage.setItem('copa26_confrontos_sandbox', JSON.stringify(nextConfs));
+                      setConfrontos(nextConfs);
+                      
+                      // Update current modal reference
+                      setShowMatchModal({
+                        ...g,
+                        home_team: homeTeam,
+                        away_team: awayTeam,
+                        home_code: getFlagCode(homeTeam) || 'placeholder',
+                        away_code: getFlagCode(awayTeam) || 'placeholder',
+                        home_score: nextHomeScore,
+                        away_score: nextAwayScore,
+                        finished: isFinished
+                      });
+
+                      showToast('Simulação do jogo salva localmente! 🧪');
+                    }}
+                    style={{
+                      background: 'var(--accent-gold)', color: '#000', border: 'none', borderRadius: '8px',
+                      padding: '0.5rem', fontWeight: 'bold', fontSize: '0.8rem', cursor: 'pointer', marginTop: '0.5rem'
+                    }}
+                  >
+                    Salvar Alterações (Sandbox)
+                  </button>
                 </div>
               )}
 

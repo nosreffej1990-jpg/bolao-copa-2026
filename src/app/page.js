@@ -479,11 +479,11 @@ export default function Home() {
                       backdropFilter: 'blur(10px)',
                       border: '2px solid var(--accent-gold)', boxShadow: '0 0 10px rgba(225, 182, 79, 0.4), inset 0 0 10px rgba(225, 182, 79, 0.2)',
                       borderRadius: '16px',
-                      padding: '1.25rem 1rem',
+                      padding: '0.8rem 0.5rem',
                       display: 'flex',
                       flexDirection: 'column',
                       alignItems: 'center',
-                      gap: '0.6rem',
+                      gap: '0.3rem',
                       cursor: 'pointer',
                       transition: 'all 0.2s'
                     }}
@@ -491,17 +491,17 @@ export default function Home() {
                     <div style={{
                       background: 'transparent',
                       borderRadius: '50%',
-                      width: '50px',
-                      height: '50px',
+                      width: '38px',
+                      height: '38px',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       border: '2px solid var(--accent-gold)', boxShadow: '0 0 10px rgba(225, 182, 79, 0.4), inset 0 0 10px rgba(225, 182, 79, 0.2)'
                     }}>
-                      <Icons.Trophy size={20} style={{ color: 'var(--accent-gold)' }} />
+                      <Icons.Trophy size={18} style={{ color: 'var(--accent-gold)' }} />
                     </div>
-                    <span style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#fff' }}>Classificação</span>
-                    <span className="text-gold-gradient" style={{ fontSize: '0.75rem', fontWeight: 'bold' }}>Ver líderes e pontos</span>
+                    <span style={{ fontSize: '0.8rem', fontWeight: 'bold', color: '#fff' }}>Classificação</span>
+                    <span className="text-gold-gradient" style={{ fontSize: '0.65rem', fontWeight: 'bold' }}>Ver líderes e pontos</span>
                   </div>
 
                   <div 
@@ -512,11 +512,11 @@ export default function Home() {
                       backdropFilter: 'blur(10px)',
                       border: '2px solid var(--accent-gold)', boxShadow: '0 0 10px rgba(225, 182, 79, 0.4), inset 0 0 10px rgba(225, 182, 79, 0.2)',
                       borderRadius: '16px',
-                      padding: '1.25rem 1rem',
+                      padding: '0.8rem 0.5rem',
                       display: 'flex',
                       flexDirection: 'column',
                       alignItems: 'center',
-                      gap: '0.6rem',
+                      gap: '0.3rem',
                       cursor: 'pointer',
                       transition: 'all 0.2s'
                     }}
@@ -524,17 +524,17 @@ export default function Home() {
                     <div style={{
                       background: 'transparent',
                       borderRadius: '50%',
-                      width: '50px',
-                      height: '50px',
+                      width: '38px',
+                      height: '38px',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       border: '2px solid var(--accent-gold)', boxShadow: '0 0 10px rgba(225, 182, 79, 0.4), inset 0 0 10px rgba(225, 182, 79, 0.2)'
                     }}>
-                      <Icons.Check size={20} style={{ color: 'var(--accent-gold)' }} />
+                      <Icons.Check size={18} style={{ color: 'var(--accent-gold)' }} />
                     </div>
-                    <span style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#fff' }}>Resultados</span>
-                    <span className="text-gold-gradient" style={{ fontSize: '0.75rem', fontWeight: 'bold' }}>Jogos finalizados</span>
+                    <span style={{ fontSize: '0.8rem', fontWeight: 'bold', color: '#fff' }}>Resultados</span>
+                    <span className="text-gold-gradient" style={{ fontSize: '0.65rem', fontWeight: 'bold' }}>Jogos finalizados</span>
                   </div>
 
                   <div 
@@ -545,11 +545,11 @@ export default function Home() {
                       backdropFilter: 'blur(10px)',
                       border: '2px solid var(--accent-gold)', boxShadow: '0 0 10px rgba(225, 182, 79, 0.4), inset 0 0 10px rgba(225, 182, 79, 0.2)',
                       borderRadius: '16px',
-                      padding: '1.25rem 1rem',
+                      padding: '0.8rem 0.5rem',
                       display: 'flex',
                       flexDirection: 'column',
                       alignItems: 'center',
-                      gap: '0.6rem',
+                      gap: '0.3rem',
                       cursor: 'pointer',
                       transition: 'all 0.2s'
                     }}
@@ -557,17 +557,17 @@ export default function Home() {
                     <div style={{
                       background: 'transparent',
                       borderRadius: '50%',
-                      width: '50px',
-                      height: '50px',
+                      width: '38px',
+                      height: '38px',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       border: '2px solid var(--accent-gold)', boxShadow: '0 0 10px rgba(225, 182, 79, 0.4), inset 0 0 10px rgba(225, 182, 79, 0.2)'
                     }}>
-                      <Icons.Calendar size={20} style={{ color: 'var(--accent-gold)' }} />
+                      <Icons.Calendar size={18} style={{ color: 'var(--accent-gold)' }} />
                     </div>
-                    <span style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#fff' }}>Confrontos</span>
-                    <span className="text-gold-gradient" style={{ fontSize: '0.75rem', fontWeight: 'bold' }}>Agenda de jogos</span>
+                    <span style={{ fontSize: '0.8rem', fontWeight: 'bold', color: '#fff' }}>Confrontos</span>
+                    <span className="text-gold-gradient" style={{ fontSize: '0.65rem', fontWeight: 'bold' }}>Agenda de jogos</span>
                   </div>
 
                   <div 
@@ -578,11 +578,11 @@ export default function Home() {
                       backdropFilter: 'blur(10px)',
                       border: '2px solid var(--accent-gold)', boxShadow: '0 0 10px rgba(225, 182, 79, 0.4), inset 0 0 10px rgba(225, 182, 79, 0.2)',
                       borderRadius: '16px',
-                      padding: '1.25rem 1rem',
+                      padding: '0.8rem 0.5rem',
                       display: 'flex',
                       flexDirection: 'column',
                       alignItems: 'center',
-                      gap: '0.6rem',
+                      gap: '0.3rem',
                       cursor: 'pointer',
                       transition: 'all 0.2s'
                     }}
@@ -590,17 +590,17 @@ export default function Home() {
                     <div style={{
                       background: 'transparent',
                       borderRadius: '50%',
-                      width: '50px',
-                      height: '50px',
+                      width: '38px',
+                      height: '38px',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       border: '2px solid var(--accent-gold)', boxShadow: '0 0 10px rgba(225, 182, 79, 0.4), inset 0 0 10px rgba(225, 182, 79, 0.2)'
                     }}>
-                      <Icons.List size={20} style={{ color: 'var(--accent-gold)' }} />
+                      <Icons.List size={18} style={{ color: 'var(--accent-gold)' }} />
                     </div>
-                    <span style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#fff' }}>Grupos</span>
-                    <span className="text-gold-gradient" style={{ fontSize: '0.75rem', fontWeight: 'bold' }}>Classificação oficial</span>
+                    <span style={{ fontSize: '0.8rem', fontWeight: 'bold', color: '#fff' }}>Grupos</span>
+                    <span className="text-gold-gradient" style={{ fontSize: '0.65rem', fontWeight: 'bold' }}>Classificação oficial</span>
                   </div>
                 </div>
 
