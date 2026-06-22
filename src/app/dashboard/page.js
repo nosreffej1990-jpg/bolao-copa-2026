@@ -367,6 +367,49 @@ function DashboardContent() {
     return () => clearInterval(id);
   }, [apiUpcoming, notifPermission]);
 
+  const fetchApiData = async () => {
+    setApiLoading(true);
+    try {
+      const [finished, live, upcoming] = await Promise.all([
+        getFinishedMatches(),
+        getLiveMatches(),
+        getUpcomingMatches(15),
+      ]);
+      setApiFinished(finished);
+      setApiLive(live);
+      setApiUpcoming(upcoming);
+    } catch (e) {
+      console.error('Erro na API:', e);
+    } finally {
+      setApiLoading(false);
+    }
+  };
+
+  const fetchData = async () => {
+    const { data: confs } = await supabase.from('confrontos').select('*');
+    setConfrontos(confs || []);
+
+    const { data: bols } = await supabase.from('boloes').select('*');
+    setBoloes(bols || []);
+
+    // Load user's saved predictions if logged in
+    if (typeof window !== 'undefined') {
+      const user = localStorage.getItem('copa26_user');
+      if (user) {
+        const { data: palps } = await supabase.from('palpites').select('*').eq('username', user);
+        const palpsMap = {};
+        (palps || []).forEach(p => {
+          palpsMap[p.match_id] = {
+            home: p.home_score,
+            away: p.away_score,
+            saved: true
+          };
+        });
+        setPalpites(palpsMap);
+      }
+    }
+  };
+
   const handleScoreChange = (matchId, team, val) => {
     setPalpites(prev => ({
       ...prev,
