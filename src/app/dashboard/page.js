@@ -10,47 +10,8 @@ import RankingTab from '@/components/dashboard/RankingTab';
 import MatchesTab from '@/components/dashboard/MatchesTab';
 import SettingsTab from '@/components/dashboard/SettingsTab';
 import FirstLaunchOverlay from '@/components/FirstLaunchOverlay';
-
-// Helper to compress and resize images on client-side before sending to API
-const compressImage = (file, maxWidth = 1024, maxHeight = 1024) => {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = (event) => {
-      const img = new Image();
-      img.src = event.target.result;
-      img.onload = () => {
-        let width = img.width;
-        let height = img.height;
-
-        // Apply aspect ratio scaling
-        if (width > height) {
-          if (width > maxWidth) {
-            height = Math.round((height * maxWidth) / width);
-            width = maxWidth;
-          }
-        } else {
-          if (height > maxHeight) {
-            width = Math.round((width * maxHeight) / height);
-            height = maxHeight;
-          }
-        }
-
-        const canvas = document.createElement('canvas');
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0, width, height);
-
-        // Convert to jpeg with 0.8 quality
-        const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
-        resolve(dataUrl);
-      };
-      img.onerror = (err) => reject(err);
-    };
-    reader.onerror = (err) => reject(err);
-  });
-};
+import { usePdfExport } from '@/hooks/usePdfExport';
+import { useOcr, compressImage } from '@/hooks/useOcr';
 
 const normalizeTeamName = (name) => {
     if (!name) return '';
@@ -224,6 +185,9 @@ function DashboardContent() {
   const searchParams = useSearchParams();
   const { theme } = useChampion();
   const activeChampionObj = CHAMPIONS[theme] || CHAMPIONS['brasil'];
+  
+  const { generatePDFReceipt } = usePdfExport();
+  const { performOcrScan: performOcrScanApi } = useOcr();
   
   // App states
   const [currentUser, setCurrentUser] = useState(null);
@@ -701,108 +665,6 @@ function DashboardContent() {
     }
   };
 
-  const loadJsPDF = () => {
-    return new Promise((resolve, reject) => {
-      if (window.jspdf) {
-        resolve(window.jspdf);
-        return;
-      }
-      const script = document.createElement('script');
-      script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
-      script.onload = () => resolve(window.jspdf);
-      script.onerror = (e) => reject(e);
-      document.body.appendChild(script);
-    });
-  };
-
-  const generatePDFReceipt = async (userBets, username) => {
-    try {
-      const jspdfModule = await loadJsPDF();
-      const { jsPDF } = jspdfModule;
-      const doc = new jsPDF();
-      
-      const loadImage = (src) => {
-        return new Promise((resolve) => {
-          const img = new Image();
-          img.crossOrigin = 'anonymous';
-          img.onload = () => resolve(img);
-          img.onerror = () => resolve(null);
-          img.src = src;
-        });
-      };
-
-      // Load logo and active team flag in parallel
-      const logoUrl = '/icons/logo-transparent.png';
-      const flagUrl = activeChampionObj ? `https://flagcdn.com/w160/${activeChampionObj.flag}.png` : null;
-
-      const [logoImg, flagImg] = await Promise.all([
-        loadImage(logoUrl),
-        flagUrl ? loadImage(flagUrl) : Promise.resolve(null)
-      ]);
-
-      // Header Banner
-      doc.setFillColor(11, 15, 25);
-      doc.rect(0, 0, 220, 40, 'F');
-      
-      // Draw Images on the header
-      if (logoImg) {
-        doc.addImage(logoImg, 'PNG', 15, 8, 24, 24);
-      }
-      if (flagImg) {
-        doc.addImage(flagImg, 'PNG', 171, 12, 24, 16);
-      }
-
-      doc.setTextColor(255, 215, 0);
-      doc.setFontSize(22);
-      doc.text('BOLÃO COPA 2026', 45, 23);
-      doc.setFontSize(10);
-      doc.setTextColor(255, 255, 255);
-      doc.text('COMPROVANTE OFICIAL DE PALPITES - MATA-MATA', 45, 31);
-      
-      // User info
-      doc.setFontSize(11);
-      doc.setTextColor(0, 0, 0);
-      doc.text(`Apostador: ${username}`, 15, 52);
-      doc.text(`Data de Emissão: ${new Date().toLocaleString('pt-BR')}`, 15, 58);
-      
-      doc.setDrawColor(218, 165, 32);
-      doc.setLineWidth(0.5);
-      doc.line(15, 62, 195, 62);
-      
-      // Table Header
-      doc.setFontSize(10);
-      doc.setFont('Helvetica', 'bold');
-      doc.text('Fase / Confronto', 15, 70);
-      doc.text('Palpite', 160, 70);
-      doc.line(15, 73, 195, 73);
-      
-      doc.setFont('Helvetica', 'normal');
-      let y = 80;
-      userBets.forEach((bet) => {
-        if (y > 280) {
-          doc.addPage();
-          y = 20;
-        }
-        
-        let phaseLabel = 'Mata-Mata';
-        if (bet.match_id >= 73 && bet.match_id <= 88) phaseLabel = '1/16';
-        else if (bet.match_id >= 89 && bet.match_id <= 96) phaseLabel = '1/8';
-        else if (bet.match_id >= 97 && bet.match_id <= 100) phaseLabel = 'Quartas';
-        else if (bet.match_id >= 101 && bet.match_id <= 102) phaseLabel = 'Semifinal';
-        else if (bet.match_id >= 103) phaseLabel = 'Final';
-
-        doc.text(`[${phaseLabel}] ${bet.home_team} x ${bet.away_team}`, 15, y);
-        doc.text(`${bet.home_score} x ${bet.away_score}`, 160, y);
-        y += 8;
-      });
-      
-      doc.save(`Comprovante_MataMata_${username}.pdf`);
-    } catch (err) {
-      console.error('Erro ao gerar PDF:', err);
-      alert('Erro ao gerar comprovante PDF. Suas apostas foram salvas com sucesso!');
-    }
-  };
-
   const getMatchesForStage = (stage) => {
     if (stage === 'r32') return confrontos.filter(m => m.id >= 73 && m.id <= 88);
     if (stage === 'r16') return confrontos.filter(m => m.id >= 89 && m.id <= 96);
@@ -1024,27 +886,7 @@ function DashboardContent() {
   const performOcrScan = async (base64String, bettorNameInput) => {
     setCameraStep(2);
     try {
-      const res = await fetch('/api/ocr', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          image: base64String,
-          name: bettorNameInput
-        })
-      });
-
-      let data;
-      try {
-        data = await res.json();
-      } catch (jsonErr) {
-        throw new Error(`Resposta inválida do servidor (HTTP ${res.status})`);
-      }
-
-      if (!res.ok || data.error) {
-        throw new Error(data.error || `Erro HTTP ${res.status}`);
-      }
+      const data = await performOcrScanApi(base64String, bettorNameInput);
 
       setWizardBettorName(data.bettor_name || bettorNameInput.trim() || 'Novo Apostador');
       setWizardBets(data.bets);
@@ -1054,7 +896,7 @@ function DashboardContent() {
       setShowWizardModal(true);
     } catch (err) {
       console.error('Erro na leitura com IA:', err);
-      alert(`Não foi possível ler a imagem com a IA: ${err.message}\n\nAbrindo o formulário em branco para preenchimento manual.`);
+      alert(`Não foi possível ler a imagem com a IA: ${err.message || err}\n\nAbrindo o formulário em branco para preenchimento manual.`);
       
       // Fallback to manual blank form on error
       const blankBets = confrontos.map(match => ({

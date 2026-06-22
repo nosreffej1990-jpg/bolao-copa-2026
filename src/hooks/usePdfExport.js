@@ -88,8 +88,13 @@ export function usePdfExport() {
         else if (bet.match_id >= 101 && bet.match_id <= 102) phaseLabel = 'Semifinal';
         else if (bet.match_id >= 103) phaseLabel = 'Final';
 
-        doc.text(`${phaseLabel} | ${bet.home} x ${bet.away}`, 15, y);
-        doc.text(`${bet.bet_home} x ${bet.bet_away}`, 160, y);
+        const homeName = bet.home_team || bet.home || '';
+        const awayName = bet.away_team || bet.away || '';
+        const homeScore = bet.home_score !== undefined ? bet.home_score : (bet.bet_home !== undefined ? bet.bet_home : '');
+        const awayScore = bet.away_score !== undefined ? bet.away_score : (bet.bet_away !== undefined ? bet.bet_away : '');
+
+        doc.text(`${phaseLabel} | ${homeName} x ${awayName}`, 15, y);
+        doc.text(`${homeScore} x ${awayScore}`, 160, y);
         y += 8;
       });
 
