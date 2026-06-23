@@ -253,6 +253,8 @@ function DashboardContent() {
   const [showBetConfirmation, setShowBetConfirmation] = useState(false);
   const [bettingLoading, setBettingLoading] = useState(false);
   const [bettingProgress, setBettingProgress] = useState(0);
+  const [saveFinished, setSaveFinished] = useState(false);
+  const [videoEnded, setVideoEnded] = useState(false);
   const [showPaquetaModal, setShowPaquetaModal] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [tempAvatar, setTempAvatar] = useState('');
@@ -269,7 +271,7 @@ function DashboardContent() {
   const [mataMataPublic, setMataMataPublic] = useState(false);
   const [allowRegister, setAllowRegister] = useState(true);
   const [paquetaTitle, setPaquetaTitle] = useState('ESCOLHEU TUDO CERTO OU SAIU CHUTANDO IGUAL O PAQUETÁ? 🇧🇷⚽');
-  const [paquetaBody, setPaquetaBody] = useState('Seus palpites do mata-mata foram processados com sucesso no banco de dados e o seu comprovante PDF foi gerado automaticamente! Boa sorte no Bolão da Copa 2026.');
+  const [paquetaBody, setPaquetaBody] = useState('Seus palpites do mata-mata foram salvos com sucesso! Você pode visualizar seus palpites e gerar o comprovante PDF na aba Palpites. Boa sorte no Bolão da Copa 2026.');
   const [sandboxMode, setSandboxMode] = useState(false);
   
   // Camera / OCR / Wizard states
@@ -315,6 +317,15 @@ function DashboardContent() {
     const interval = setInterval(fetchApiData, 60000);
     return () => clearInterval(interval);
   }, []);
+
+  // Aguarda salvamento e fim do vídeo de carregamento
+  useEffect(() => {
+    if (saveFinished && videoEnded && bettingLoading) {
+      setBettingLoading(false);
+      setShowPaquetaModal(true);
+      showToast('Palpites salvos com sucesso! 🏆');
+    }
+  }, [saveFinished, videoEnded, bettingLoading]);
 
   // Countdown para o próximo jogo
   useEffect(() => {
@@ -825,157 +836,109 @@ function DashboardContent() {
 
     setShowBetConfirmation(false);
     setBettingLoading(true);
-    setBettingProgress(0);
+    setSaveFinished(false);
+    setVideoEnded(false);
 
-    // Simulate trophy fill animation (0 to 100%) - Slower and more premium
-    let progress = 0;
-    const interval = setInterval(async () => {
-      progress += Math.floor(Math.random() * 3) + 1; // 1% to 3% increments
-      if (progress >= 100) {
-        progress = 100;
-        setBettingProgress(100);
-        clearInterval(interval);
-        
-        // Save to database
-        try {
-          const knockoutMatches = getMatchesForStage(knockoutStage);
-          
-          // Map to bets_data format for the boloes table
-          const betsData = knockoutMatches.map(m => {
-            const b = knockoutBets[m.id];
-            return {
-              match_id: m.id,
-              home: m.home_team,
-              away: m.away_team,
-              bet_home: parseInt(b.home),
-              bet_away: parseInt(b.away),
-              real_home: m.home_score !== null && m.home_score !== undefined && String(m.home_score) !== 'null' ? parseInt(m.home_score) : null,
-              real_away: m.away_score !== null && m.away_score !== undefined && String(m.away_score) !== 'null' ? parseInt(m.away_score) : null,
-              pts: null
-            };
-          });
+    try {
+      const knockoutMatches = getMatchesForStage(knockoutStage);
+      
+      // Map to bets_data format for the boloes table
+      const betsData = knockoutMatches.map(m => {
+        const b = knockoutBets[m.id];
+        return {
+          match_id: m.id,
+          home: m.home_team,
+          away: m.away_team,
+          bet_home: parseInt(b.home),
+          bet_away: parseInt(b.away),
+          real_home: m.home_score !== null && m.home_score !== undefined && String(m.home_score) !== 'null' ? parseInt(m.home_score) : null,
+          real_away: m.away_score !== null && m.away_score !== undefined && String(m.away_score) !== 'null' ? parseInt(m.away_score) : null,
+          pts: null
+        };
+      });
 
-          if (sandboxMode) {
-            // Save locally
-            const localSbBolsRaw = localStorage.getItem('copa26_boloes_sandbox');
-            let localSbBols = [];
-            if (localSbBolsRaw) {
-              try {
-                localSbBols = JSON.parse(localSbBolsRaw);
-              } catch (e) {
-                console.error(e);
-              }
-            }
-
-            const newBolao = {
-              id: Date.now(),
-              username: currentUser,
-              bettor_name: finalBettorName,
-              photo_url: 'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?q=80&w=375&auto=format&fit=crop',
-              bets_data: betsData,
-              created_at: new Date().toISOString()
-            };
-
-            localSbBols.push(newBolao);
-            localStorage.setItem('copa26_boloes_sandbox', JSON.stringify(localSbBols));
-
-            // Generate PDF Receipt Data
-            const pdfData = knockoutMatches.map(m => {
-              const b = knockoutBets[m.id];
-              return {
-                match_id: m.id,
-                home_team: m.home_team,
-                away_team: m.away_team,
-                home_score: parseInt(b.home),
-                away_score: parseInt(b.away)
-              };
-            });
-
-            // Generate Receipt PDF
-            await generatePDFReceipt(pdfData, currentUser);
-
-            // Merge new local bolão to state
-            setBoloes(prev => [...prev, newBolao]);
-
-            setBettingLoading(false);
-            setShowPaquetaModal(true); // Open humor popup
-            showToast('Palpites salvos localmente no Sandbox! 🏆');
-            return;
+      if (sandboxMode) {
+        // Save locally
+        const localSbBolsRaw = localStorage.getItem('copa26_boloes_sandbox');
+        let localSbBols = [];
+        if (localSbBolsRaw) {
+          try {
+            localSbBols = JSON.parse(localSbBolsRaw);
+          } catch (e) {
+            console.error(e);
           }
-
-          const password = localStorage.getItem('copa26_pass') || '';
-
-          // Insert as a new bolão sheet via API
-          const response = await fetch('/api/boloes', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              action: 'insertBolao',
-              username: currentUser,
-              password,
-              bettorName: finalBettorName,
-              photoUrl: 'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?q=80&w=375&auto=format&fit=crop',
-              betsData,
-              avatarUrl: 'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?q=80&w=375&auto=format&fit=crop'
-            })
-          });
-          
-          const data = await response.json();
-          if (!response.ok || !data.success) {
-            throw new Error(data.error || 'Erro ao salvar bolão.');
-          }
-
-          // Reset user payment approval for this stage via API
-          const stagesConfig = {
-            r32: 'approved_r32',
-            r16: 'approved_r16',
-            qf: 'approved_qf',
-            sf: 'approved_sf',
-            final: 'approved_final'
-          };
-          const currentStageKey = stagesConfig[knockoutStage];
-          if (currentStageKey) {
-            await fetch('/api/usuarios', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                action: 'revokeUser',
-                username: currentUser,
-                password,
-                targetUserId: currentUserObj?.id,
-                phaseField: currentStageKey
-              })
-            });
-          }
-
-          // Generate PDF Receipt Data
-          const pdfData = knockoutMatches.map(m => {
-            const b = knockoutBets[m.id];
-            return {
-              match_id: m.id,
-              home_team: m.home_team,
-              away_team: m.away_team,
-              home_score: parseInt(b.home),
-              away_score: parseInt(b.away)
-            };
-          });
-
-          // Generate Receipt PDF
-          await generatePDFReceipt(pdfData, currentUser);
-
-          setBettingLoading(false);
-          setShowPaquetaModal(true); // Open humor popup
-          showToast('Palpites salvos com sucesso! 🏆');
-          fetchData();
-        } catch (err) {
-          console.error(err);
-          setBettingLoading(false);
-          showToast(err.message || 'Erro ao salvar palpites.', 'error');
         }
-      } else {
-        setBettingProgress(progress);
+
+        const newBolao = {
+          id: Date.now(),
+          username: currentUser,
+          bettor_name: finalBettorName,
+          photo_url: 'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?q=80&w=375&auto=format&fit=crop',
+          bets_data: betsData,
+          created_at: new Date().toISOString()
+        };
+
+        localSbBols.push(newBolao);
+        localStorage.setItem('copa26_boloes_sandbox', JSON.stringify(localSbBols));
+
+        // Merge new local bolão to state
+        setBoloes(prev => [...prev, newBolao]);
+        setSaveFinished(true);
+        return;
       }
-    }, 120); // slower interval (every 120ms)
+
+      const password = localStorage.getItem('copa26_pass') || '';
+
+      // Insert as a new bolão sheet via API
+      const response = await fetch('/api/boloes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'insertBolao',
+          username: currentUser,
+          password,
+          bettorName: finalBettorName,
+          photoUrl: 'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?q=80&w=375&auto=format&fit=crop',
+          betsData,
+          avatarUrl: 'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?q=80&w=375&auto=format&fit=crop'
+        })
+      });
+      
+      const data = await response.json();
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || 'Erro ao salvar bolão.');
+      }
+
+      // Reset user payment approval for this stage via API
+      const stagesConfig = {
+        r32: 'approved_r32',
+        r16: 'approved_r16',
+        qf: 'approved_qf',
+        sf: 'approved_sf',
+        final: 'approved_final'
+      };
+      const currentStageKey = stagesConfig[knockoutStage];
+      if (currentStageKey) {
+        await fetch('/api/usuarios', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'revokeUser',
+            username: currentUser,
+            password,
+            targetUserId: currentUserObj?.id,
+            phaseField: currentStageKey
+          })
+        });
+      }
+
+      setSaveFinished(true);
+      fetchData();
+    } catch (err) {
+      console.error(err);
+      setBettingLoading(false);
+      showToast(err.message || 'Erro ao salvar palpites.', 'error');
+    }
   };
 
   // Get bet statistics for a specific match (by team name matching)
@@ -2426,6 +2389,20 @@ function DashboardContent() {
                       <button className="bolao-action-btn btn-view-bets" onClick={() => setShowBetsModal(b)}>
                         <Icons.Trophy size={12} /> Palpites
                       </button>
+                      {Array.isArray(b.bets_data) && b.bets_data.some(bd => bd.match_id >= 73) && (
+                        <button 
+                          className="bolao-action-btn" 
+                          style={{ background: 'rgba(218,165,32,0.15)', border: '1px solid var(--accent-gold)', color: 'var(--accent-gold)' }}
+                          onClick={async () => {
+                            showToast('Gerando recibo PDF...');
+                            const mataMataBets = b.bets_data.filter(bd => bd.match_id >= 73);
+                            await generatePDFReceipt(mataMataBets, b.bettor_name);
+                            showToast('Comprovante PDF gerado com sucesso! 📄');
+                          }}
+                        >
+                          <Icons.FileText size={12} /> PDF
+                        </button>
+                      )}
                       <button className="bolao-action-btn" style={{ background: 'rgba(99,102,241,0.12)', border: '1px solid #6366f1', color: '#818cf8' }}
                         onClick={() => setShowHistoryModal(b)}>
                         📊 Histórico
@@ -4843,11 +4820,11 @@ function DashboardContent() {
           `}</style>
           
           <div className="premium-modal-card" style={{
-            background: 'rgba(17,24,39,0.7)',
+            background: 'rgba(17,24,39,0.75)',
             border: '1px solid rgba(255,255,255,0.08)',
             borderRadius: '24px',
-            padding: '2.5rem 2rem',
-            maxWidth: '360px',
+            padding: '2.5rem 1.5rem 2rem',
+            maxWidth: '380px',
             width: '100%',
             textAlign: 'center',
             boxShadow: '0 20px 50px rgba(0, 0, 0, 0.5), 0 0 40px rgba(218, 165, 32, 0.05)',
@@ -4857,25 +4834,25 @@ function DashboardContent() {
             {/* Ambient glowing background aura */}
             <div style={{
               position: 'absolute',
-              width: `${200 + (bettingProgress / 100) * 80}px`,
-              height: `${200 + (bettingProgress / 100) * 80}px`,
-              background: `radial-gradient(circle, rgba(218, 165, 32, ${0.1 + (bettingProgress / 100) * 0.3}) 0%, transparent 70%)`,
+              width: '300px',
+              height: '300px',
+              background: 'radial-gradient(circle, rgba(218, 165, 32, 0.2) 0%, transparent 70%)',
               borderRadius: '50%',
               top: '50%',
               left: '50%',
               transform: 'translate(-50%, -50%)',
               pointerEvents: 'none',
-              zIndex: -1,
-              transition: 'all 0.3s ease'
+              zIndex: -1
             }}></div>
 
-            <h3 style={{ fontSize: '1.2rem', marginBottom: '0.5rem', color: 'var(--text-primary)' }}>Processando suas Apostas...</h3>
-            <p style={{ fontSize: '0.78rem', color: '#9ca3af' }}>Validando e gerando seu recibo oficial</p>
+            <h3 style={{ fontSize: '1.25rem', marginBottom: '0.5rem', color: 'var(--text-primary)', fontWeight: '800' }}>Processando suas Apostas...</h3>
+            <p style={{ fontSize: '0.78rem', color: '#9ca3af', marginBottom: '1.25rem' }}>Validando e registrando seus palpites</p>
 
             <div style={{
-              width: '180px',
-              height: '180px',
-              margin: '1.5rem auto',
+              width: '100%',
+              maxWidth: '320px',
+              aspectRatio: '1/1',
+              margin: '0 auto',
               borderRadius: '20px',
               overflow: 'hidden',
               boxShadow: '0 8px 30px rgba(0,0,0,0.5)',
@@ -4888,19 +4865,15 @@ function DashboardContent() {
               <video 
                 src="/trophy_success.mp4" 
                 autoPlay 
-                loop 
                 muted 
                 playsInline
+                onEnded={() => setVideoEnded(true)}
                 style={{
                   width: '100%',
                   height: '100%',
                   objectFit: 'cover'
                 }}
               />
-            </div>
-
-            <div style={{ fontSize: '2rem', fontWeight: '700', color: 'var(--accent-gold, #ffd700)', fontFamily: 'monospace', textShadow: '0 0 10px rgba(255, 215, 0, 0.3)' }}>
-              {bettingProgress}%
             </div>
           </div>
         </div>
