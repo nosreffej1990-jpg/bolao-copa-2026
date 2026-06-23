@@ -255,6 +255,7 @@ function DashboardContent() {
   const [bettingProgress, setBettingProgress] = useState(0);
   const [saveFinished, setSaveFinished] = useState(false);
   const [videoEnded, setVideoEnded] = useState(false);
+  const [selectedKnockoutFilterStage, setSelectedKnockoutFilterStage] = useState('all');
   const [showPaquetaModal, setShowPaquetaModal] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [tempAvatar, setTempAvatar] = useState('');
@@ -1865,59 +1866,74 @@ function DashboardContent() {
   const groupsList = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L'];
 
   return (
-    <div className="dashboard-container" style={{ paddingBottom: '5.5rem' }}>
-      {/* Sandbox Warning Banner */}
-      {sandboxMode && (
-        <div style={{
-          background: 'linear-gradient(90deg, #b45309 0%, #d97706 50%, #b45309 100%)',
-          color: '#fff',
-          textAlign: 'center',
-          padding: '0.4rem 1rem',
-          fontSize: '0.72rem',
-          fontWeight: '900',
-          letterSpacing: '0.5px',
-          textTransform: 'uppercase',
-          boxShadow: '0 4px 12px rgba(217, 119, 6, 0.25)',
-          zIndex: 999,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: '0.5rem'
-        }}>
-          <span>🧪 Modo Sandbox Ativado (Testes Locais)</span>
-          <button 
-            onClick={() => {
-              setSandboxMode(false);
-              localStorage.removeItem('copa26_sandbox');
-              localStorage.removeItem('copa26_confrontos_sandbox');
-              fetchData();
-              showToast('Modo Sandbox desativado.');
-            }}
-            style={{
-              background: 'rgba(0,0,0,0.3)',
-              border: 'none',
-              borderRadius: '4px',
-              color: '#fff',
-              padding: '2px 8px',
-              fontSize: '0.62rem',
-              fontWeight: 'bold',
-              cursor: 'pointer'
-            }}
-          >
-            Sair
-          </button>
-        </div>
-      )}
-      {/* Header */}
-      <header className="dashboard-header" style={{
-        position: 'relative',
-        display: 'grid',
-        gridTemplateColumns: '100px 1fr 100px',
-        alignItems: 'center',
-        padding: '10px 16px',
-        borderBottom: '1px solid var(--border-color)',
+    <div className="dashboard-container" style={{ 
+      paddingTop: sandboxMode ? '100px' : '68px',
+      paddingBottom: '5.5rem' 
+    }}>
+      {/* Fixed Header Wrapper */}
+      <div style={{
+        position: 'fixed',
+        top: 0,
+        left: '50%',
+        transform: 'translateX(-50%)',
+        width: '100%',
+        maxWidth: '480px',
+        zIndex: 1000,
+        background: '#0b0f19',
         boxSizing: 'border-box'
       }}>
+        {/* Sandbox Warning Banner */}
+        {sandboxMode && (
+          <div style={{
+            background: 'linear-gradient(90deg, #b45309 0%, #d97706 50%, #b45309 100%)',
+            color: '#fff',
+            textAlign: 'center',
+            padding: '0.4rem 1rem',
+            fontSize: '0.72rem',
+            fontWeight: '900',
+            letterSpacing: '0.5px',
+            textTransform: 'uppercase',
+            boxShadow: '0 4px 12px rgba(217, 119, 6, 0.25)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '0.5rem'
+          }}>
+            <span>🧪 Modo Sandbox Ativado (Testes Locais)</span>
+            <button 
+              onClick={() => {
+                setSandboxMode(false);
+                localStorage.removeItem('copa26_sandbox');
+                localStorage.removeItem('copa26_confrontos_sandbox');
+                fetchData();
+                showToast('Modo Sandbox desativado.');
+              }}
+              style={{
+                background: 'rgba(0,0,0,0.3)',
+                border: 'none',
+                borderRadius: '4px',
+                color: '#fff',
+                padding: '2px 8px',
+                fontSize: '0.62rem',
+                fontWeight: 'bold',
+                cursor: 'pointer'
+              }}
+            >
+              Sair
+            </button>
+          </div>
+        )}
+        {/* Header */}
+        <header className="dashboard-header" style={{
+          display: 'grid',
+          gridTemplateColumns: '100px 1fr 100px',
+          alignItems: 'center',
+          padding: '10px 16px',
+          borderBottom: '1px solid var(--border-color)',
+          boxSizing: 'border-box',
+          background: 'rgba(3, 16, 11, 0.95)',
+          backdropFilter: 'blur(10px)'
+        }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', justifyContent: 'flex-start' }}>
           <div className="back-btn" onClick={() => router.push('/')} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
             <Icons.ChevronLeft size={24} style={{ color: '#D2A74F' }} />
@@ -2013,6 +2029,7 @@ function DashboardContent() {
           )}
         </div>
       </header>
+    </div>
 
       {/* Navigation Drawer Menu */}
       <div className={`drawer ${isDrawerOpen ? 'open' : ''}`} onClick={() => setIsDrawerOpen(false)}>
@@ -2313,6 +2330,39 @@ function DashboardContent() {
               </button>
             </div>
 
+            {/* Sub-filtro das Fases do Mata-Mata */}
+            {bolaoTypeFilter === 'matamata' && (
+              <div style={{ display: 'flex', gap: '0.35rem', overflowX: 'auto', paddingBottom: '0.75rem', marginBottom: '1rem', scrollbarWidth: 'none' }} className="no-scrollbar">
+                {[
+                  { id: 'all', label: 'Todas' },
+                  { id: 'r32', label: '1/16' },
+                  { id: 'r16', label: 'Oitavas' },
+                  { id: 'qf', label: 'Quartas' },
+                  { id: 'sf', label: 'Semifinal' },
+                  { id: 'final', label: 'Finais' }
+                ].map(stage => (
+                  <button
+                    key={stage.id}
+                    onClick={() => setSelectedKnockoutFilterStage(stage.id)}
+                    style={{
+                      padding: '0.4rem 0.85rem',
+                      borderRadius: '20px',
+                      fontSize: '0.72rem',
+                      fontWeight: '800',
+                      border: selectedKnockoutFilterStage === stage.id ? '1px solid var(--accent-gold)' : '1px solid rgba(255,255,255,0.08)',
+                      background: selectedKnockoutFilterStage === stage.id ? 'var(--accent-gold)' : 'transparent',
+                      color: selectedKnockoutFilterStage === stage.id ? '#000' : 'var(--text-secondary)',
+                      cursor: 'pointer',
+                      whiteSpace: 'nowrap',
+                      transition: 'all 0.2s'
+                    }}
+                  >
+                    {stage.label}
+                  </button>
+                ))}
+              </div>
+            )}
+
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               {(() => {
                 const filteredBoloes = boloes.filter(b => {
@@ -2325,7 +2375,19 @@ function DashboardContent() {
                      bd.bet_away !== undefined && 
                      String(bd.bet_away).trim() !== ''
                    );
-                  return bolaoTypeFilter === 'matamata' ? isKnockout : !isKnockout;
+                  if (bolaoTypeFilter !== 'matamata') return !isKnockout;
+                  if (!isKnockout) return false;
+                  
+                  if (selectedKnockoutFilterStage === 'all') return true;
+                  
+                  const ids = b.bets_data.map(bd => bd.match_id);
+                  if (selectedKnockoutFilterStage === 'final') return ids.some(id => id >= 103);
+                  if (selectedKnockoutFilterStage === 'sf') return ids.some(id => id >= 101 && id <= 102);
+                  if (selectedKnockoutFilterStage === 'qf') return ids.some(id => id >= 97 && id <= 100);
+                  if (selectedKnockoutFilterStage === 'r16') return ids.some(id => id >= 89 && id <= 96);
+                  if (selectedKnockoutFilterStage === 'r32') return ids.some(id => id >= 73 && id <= 88);
+                  
+                  return true;
                 });
                   filteredBoloes.sort((a, b) => {
                     if (currentUser && a.username === currentUser) return -1;
@@ -5077,6 +5139,8 @@ function DashboardContent() {
 function KnockoutBetsList({ playerUsername, koConfs, boloes, currentUser, currentUserRole, mataMataPublic, expandedBoloesList, setExpandedBoloesList }) {
   const isSelf = currentUser && playerUsername && currentUser.toLowerCase() === playerUsername.toLowerCase();
   const isPrivileged = currentUserRole === 'Admin' || currentUserRole === 'Moderador';
+  
+  const [playerStageFilter, setPlayerStageFilter] = useState('all');
 
   if (!mataMataPublic && !isSelf && !isPrivileged) {
     return (
@@ -5101,8 +5165,6 @@ function KnockoutBetsList({ playerUsername, koConfs, boloes, currentUser, curren
     Array.isArray(b.bets_data) && b.bets_data.some(bd => bd.match_id >= 73)
   );
 
-
-
   if (playerKoBoloes.length === 0) {
     return (
       <div style={{ 
@@ -5121,9 +5183,52 @@ function KnockoutBetsList({ playerUsername, koConfs, boloes, currentUser, curren
     );
   }
 
+  // Filter player predictions by selected stage filter
+  const filteredKoBoloes = playerKoBoloes.filter(b => {
+    if (playerStageFilter === 'all') return true;
+    const ids = b.bets_data.map(bd => bd.match_id);
+    if (playerStageFilter === 'final') return ids.some(id => id >= 103);
+    if (playerStageFilter === 'sf') return ids.some(id => id >= 101 && id <= 102);
+    if (playerStageFilter === 'qf') return ids.some(id => id >= 97 && id <= 100);
+    if (playerStageFilter === 'r16') return ids.some(id => id >= 89 && id <= 96);
+    if (playerStageFilter === 'r32') return ids.some(id => id >= 73 && id <= 88);
+    return true;
+  });
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-      {playerKoBoloes.map((bol) => {
+      {/* Sub-filtro das Fases do Mata-Mata */}
+      <div style={{ display: 'flex', gap: '0.35rem', overflowX: 'auto', paddingBottom: '0.5rem', scrollbarWidth: 'none' }} className="no-scrollbar">
+        {[
+          { id: 'all', label: 'Todas' },
+          { id: 'r32', label: '1/16' },
+          { id: 'r16', label: 'Oitavas' },
+          { id: 'qf', label: 'Quartas' },
+          { id: 'sf', label: 'Semifinal' },
+          { id: 'final', label: 'Finais' }
+        ].map(stage => (
+          <button
+            key={stage.id}
+            onClick={() => setPlayerStageFilter(stage.id)}
+            style={{
+              padding: '0.35rem 0.75rem',
+              borderRadius: '20px',
+              fontSize: '0.7rem',
+              fontWeight: '800',
+              border: playerStageFilter === stage.id ? '1px solid var(--accent-gold)' : '1px solid rgba(255,255,255,0.08)',
+              background: playerStageFilter === stage.id ? 'var(--accent-gold)' : 'transparent',
+              color: playerStageFilter === stage.id ? '#000' : 'var(--text-secondary)',
+              cursor: 'pointer',
+              whiteSpace: 'nowrap',
+              transition: 'all 0.2s'
+            }}
+          >
+            {stage.label}
+          </button>
+        ))}
+      </div>
+
+      {filteredKoBoloes.map((bol) => {
         const isExpanded = expandedBoloesList.includes(bol.id);
         const bets = bol.bets_data || [];
         return (
@@ -5190,6 +5295,12 @@ function KnockoutBetsList({ playerUsername, koConfs, boloes, currentUser, curren
           </div>
         );
       })}
+
+      {filteredKoBoloes.length === 0 && (
+        <p style={{ textAlign: 'center', color: 'var(--text-secondary)', fontSize: '0.78rem', margin: '0.5rem 0' }}>
+          Nenhuma cartela desta fase encontrada para este jogador.
+        </p>
+      )}
     </div>
   );
 }
