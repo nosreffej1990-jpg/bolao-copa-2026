@@ -255,7 +255,7 @@ function DashboardContent() {
   const [bettingProgress, setBettingProgress] = useState(0);
   const [saveFinished, setSaveFinished] = useState(false);
   const [videoEnded, setVideoEnded] = useState(false);
-  const [selectedKnockoutFilterStage, setSelectedKnockoutFilterStage] = useState('all');
+  const [selectedKnockoutFilterStage, setSelectedKnockoutFilterStage] = useState('r32');
   const [showPaquetaModal, setShowPaquetaModal] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [tempAvatar, setTempAvatar] = useState('');
@@ -2334,7 +2334,6 @@ function DashboardContent() {
             {bolaoTypeFilter === 'matamata' && (
               <div style={{ display: 'flex', gap: '0.35rem', overflowX: 'auto', paddingBottom: '0.75rem', marginBottom: '1rem', scrollbarWidth: 'none' }} className="no-scrollbar">
                 {[
-                  { id: 'all', label: 'Todas' },
                   { id: 'r32', label: '1/16' },
                   { id: 'r16', label: 'Oitavas' },
                   { id: 'qf', label: 'Quartas' },
@@ -2377,8 +2376,6 @@ function DashboardContent() {
                    );
                   if (bolaoTypeFilter !== 'matamata') return !isKnockout;
                   if (!isKnockout) return false;
-                  
-                  if (selectedKnockoutFilterStage === 'all') return true;
                   
                   const ids = b.bets_data.map(bd => bd.match_id);
                   if (selectedKnockoutFilterStage === 'final') return ids.some(id => id >= 103);
@@ -5140,7 +5137,7 @@ function KnockoutBetsList({ playerUsername, koConfs, boloes, currentUser, curren
   const isSelf = currentUser && playerUsername && currentUser.toLowerCase() === playerUsername.toLowerCase();
   const isPrivileged = currentUserRole === 'Admin' || currentUserRole === 'Moderador';
   
-  const [playerStageFilter, setPlayerStageFilter] = useState('all');
+  const [playerStageFilter, setPlayerStageFilter] = useState('r32');
 
   if (!mataMataPublic && !isSelf && !isPrivileged) {
     return (
@@ -5185,7 +5182,6 @@ function KnockoutBetsList({ playerUsername, koConfs, boloes, currentUser, curren
 
   // Filter player predictions by selected stage filter
   const filteredKoBoloes = playerKoBoloes.filter(b => {
-    if (playerStageFilter === 'all') return true;
     const ids = b.bets_data.map(bd => bd.match_id);
     if (playerStageFilter === 'final') return ids.some(id => id >= 103);
     if (playerStageFilter === 'sf') return ids.some(id => id >= 101 && id <= 102);
@@ -5200,7 +5196,6 @@ function KnockoutBetsList({ playerUsername, koConfs, boloes, currentUser, curren
       {/* Sub-filtro das Fases do Mata-Mata */}
       <div style={{ display: 'flex', gap: '0.35rem', overflowX: 'auto', paddingBottom: '0.5rem', scrollbarWidth: 'none' }} className="no-scrollbar">
         {[
-          { id: 'all', label: 'Todas' },
           { id: 'r32', label: '1/16' },
           { id: 'r16', label: 'Oitavas' },
           { id: 'qf', label: 'Quartas' },

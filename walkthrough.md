@@ -59,3 +59,11 @@ Extraímos lógicas utilitárias complexas do frontend para hooks reutilizáveis
   - Permite que o Admin clique em qualquer confronto diretamente a partir do chaveamento visual (fase de grupos ou mata-mata) para abrir o modal de detalhes do jogo.
   - Habilita uma aba exclusiva `🧪 Sandbox` no modal onde o Admin pode simular nomes de equipes (para avançar no mata-mata) e placares de gols.
   - Os resultados simulados são mantidos localmente via `localStorage` e refletem imediatamente na classificação dos grupos e no chaveamento geral da tela, de forma 100% isolada e sem interferir no banco de dados de produção.
+
+---
+
+## 8. Ícone de Atalho PWA com o Logo Oficial da Copa
+- **Design de Alto Nível**: Substituímos os ícones de atalho do aplicativo (PWA / favicon) por uma versão premium que traz o **logotipo oficial da Copa do Mundo de 2026** (o numeral 26 vertical estilizado com a taça dourada ao centro) destacado sobre um escudo circular verde-esmeralda com brilho dourado metálico.
+- **Sincronização PWA**: Atualizamos as imagens nos tamanhos recomendados (`public/icons/icon-192.png` e `public/icons/icon-512.png`), mantendo o suporte nativo a ícones adaptáveis (*maskable*) e normais (*any*) no manifesto do aplicativo.
+- **Favicons & Apple Touch**: As tags `<link rel="apple-touch-icon">` no cabeçalho global do `layout.js` agora carregam a nova imagem oficial, assegurando uma identidade visual integrada em dispositivos iOS, Android e navegadores desktop.
+
