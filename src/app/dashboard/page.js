@@ -3298,20 +3298,28 @@ function DashboardContent() {
 
                     {/* Sticky Footer Bar with submit button */}
                     <div style={{
-                      position: 'fixed', bottom: 0, left: 0, right: 0,
-                      background: 'linear-gradient(0deg, #0b0f19 75%, transparent 100%)',
-                      padding: '1.25rem 1rem 1.75rem', zIndex: 100,
-                      display: 'flex', alignItems: 'center', justifyContent: 'center'
+                      position: 'fixed',
+                      bottom: '5.2rem',
+                      left: '50%',
+                      transform: 'translateX(-50%)',
+                      width: '100%',
+                      maxWidth: '480px',
+                      padding: '0 1rem',
+                      boxSizing: 'border-box',
+                      zIndex: 90,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      pointerEvents: 'none'
                     }}>
                       <div style={{
-                        maxWidth: '500px', width: '100%',
-                        background: 'rgba(17,24,39,0.85)',
+                        width: '100%',
+                        background: 'rgba(17,24,39,0.95)',
                         backdropFilter: 'blur(12px)',
                         border: '1px solid rgba(255,255,255,0.08)',
                         borderRadius: '16px',
                         padding: '0.85rem 1.25rem',
                         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                        boxShadow: '0 10px 30px rgba(0,0,0,0.5)'
+                        boxShadow: '0 10px 30px rgba(0,0,0,0.5)',
+                        pointerEvents: 'auto'
                       }}>
                         <div style={{ display: 'flex', flexDirection: 'column' }}>
                           <span style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', fontWeight: 'bold' }}>Palpites Preenchidos</span>
@@ -4864,67 +4872,32 @@ function DashboardContent() {
             <h3 style={{ fontSize: '1.2rem', marginBottom: '0.5rem', color: 'var(--text-primary)' }}>Processando suas Apostas...</h3>
             <p style={{ fontSize: '0.78rem', color: '#9ca3af' }}>Validando e gerando seu recibo oficial</p>
 
-            <svg viewBox="0 0 100 120" style={{ width: '120px', height: '140px', margin: '1.5rem auto', filter: 'drop-shadow(0 0 15px rgba(0,0,0,0.5))' }}>
-              <defs>
-                <linearGradient id="modalGoldLiquid" x1="0%" y1="100%" x2="0%" y2="0%">
-                  <stop offset="0%" stop-color="#8a660d" />
-                  <stop offset="50%" stop-color="#d4af37" />
-                  <stop offset="85%" stop-color="#ffd700" />
-                  <stop offset="100%" stop-color="#fffbbf" />
-                </linearGradient>
-                <linearGradient id="modalGoldHighlight" x1="0%" y1="0%" x2="100%" y2="0%">
-                  <stop offset="0%" stop-color="rgba(255,255,255,0.4)" />
-                  <stop offset="50%" stop-color="transparent" />
-                  <stop offset="100%" stop-color="rgba(0,0,0,0.3)" />
-                </linearGradient>
-                <clipPath id="modalTrophyClip">
-                  <path d="M 35,106 C 35,102 37,99 39,97 L 61,97 C 63,99 65,102 65,106 Z M 37,95 L 63,95 C 62,90 61,86 60,83 L 40,83 C 39,86 38,90 37,95 Z M 42,81 C 43,74 44,67 45,61 C 41,57 37,51 36,44 C 34,35 37,26 43,20 C 47,15 53,15 57,20 C 63,26 66,35 64,44 C 63,51 59,57 55,61 C 56,67 57,74 58,81 Z" />
-                  <circle cx="50" cy="30" r="11" />
-                </clipPath>
-              </defs>
-              <path fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.12)" strokeWidth="1.5" d="M 35,106 C 35,102 37,99 39,97 L 61,97 C 63,99 65,102 65,106 Z M 37,95 L 63,95 C 62,90 61,86 60,83 L 40,83 C 39,86 38,90 37,95 Z M 42,81 C 43,74 44,67 45,61 C 41,57 37,51 36,44 C 34,35 37,26 43,20 C 47,15 53,15 57,20 C 63,26 66,35 64,44 C 63,51 59,57 55,61 C 56,67 57,74 58,81 Z" />
-              <circle cx="50" cy="30" r="11" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.12)" strokeWidth="1.5" />
-              
-              <g clipPath="url(#modalTrophyClip)">
-                <g style={{ transform: `translateY(${120 - (120 * (bettingProgress / 100))}px)`, transition: 'transform 0.1s ease-out' }}>
-                  {/* Liquid Body */}
-                  <rect x="0" y="0" width="100" height="120" fill="url(#modalGoldLiquid)" />
-                  
-                  {/* Highlight overlay */}
-                  <rect x="0" y="0" width="100" height="120" fill="url(#modalGoldHighlight)" style={{ mixBlendMode: 'overlay' }} />
-
-                  {/* Wave Top */}
-                  <path d="M 0,0 Q 25,-4 50,0 T 100,0 L 100,10 L 0,10 Z" fill="#fffbbf" opacity="0.8">
-                    <animateTransform 
-                      attributeName="transform" 
-                      type="translate" 
-                      from="-50,0" to="0,0" 
-                      dur="1.5s" 
-                      repeatCount="indefinite" />
-                  </path>
-                </g>
-              </g>
-
-              {/* Overlaid Detail Lines (Figures contour and details) */}
-              <path d="M 45,81 C 46,71 49,63 51,54 C 47,51 43,45 42,38" fill="none" stroke="rgba(11,15,25,0.6)" strokeWidth="1.5" strokeLinecap="round" />
-              <path d="M 55,81 C 54,71 51,63 49,54 C 53,51 57,45 58,38" fill="none" stroke="rgba(11,15,25,0.6)" strokeWidth="1.5" strokeLinecap="round" />
-              
-              {/* Pedestal Green Malachite Bands (Instant recognizability) */}
-              <rect x="38" y="100" width="24" height="2.5" fill="#047857" rx="0.5" opacity="0.85" />
-              <rect x="39.5" y="89" width="21" height="2.5" fill="#047857" rx="0.5" opacity="0.85" />
-
-              {/* Bright Golden Border (Matches Fill Level) */}
-              <path d="M 35,106 C 35,102 37,99 39,97 L 61,97 C 63,99 65,102 65,106 Z M 37,95 L 63,95 C 62,90 61,86 60,83 L 40,83 C 39,86 38,90 37,95 Z M 42,81 C 43,74 44,67 45,61 C 41,57 37,51 36,44 C 34,35 37,26 43,20 C 47,15 53,15 57,20 C 63,26 66,35 64,44 C 63,51 59,57 55,61 C 56,67 57,74 58,81 Z"
-                    fill="none" 
-                    stroke="url(#modalGoldLiquid)" 
-                    strokeWidth="1.5" 
-                    style={{ opacity: bettingProgress > 10 ? (bettingProgress / 100) : 0, transition: 'opacity 0.5s' }} />
-              <circle cx="50" cy="30" r="11"
-                    fill="none" 
-                    stroke="url(#modalGoldLiquid)" 
-                    strokeWidth="1.5" 
-                    style={{ opacity: bettingProgress > 10 ? (bettingProgress / 100) : 0, transition: 'opacity 0.5s' }} />
-            </svg>
+            <div style={{
+              width: '180px',
+              height: '180px',
+              margin: '1.5rem auto',
+              borderRadius: '20px',
+              overflow: 'hidden',
+              boxShadow: '0 8px 30px rgba(0,0,0,0.5)',
+              background: '#000',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              position: 'relative'
+            }}>
+              <video 
+                src="/trophy_success.mp4" 
+                autoPlay 
+                loop 
+                muted 
+                playsInline
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover'
+                }}
+              />
+            </div>
 
             <div style={{ fontSize: '2rem', fontWeight: '700', color: 'var(--accent-gold, #ffd700)', fontFamily: 'monospace', textShadow: '0 0 10px rgba(255, 215, 0, 0.3)' }}>
               {bettingProgress}%
@@ -4951,30 +4924,30 @@ function DashboardContent() {
             textAlign: 'center',
             boxShadow: '0 20px 50px rgba(0,0,0,0.6)'
           }}>
-            <div style={{
-              width: '200px',
-              height: '200px',
-              margin: '0 auto 1.25rem auto',
-              borderRadius: '20px',
-              overflow: 'hidden',
-              boxShadow: '0 8px 30px rgba(0,0,0,0.5)',
-              background: '#000',
+            <style>{`
+              @keyframes successPulse {
+                0% { transform: scale(0.95); box-shadow: 0 0 15px rgba(16, 185, 129, 0.4); }
+                50% { transform: scale(1.05); box-shadow: 0 0 30px rgba(218, 165, 32, 0.6); }
+                100% { transform: scale(0.95); box-shadow: 0 0 15px rgba(16, 185, 129, 0.4); }
+              }
+              .success-trophy-badge {
+                animation: successPulse 2s infinite ease-in-out;
+              }
+            `}</style>
+            
+            <div className="success-trophy-badge" style={{
+              width: '130px',
+              height: '130px',
+              margin: '0 auto 1.5rem auto',
+              borderRadius: '50%',
+              background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+              border: '4px solid var(--accent-gold, #ffd700)',
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'center'
+              justifyContent: 'center',
+              position: 'relative'
             }}>
-              <video 
-                src="/trophy_success.mp4" 
-                autoPlay 
-                loop 
-                muted 
-                playsInline
-                style={{
-                  width: '100%',
-                  height: '100%',
-                  objectFit: 'cover'
-                }}
-              />
+              <span style={{ fontSize: '4.5rem', filter: 'drop-shadow(0 4px 6px rgba(0,0,0,0.3))' }}>🏆</span>
             </div>
             <h3 style={{ fontSize: '1.3rem', color: 'var(--text-primary)', fontWeight: '900', letterSpacing: '0.5px', marginBottom: '1rem', textTransform: 'uppercase' }}>
               {paquetaTitle}
