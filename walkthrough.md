@@ -67,3 +67,17 @@ Extraímos lógicas utilitárias complexas do frontend para hooks reutilizáveis
 - **Sincronização PWA**: Atualizamos as imagens nos tamanhos recomendados (`public/icons/icon-192.png` e `public/icons/icon-512.png`), mantendo o suporte nativo a ícones adaptáveis (*maskable*) e normais (*any*) no manifesto do aplicativo.
 - **Favicons & Apple Touch**: As tags `<link rel="apple-touch-icon">` no cabeçalho global do `layout.js` agora carregam a nova imagem oficial, assegurando uma identidade visual integrada em dispositivos iOS, Android e navegadores desktop.
 
+---
+
+## 9. Logo Oficial na Tela de Carregamento (Splash Screen)
+- **Consistência Visual**: Atualizamos a tela de carregamento inicial em [page.js](file:///c:/Users/nosre/OneDrive/Documentos/GitHub/bolao-copa-2026/src/app/page.js) para carregar o novo ícone oficial de atalho (`/icons/icon-512.png`) com a moldura dupla dourada e escudo verde-esmeralda, substituindo o antigo logo de fundo transparente simples.
+- **Experiência Premium**: Isso garante que a transição do clique no atalho do celular para a abertura do app seja visualmente idêntica e fluida, transmitindo um aspecto profissional e nativo.
+
+---
+
+## 10. Proteção e Sincronização Completa de Resultados (Recalcular)
+- **Preservação de Histórico**: Corrigimos a rota de recalcular `/api/admin/recalculate` para proteger confrontos já marcados como finalizados (`finished: true`) no banco de dados. Eles não são mais limpos ou redefinidos para `null` caso a API de sincronização tenha atraso ou retorne o jogo como não finalizado.
+- **Sincronização Total (Fases Anteriores)**: Ajustamos a função `fetchAllGames` em [worldcupApi.js](file:///c:/Users/nosre/OneDrive/Documentos/GitHub/bolao-copa-2026/src/lib/worldcupApi.js) para aceitar o parâmetro `forceWorldCupApi`. Quando acionado no painel de administração, o sistema faz o bypass da ESPN e consulta diretamente a listagem completa de 104 confrontos na API do WorldCup26.ir.
+- **Resolução de Restaurações**: Desta forma, se o administrador precisar restaurar/limpar o banco de dados e recalcular os pontos, clicar em "Recalcular" irá re-sincronizar e preencher imediatamente **todos os jogos já finalizados** desde o início do torneio, e não apenas os jogos do dia corrente.
+
+

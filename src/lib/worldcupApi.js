@@ -128,15 +128,16 @@ export async function fetchAllTeams() {
 }
 
 // Busca todos os jogos
-export async function fetchAllGames() {
+export async function fetchAllGames(forceWorldCupApi = false) {
   const now = Date.now();
-  if (cache.games && now - cache.lastFetch < CACHE_TTL) {
+  if (!forceWorldCupApi && cache.games && now - cache.lastFetch < CACHE_TTL) {
     return cache.games;
   }
 
   try {
-    const espnRes = await fetch('https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard', { cache: 'no-store' });
-    if (espnRes.ok) {
+    if (!forceWorldCupApi) {
+      const espnRes = await fetch('https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard', { cache: 'no-store' });
+      if (espnRes.ok) {
       const espnData = await espnRes.json();
       if (espnData && espnData.events) {
         const games = espnData.events.map((event, idx) => {
@@ -185,7 +186,8 @@ export async function fetchAllGames() {
         return cache.games;
       }
     }
-  } catch (err) {
+  }
+} catch (err) {
     console.error('Erro na ESPN API, caindo para fallback:', err);
   }
 

@@ -63,7 +63,7 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Nenhum confronto encontrado no banco.' }, { status: 404 });
     }
 
-    const allApiGames = await fetchAllGames();
+    const allApiGames = await fetchAllGames(true);
     if (!allApiGames || allApiGames.length === 0) {
       return NextResponse.json({ error: 'Erro ao buscar jogos na ESPN API.' }, { status: 500 });
     }
@@ -121,7 +121,7 @@ export async function POST(request) {
             isDifferent = true;
           }
         } else {
-          if (c.home_score !== null || c.away_score !== null || c.finished) {
+          if ((c.home_score !== null || c.away_score !== null) && !c.finished) {
             nextHomeScore = null;
             nextAwayScore = null;
             nextFinished = false;
