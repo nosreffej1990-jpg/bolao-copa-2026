@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { supabaseServer, isSupabaseServerConfigured } from '@/lib/supabaseServer';
-import { fetchAllGames } from '@/lib/worldcupApi';
-import { CHAMPIONS } from '@/components/ChampionProvider';
+import { fetchAllGames, getFlagCode } from '@/lib/worldcupApi';
 
 async function validateAdmin(username, password) {
   if (!isSupabaseServerConfigured) return { valid: true };
@@ -34,13 +33,6 @@ const normalizeTeamName = (name) => {
   if (n === 'costarica') return 'costarica';
   
   return n;
-};
-
-const getFlagCode = (name) => {
-  if (!name) return null;
-  const n = normalizeTeamName(name);
-  const found = CHAMPIONS.find(t => normalizeTeamName(t.name) === n);
-  return found ? found.code : null;
 };
 
 export async function POST(request) {
