@@ -10,62 +10,104 @@ import { useChampion, CHAMPIONS } from '@/components/ChampionProvider';
 const generateTrophyPoints = (numPoints, width, height) => {
   const points = [];
   const centerX = width / 2;
-  const centerY = height / 2 - 20;
+  const centerY = height / 2 - 80;
 
-  // 1. Globe (sphere at the top)
-  const globeCount = Math.floor(numPoints * 0.35);
+  // Let's model the World Cup Trophy outline and internal details precisely.
+  // Height ranges from centerY - 70 (top of globe) to centerY + 90 (bottom of base).
+
+  // 1. Globe (Top sphere): centerY - 70 to centerY - 20
   const globeCenterY = centerY - 45;
-  const globeRadius = 24;
+  const globeRadius = 26;
+  const globeCount = Math.floor(numPoints * 0.38);
+
   for (let i = 0; i < globeCount; i++) {
-    const angle = (i / globeCount) * Math.PI * 2;
-    const r = globeRadius * (0.4 + 0.6 * Math.random());
-    const x = centerX + Math.sin(angle) * r;
-    const y = globeCenterY + Math.cos(angle) * r * 0.95;
-    points.push({ x, y });
+    const seed = i / globeCount;
+    // Outer shell of the globe
+    if (seed < 0.6) {
+      const angle = (seed / 0.6) * Math.PI * 2;
+      const x = centerX + Math.sin(angle) * globeRadius;
+      const y = globeCenterY + Math.cos(angle) * globeRadius * 0.95;
+      points.push({ x, y, type: 'globe-shell' });
+    } else {
+      // Internal continental lines/texture matching the stylized globe on the FIFA trophy
+      const mapSeed = (seed - 0.6) / 0.4;
+      const r = globeRadius * 0.85;
+      // Stretched spiral lines inside the globe to simulate continents
+      const angle = mapSeed * Math.PI * 3;
+      const x = centerX + Math.cos(angle) * r * Math.sin(mapSeed * Math.PI);
+      const y = globeCenterY - r * 0.5 + mapSeed * r * 1.1;
+      points.push({ x, y, type: 'globe-texture' });
+    }
   }
 
-  // 2. Base (tiered cylinders at the bottom)
+  // 2. Base (Bottom pedestal with bands): centerY + 50 to centerY + 95
   const baseCount = Math.floor(numPoints * 0.28);
   for (let i = 0; i < baseCount; i++) {
     const pct = i / (baseCount - 1);
-    const by = centerY + 35 + pct * 40;
+    const by = centerY + 50 + pct * 45;
     
-    let baseW = 20;
-    if (by > centerY + 62) {
-      baseW = 38;
-    } else if (by > centerY + 48) {
+    // Predetermined silhouette widths at specific heights of the tiered pedestal
+    let baseW = 18;
+    let type = 'gold-base';
+    if (by > centerY + 82) {
+      // Bottom tier
+      baseW = 42;
+    } else if (by > centerY + 78) {
+      // Spacer/ring
+      baseW = 39;
+    } else if (by > centerY + 66) {
+      // Lower malachite band band
+      baseW = 36;
+      type = 'malachite-band-2';
+    } else if (by > centerY + 58) {
+      // Mid gold spacer
       baseW = 32;
+    } else if (by > centerY + 52) {
+      // Upper malachite band
+      baseW = 29;
+      type = 'malachite-band-1';
     } else {
-      baseW = 26;
+      // Top base neck
+      baseW = 25;
     }
 
-    const offsetPct = (Math.random() - 0.5) * 2;
-    const x = centerX + offsetPct * baseW;
-    points.push({ x, y: by });
+    const sidePct = (Math.random() - 0.5) * 2;
+    const x = centerX + sidePct * baseW;
+    points.push({ x, y: by, type });
   }
 
-  // 3. Body/Stem/Arms (the stylized human figures)
+  // 3. Stylized human arms/body (Stem/core): centerY - 20 to centerY + 50
   const bodyCount = numPoints - points.length;
   for (let i = 0; i < bodyCount; i++) {
     const pct = i / (bodyCount - 1);
-    const by = centerY - 25 + pct * 60;
+    const by = centerY - 20 + pct * 70;
     
+    // The trophy consists of two sweeping upward human figures holding up the globe.
+    // Let's model their curvy, dynamic profile.
     let bodyW = 10;
-    if (by < centerY - 10) {
-      const armPct = (by - (centerY - 25)) / 15;
-      bodyW = 25 - armPct * 11;
-    } else if (by < centerY + 10) {
-      const waistPct = (by - (centerY - 10)) / 20;
-      bodyW = 14 - waistPct * 5;
+    let type = 'trophy-body';
+
+    if (by < centerY - 5) {
+      // Arms sweeping out to cradle the globe
+      const armPct = (by - (centerY - 20)) / 15; // 0 to 1
+      bodyW = 26 - armPct * 12; // starts wide at globe base, narrows down
+    } else if (by < centerY + 18) {
+      // Core waist / twisting bodies
+      const waistPct = (by - (centerY - 5)) / 23;
+      bodyW = 14 - Math.sin(waistPct * Math.PI) * 4;
     } else {
-      const lowerPct = (by - (centerY + 10)) / 25;
-      bodyW = 9 + lowerPct * 11;
+      // Base flare joining the pedestal
+      const lowerPct = (by - (centerY + 18)) / 32;
+      bodyW = 10 + lowerPct * 14;
     }
 
+    // Add double-helix/spiral twist look of the figures
     const side = i % 2 === 0 ? 1 : -1;
-    const spiralOffset = Math.sin(by * 0.1) * 3;
-    const x = centerX + side * (bodyW * 0.7) + spiralOffset;
-    points.push({ x, y: by });
+    // Spiral twist offset based on Y position
+    const twistOffset = Math.sin(by * 0.08) * 4;
+    const x = centerX + side * (bodyW * 0.75) + twistOffset;
+    
+    points.push({ x, y: by, type });
   }
 
   return points;
@@ -87,17 +129,17 @@ const ParticleCanvas = ({ progress }) => {
     let animationFrameId;
     let width = (canvas.width = window.innerWidth);
     let height = (canvas.height = window.innerHeight);
-    let trophyPoints = generateTrophyPoints(350, width, height);
+    let trophyPoints = generateTrophyPoints(420, width, height);
 
     const handleResize = () => {
       if (!canvas) return;
       width = canvas.width = window.innerWidth;
       height = canvas.height = window.innerHeight;
-      trophyPoints = generateTrophyPoints(350, width, height);
+      trophyPoints = generateTrophyPoints(420, width, height);
     };
     window.addEventListener('resize', handleResize);
 
-    const centerY = height / 2 - 20;
+    const centerY = height / 2 - 80;
 
     class Particle {
       constructor(index) {
@@ -106,47 +148,61 @@ const ParticleCanvas = ({ progress }) => {
       }
 
       reset(init = false) {
-        this.x = init ? Math.random() * width : (Math.random() > 0.5 ? 0 : width);
-        this.y = init ? Math.random() * height : (Math.random() > 0.5 ? 0 : height);
-        this.size = Math.random() * 1.8 + 1.2;
-        this.speedX = (Math.random() - 0.5) * 1.5;
-        this.speedY = (Math.random() - 0.5) * 1.5;
-        this.alpha = Math.random() * 0.4 + 0.4;
+        // Starfield starting positions
+        this.x = init ? Math.random() * width : (Math.random() > 0.5 ? -10 : width + 10);
+        this.y = init ? Math.random() * height : (Math.random() > 0.5 ? -10 : height + 10);
+        
+        // Varying sizes for depth - identical to the volumetric look of Option E
+        this.size = Math.random() * 1.5 + 0.8;
+        if (this.index % 12 === 0) {
+          this.size = Math.random() * 1.5 + 2.0; // occasional larger glowing embers
+        }
+        
+        this.speedX = (Math.random() - 0.5) * 0.8;
+        this.speedY = (Math.random() - 0.5) * 0.8;
+        this.alpha = Math.random() * 0.4 + 0.3;
         this.angle = Math.random() * Math.PI * 2;
-        this.angularSpeed = (Math.random() - 0.5) * 0.05;
+        this.angularSpeed = (Math.random() - 0.5) * 0.03;
       }
 
       update(time, currentProgress) {
         const target = trophyPoints[this.index % trophyPoints.length];
-        const ease = Math.min(1, Math.max(0, (currentProgress - 15) / 75));
+        
+        // Morphing transition curve
+        // 0% - 15%: particles float freely
+        // 15% - 100%: particles gradually pull into the trophy silhouette
+        const ease = Math.min(1, Math.max(0, (currentProgress - 15) / 85));
 
         if (ease > 0) {
-          const shimmerScale = (1 - ease) * 35 + 0.6;
-          const targetX = target.x + Math.sin(time * 0.04 + this.angle) * shimmerScale;
-          const targetY = target.y + Math.cos(time * 0.04 + this.angle) * shimmerScale;
+          // Dynamic swirling effect that consolidates as progress increases
+          const swirlRadius = (1 - ease) * 55 + 0.3;
+          const targetX = target.x + Math.sin(time * 0.04 + this.angle) * swirlRadius;
+          const targetY = target.y + Math.cos(time * 0.04 + this.angle) * swirlRadius;
 
-          const speed = 1.5 + ease * 4.5;
+          // Accelerating magnetic pull towards silhouette
+          const speed = 1.0 + ease * 5.0;
           const dx = targetX - this.x;
           const dy = targetY - this.y;
           const dist = Math.sqrt(dx * dx + dy * dy);
 
-          if (dist > 1) {
+          if (dist > 0.8) {
             this.x += (dx / dist) * speed;
             this.y += (dy / dist) * speed;
           } else {
             this.x = targetX;
             this.y = targetY;
           }
-          this.alpha = Math.min(1, 0.4 + 0.6 * ease);
+          this.alpha = Math.min(1, 0.3 + 0.7 * ease);
         } else {
-          this.x += this.speedX + Math.sin(time * 0.02 + this.angle) * 0.4;
-          this.y += this.speedY + Math.cos(time * 0.02 + this.angle) * 0.4;
+          // Idle floating physics before morphing starts
+          this.x += this.speedX + Math.sin(time * 0.01 + this.angle) * 0.25;
+          this.y += this.speedY + Math.cos(time * 0.01 + this.angle) * 0.25;
           this.angle += this.angularSpeed;
 
-          if (this.x < -20) this.x = width + 20;
-          if (this.x > width + 20) this.x = -20;
-          if (this.y < -20) this.y = height + 20;
-          if (this.y > height + 20) this.y = -20;
+          if (this.x < -30) this.x = width + 30;
+          if (this.x > width + 30) this.x = -30;
+          if (this.y < -30) this.y = height + 30;
+          if (this.y > height + 30) this.y = -30;
         }
       }
 
@@ -156,33 +212,35 @@ const ParticleCanvas = ({ progress }) => {
         ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
         
         const target = trophyPoints[this.index % trophyPoints.length];
-        const ease = Math.min(1, Math.max(0, (progressRef.current - 15) / 75));
-        
-        let isMalachiteBand = false;
-        if (target && target.y) {
-          const relativeY = target.y - centerY;
-          if ((relativeY >= 44 && relativeY <= 48) || (relativeY >= 58 && relativeY <= 62)) {
-            isMalachiteBand = true;
-          }
-        }
+        const ease = Math.min(1, Math.max(0, (progressRef.current - 15) / 85));
 
-        const hue = 40 + (this.index % 3) * 3;
-        const light = 60 + (this.index % 2) * 10;
+        const isMalachite = target && (target.type === 'malachite-band-1' || target.type === 'malachite-band-2');
 
-        if (ease > 0.4 && isMalachiteBand) {
-          const blendProgress = Math.min(1, (ease - 0.4) / 0.6);
-          const targetHue = 145;
-          const targetLight = 40;
-          const currentHue = 40 + (targetHue - 40) * blendProgress;
-          const currentLight = light + (targetLight - light) * blendProgress;
+        // Color palette parameters from option E:
+        // Vibrant Gold / Warm Amber (HSL 42, 100%, 65%) with occasional bright white sparks
+        const isSparkle = this.index % 15 === 0;
+        let hue = 40 + (this.index % 5) * 2;
+        let saturation = 95;
+        let lightness = isSparkle ? 90 : 60 + (this.index % 3) * 6;
+
+        if (ease > 0.45 && isMalachite) {
+          const blendProgress = Math.min(1, (ease - 0.45) / 0.55);
+          // Dark Emerald green malachite ring blend
+          const targetHue = 152;
+          const targetSat = 85;
+          const targetLight = 38;
           
-          ctx.fillStyle = `hsla(${currentHue}, 75%, ${currentLight}%, ${this.alpha})`;
+          hue = hue + (targetHue - hue) * blendProgress;
+          saturation = saturation + (targetSat - saturation) * blendProgress;
+          lightness = lightness + (targetLight - lightness) * blendProgress;
+          
+          ctx.fillStyle = `hsla(${hue}, ${saturation}%, ${lightness}%, ${this.alpha})`;
           ctx.shadowBlur = this.size * 2;
-          ctx.shadowColor = `rgba(16, 185, 129, ${this.alpha * 0.6 * blendProgress})`;
+          ctx.shadowColor = `rgba(16, 185, 129, ${this.alpha * 0.5 * blendProgress})`;
         } else {
-          ctx.fillStyle = `hsla(${hue}, 75%, ${light}%, ${this.alpha})`;
-          ctx.shadowBlur = this.size * 2.5;
-          ctx.shadowColor = `hsla(${hue}, 80%, 55%, ${this.alpha * 0.8})`;
+          ctx.fillStyle = `hsla(${hue}, ${saturation}%, ${lightness}%, ${this.alpha})`;
+          ctx.shadowBlur = this.size * (isSparkle ? 4.5 : 2.5);
+          ctx.shadowColor = `hsla(${hue}, 100%, 50%, ${this.alpha * 0.85})`;
         }
         
         ctx.fill();
@@ -190,12 +248,23 @@ const ParticleCanvas = ({ progress }) => {
       }
     }
 
-    const particles = Array.from({ length: 350 }, (_, i) => new Particle(i));
+    const particles = Array.from({ length: 420 }, (_, i) => new Particle(i));
 
     let time = 0;
     const animate = () => {
       time++;
-      ctx.fillStyle = 'rgba(6, 21, 12, 0.15)';
+      // Deep dark emerald green velvet background texture overlay
+      ctx.fillStyle = 'rgba(4, 18, 12, 0.16)';
+      ctx.fillRect(0, 0, width, height);
+
+      // Render subtle background dust/glow in the center
+      const centerX = width / 2;
+      const tCenterY = height / 2 - 85;
+      const grad = ctx.createRadialGradient(centerX, tCenterY, 5, centerX, tCenterY, 180);
+      grad.addColorStop(0, 'rgba(251, 191, 36, 0.035)');
+      grad.addColorStop(0.5, 'rgba(16, 185, 129, 0.015)');
+      grad.addColorStop(1, 'transparent');
+      ctx.fillStyle = grad;
       ctx.fillRect(0, 0, width, height);
 
       const currentProgress = progressRef.current;
@@ -458,40 +527,89 @@ export default function Home() {
     <>
       {/* Loading Splash Screen */}
       {loading && (
-        <div className="splash-screen" style={{ overflow: 'hidden' }}>
+        <div className="splash-screen" style={{
+          overflow: 'hidden',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '2.5rem 1.5rem',
+          background: 'radial-gradient(circle at center, #072617 0%, #03100B 100%)'
+        }}>
           <ParticleCanvas progress={progress} />
-          <div className="splash-logo-container" style={{ zIndex: 2, height: '140px' }}>
-            <div className="logo-glow" style={{
-              width: '180px',
-              height: '180px',
-              background: 'radial-gradient(circle, rgba(251, 191, 36, 0.2) 0%, transparent 70%)',
-              animation: 'pulseGlow 2.5s infinite ease-in-out'
-            }}></div>
-          </div>
-          <h2 style={{ zIndex: 2, textShadow: '0 2px 10px rgba(0,0,0,0.5)' }}>BOLÃO COPA 2026</h2>
-          <span style={{ zIndex: 2, textShadow: '0 1px 5px rgba(0,0,0,0.5)' }}>Carregando...</span>
           
-          {/* Elegant gold progress bar indicator */}
+          {/* Spacer to push card to bottom */}
+          <div style={{ flexGrow: 1 }} />
+
+          {/* Elegant glassmorphic control card at the bottom matching option E exactly */}
           <div style={{
-            width: '180px',
-            height: '3px',
-            background: 'rgba(255,255,255,0.08)',
-            borderRadius: '999px',
-            overflow: 'hidden',
-            position: 'relative',
-            zIndex: 2,
-            marginTop: '1rem'
+            width: '90%',
+            maxWidth: '380px',
+            background: 'rgba(10, 28, 19, 0.45)',
+            backdropFilter: 'blur(20px)',
+            WebkitBackdropFilter: 'blur(20px)',
+            border: '1px solid rgba(210, 167, 79, 0.25)',
+            borderRadius: '16px',
+            padding: '1.5rem',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxShadow: '0 20px 50px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1)',
+            zIndex: 10,
+            position: 'relative'
           }}>
+            {/* Top-right/Bottom-left visual corners inside the glass card like the mockup */}
+            <div style={{ position: 'absolute', top: '8px', right: '8px', width: '12px', height: '12px', borderTop: '1px solid rgba(210, 167, 79, 0.4)', borderRight: '1px solid rgba(210, 167, 79, 0.4)' }} />
+            <div style={{ position: 'absolute', bottom: '8px', left: '8px', width: '12px', height: '12px', borderBottom: '1px solid rgba(210, 167, 79, 0.4)', borderLeft: '1px solid rgba(210, 167, 79, 0.4)' }} />
+
+            <span style={{
+              fontSize: '0.62rem',
+              color: 'var(--text-secondary)',
+              letterSpacing: '0.25em',
+              textTransform: 'uppercase',
+              marginBottom: '0.75rem',
+              fontWeight: '700'
+            }}>
+              Carregando...
+            </span>
+
+            {/* Glowing gold circular loader */}
             <div style={{
-              position: 'absolute',
-              left: 0,
-              top: 0,
-              height: '100%',
-              width: `${progress}%`,
-              background: 'linear-gradient(90deg, #D2A74F, #FBBF24, #D2A74F)',
-              transition: 'width 0.1s linear',
-              borderRadius: '999px'
+              width: '28px',
+              height: '28px',
+              border: '2px solid rgba(210, 167, 79, 0.15)',
+              borderTopColor: '#FBBF24',
+              borderRadius: '50%',
+              animation: 'spin 1s linear infinite',
+              marginBottom: '1rem',
+              boxShadow: '0 0 10px rgba(251, 191, 36, 0.3)'
             }} />
+
+            <h2 style={{
+              margin: 0,
+              fontSize: '1.9rem',
+              fontWeight: '300',
+              color: '#ffffff',
+              letterSpacing: '0.08em',
+              textAlign: 'center',
+              fontFamily: 'var(--font-main)',
+              lineHeight: '1.2'
+            }}>
+              BOLÃO
+            </h2>
+            <h2 style={{
+              margin: 0,
+              fontSize: '1.9rem',
+              fontWeight: '300',
+              color: '#ffffff',
+              letterSpacing: '0.08em',
+              textAlign: 'center',
+              fontFamily: 'var(--font-main)',
+              lineHeight: '1.2'
+            }}>
+              COPA 2026
+            </h2>
           </div>
         </div>
       )}
