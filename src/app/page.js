@@ -397,9 +397,9 @@ export default function Home() {
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-          justifyContent: 'space-between',
-          padding: '2.5rem 1.5rem',
-          position: 'relative'
+          justifyContent: 'center',
+          position: 'relative',
+          background: '#03100B'
         }}>
           {/* Cinematic Zoom Background Image */}
           <div style={{
@@ -412,81 +412,22 @@ export default function Home() {
 
           {/* Real-time particle overlay */}
           <ParticleCanvas />
-          
-          {/* Spacer to push card to bottom */}
-          <div style={{ flexGrow: 1, zIndex: 3 }} />
 
-          {/* Elegant glassmorphic control card at the bottom matching option E exactly */}
+          {/* Real rotating gold spinner placed exactly on top of the background image's static spinner */}
           <div style={{
-            width: '90%',
-            maxWidth: '380px',
-            background: 'rgba(6, 21, 12, 0.96)', /* high opacity to cover background card */
-            backdropFilter: 'blur(20px)',
-            WebkitBackdropFilter: 'blur(20px)',
-            border: '1px solid rgba(210, 167, 79, 0.28)',
-            borderRadius: '16px',
-            padding: '1.5rem',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            boxShadow: '0 20px 50px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.1)',
+            position: 'absolute',
+            top: '70.3%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            width: '28px',
+            height: '28px',
+            border: '2px solid rgba(210, 167, 79, 0.05)',
+            borderTopColor: '#FBBF24',
+            borderRadius: '50%',
+            animation: 'spin 1s linear infinite',
             zIndex: 10,
-            position: 'relative',
-            marginBottom: '1rem'
-          }}>
-            {/* Top-right/Bottom-left visual corners inside the glass card like the mockup */}
-            <div style={{ position: 'absolute', top: '8px', right: '8px', width: '12px', height: '12px', borderTop: '1px solid rgba(210, 167, 79, 0.4)', borderRight: '1px solid rgba(210, 167, 79, 0.4)' }} />
-            <div style={{ position: 'absolute', bottom: '8px', left: '8px', width: '12px', height: '12px', borderBottom: '1px solid rgba(210, 167, 79, 0.4)', borderLeft: '1px solid rgba(210, 167, 79, 0.4)' }} />
-
-            <span style={{
-              fontSize: '0.62rem',
-              color: 'var(--text-secondary)',
-              letterSpacing: '0.25em',
-              textTransform: 'uppercase',
-              marginBottom: '0.75rem',
-              fontWeight: '700'
-            }}>
-              Carregando...
-            </span>
-
-            {/* Glowing gold circular loader */}
-            <div style={{
-              width: '32px',
-              height: '32px',
-              border: '2px solid rgba(210, 167, 79, 0.15)',
-              borderTopColor: '#FBBF24',
-              borderRadius: '50%',
-              animation: 'spin 1s linear infinite',
-              marginBottom: '1.25rem',
-              boxShadow: '0 0 12px rgba(251, 191, 36, 0.4)'
-            }} />
-
-            <h2 style={{
-              margin: 0,
-              fontSize: '2.0rem',
-              fontWeight: '300',
-              color: '#ffffff',
-              letterSpacing: '0.08em',
-              textAlign: 'center',
-              fontFamily: 'var(--font-main)',
-              lineHeight: '1.2'
-            }}>
-              BOLÃO
-            </h2>
-            <h2 style={{
-              margin: 0,
-              fontSize: '2.0rem',
-              fontWeight: '300',
-              color: '#ffffff',
-              letterSpacing: '0.08em',
-              textAlign: 'center',
-              fontFamily: 'var(--font-main)',
-              lineHeight: '1.2'
-            }}>
-              COPA 2026
-            </h2>
-          </div>
+            boxShadow: '0 0 15px rgba(251, 191, 36, 0.6)'
+          }} />
         </div>
       )}
 
