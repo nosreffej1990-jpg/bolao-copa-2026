@@ -661,6 +661,154 @@ function DashboardContent() {
     setToastMsg('Sincronizando com ESPN...');
     setToastType('success');
     
+    const isSb = typeof window !== 'undefined' && localStorage.getItem('copa26_sandbox') === 'true';
+    const isSupabase = !!(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_URL.startsWith('http') && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
+    
+    // Se estiver no sandbox local ou sem Supabase configurado, recalcula no frontend
+    if (isSb || !isSupabase) {
+      try {
+        console.log('Running local/sandbox recalculate...');
+        const allApiGames = await fetchAllGames(true); // Cronograma completo
+        let espnGames = [];
+        try {
+          espnGames = await fetchAllGames(false); // ESPN
+        } catch (e) {
+          console.error('Local Recalculate: erro ao buscar ESPN:', e);
+        }
+
+        if (!allApiGames || allApiGames.length === 0) {
+          throw new Error('Erro ao buscar dados na API do cronograma.');
+        }
+
+        // Mescla ESPN no cronograma
+        if (espnGames && espnGames.length > 0) {
+          allApiGames.forEach(g => {
+            if (g.home_team_name_en && g.away_team_name_en && 
+                normalizeTeamName(g.home_team_name_en) !== 'tbd' && 
+                normalizeTeamName(g.away_team_name_en) !== 'tbd') {
+              const espnMatch = espnGames.find(eg =>
+                normalizeTeamName(eg.home_team_name_en) === normalizeTeamName(g.home_team_name_en) &&
+                normalizeTeamName(eg.away_team_name_en) === normalizeTeamName(g.away_team_name_en)
+              );
+              if (espnMatch) {
+                g.finished = espnMatch.finished;
+                g.home_score = espnMatch.home_score;
+                g.away_score = espnMatch.away_score;
+                g.time_elapsed = espnMatch.time_elapsed;
+              }
+            }
+          });
+        }
+
+        // Carrega confrontos atuais (sandbox ou local storage normal)
+        let localConfs = [];
+        const storageKey = isSb ? 'copa26_confrontos_sandbox' : 'copa26_confrontos';
+        if (typeof window !== 'undefined' && localStorage.getItem(storageKey)) {
+          localConfs = JSON.parse(localStorage.getItem(storageKey));
+        } else {
+          localConfs = JSON.parse(JSON.stringify(defaultConfrontos));
+        }
+
+        let updatedCount = 0;
+        const nextConfs = localConfs.map(c => {
+          let apiGame = null;
+          if (c.id <= 72) {
+            apiGame = allApiGames.find(g =>
+              normalizeTeamName(g.home_team_name_en) === normalizeTeamName(c.home_team) &&
+              normalizeTeamName(g.away_team_name_en) === normalizeTeamName(c.away_team)
+            );
+          } else {
+            apiGame = allApiGames.find(g => String(g.id) === String(c.id));
+          }
+
+          if (apiGame) {
+            const apiHomeName = apiGame.home_team_name_en && apiGame.home_team_name_en !== '0' && apiGame.home_team_name_en !== '' 
+              ? apiGame.home_team_name_en 
+              : (apiGame.home_team_label || c.home_team);
+            const apiAwayName = apiGame.away_team_name_en && apiGame.away_team_name_en !== '0' && apiGame.away_team_name_en !== '' 
+              ? apiGame.away_team_name_en 
+              : (apiGame.away_team_label || c.away_team);
+
+            let isDifferent = false;
+            let nextHomeScore = c.home_score;
+            let nextAwayScore = c.away_score;
+            let nextFinished = c.finished;
+            let nextHomeTeam = c.home_team;
+            let nextAwayTeam = c.away_team;
+            let nextHomeCode = c.home_code;
+            let nextAwayCode = c.away_code;
+
+            if (c.id >= 73 && (apiHomeName !== c.home_team || apiAwayName !== c.away_team)) {
+              nextHomeTeam = apiHomeName;
+              nextAwayTeam = apiAwayName;
+              nextHomeCode = getFlagCode(apiHomeName) || 'placeholder';
+              nextAwayCode = getFlagCode(apiAwayName) || 'placeholder';
+              isDifferent = true;
+            }
+
+            const apiFinishedVal = apiGame.finished === 'TRUE' || apiGame.finished === true;
+            if (apiFinishedVal) {
+              const apiHomeScore = apiGame.home_score !== null && apiGame.home_score !== undefined && String(apiGame.home_score) !== 'null' ? parseInt(apiGame.home_score) : null;
+              const apiAwayScore = apiGame.away_score !== null && apiGame.away_score !== undefined && String(apiGame.away_score) !== 'null' ? parseInt(apiGame.away_score) : null;
+              
+              if (apiHomeScore !== null && apiAwayScore !== null && (c.home_score !== apiHomeScore || c.away_score !== apiAwayScore || !c.finished)) {
+                nextHomeScore = apiHomeScore;
+                nextAwayScore = apiAwayScore;
+                nextFinished = true;
+                isDifferent = true;
+              }
+            } else {
+              if (!c.finished) {
+                const apiHomeScore = apiGame.home_score !== null && apiGame.home_score !== undefined && String(apiGame.home_score) !== 'null' && String(apiGame.home_score).trim() !== '' ? parseInt(apiGame.home_score) : null;
+                const apiAwayScore = apiGame.away_score !== null && apiGame.away_score !== undefined && String(apiGame.away_score) !== 'null' && String(apiGame.away_score).trim() !== '' ? parseInt(apiGame.away_score) : null;
+                
+                if (apiHomeScore !== null && apiAwayScore !== null) {
+                  if (c.home_score !== apiHomeScore || c.away_score !== apiAwayScore) {
+                    nextHomeScore = apiHomeScore;
+                    nextAwayScore = apiAwayScore;
+                    isDifferent = true;
+                  }
+                } else {
+                  if (c.home_score !== null || c.away_score !== null) {
+                    nextHomeScore = null;
+                    nextAwayScore = null;
+                    isDifferent = true;
+                  }
+                }
+              }
+            }
+
+            if (isDifferent) {
+              updatedCount++;
+              return {
+                ...c,
+                home_team: nextHomeTeam,
+                away_team: nextAwayTeam,
+                home_code: nextHomeCode,
+                away_code: nextAwayCode,
+                home_score: nextHomeScore,
+                away_score: nextAwayScore,
+                finished: nextFinished
+              };
+            }
+          }
+          return c;
+        });
+
+        if (typeof window !== 'undefined') {
+          localStorage.setItem(storageKey, JSON.stringify(nextConfs));
+        }
+        
+        setToastMsg(`Sucesso! ${updatedCount} jogos atualizados localmente.`);
+        await fetchData();
+      } catch (err) {
+        setToastMsg(`Erro no recálculo local: ${err.message}`);
+        setToastType('error');
+      }
+      setTimeout(() => { setToastMsg(''); setToastType('success'); }, 4000);
+      return;
+    }
+    
     try {
       const pass = USERS[currentUser];
       const res = await fetch('/api/admin/recalculate', {
@@ -1340,6 +1488,13 @@ function DashboardContent() {
     try {
       setApiLoading(true);
       await resetDatabase();
+      
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('copa26_confrontos_sandbox');
+        localStorage.removeItem('copa26_palpites_sandbox');
+        localStorage.removeItem('copa26_boloes_sandbox');
+      }
+      
       showToast('Banco de dados reiniciado com sucesso!');
       await fetchData();
     } catch (e) {
@@ -1359,6 +1514,9 @@ function DashboardContent() {
       // Update local storage
       if (typeof window !== 'undefined') {
         localStorage.setItem('copa26_confrontos', JSON.stringify(defaultConfrontos));
+        if (sandboxMode) {
+          localStorage.setItem('copa26_confrontos_sandbox', JSON.stringify(defaultConfrontos));
+        }
       }
 
       // Update Supabase dynamically
@@ -1368,7 +1526,7 @@ function DashboardContent() {
           const hScore = c.home_score !== null ? c.home_score : null;
           const aScore = c.away_score !== null ? c.away_score : null;
           
-          await supabase.from('confrontos')
+          const { error } = await supabase.from('confrontos')
             .update({
               home_team: c.home_team,
               home_code: c.home_code,
@@ -1379,6 +1537,8 @@ function DashboardContent() {
               finished: c.finished
             })
             .eq('id', c.id);
+            
+          if (error) throw error;
         }
       }
 
@@ -1386,7 +1546,7 @@ function DashboardContent() {
       await fetchData();
     } catch (e) {
       console.error('Erro ao restaurar confrontos:', e);
-      alert('Erro ao restaurar confrontos.');
+      alert('Erro ao restaurar confrontos: ' + e.message);
     } finally {
       setApiLoading(false);
     }
