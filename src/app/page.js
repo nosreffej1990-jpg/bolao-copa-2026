@@ -411,8 +411,8 @@ export default function Home() {
           }}>
             <div style={{
               position: 'absolute',
-              width: '120px',
-              height: '120px',
+              width: '200px',
+              height: '200px',
               background: 'radial-gradient(circle, rgba(212,175,55,0.7) 0%, rgba(212,175,55,0) 70%)',
               borderRadius: '50%',
               zIndex: 1,
@@ -423,8 +423,8 @@ export default function Home() {
               src="/icons/icon-512.png" 
               alt="Logo" 
               style={{
-                width: '140px',
-                height: '140px',
+                width: '240px',
+                height: '240px',
                 objectFit: 'contain',
                 zIndex: 5,
                 position: 'relative'
