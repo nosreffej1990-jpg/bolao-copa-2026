@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { supabaseServer, isSupabaseServerConfigured } from '@/lib/supabaseServer';
 import { fetchAllGames, getFlagCode } from '@/lib/worldcupApi';
+import { defaultConfrontos } from '@/lib/supabase';
 
 async function validateAdmin(username, password) {
   if (!isSupabaseServerConfigured) return { valid: true };
@@ -93,6 +94,17 @@ export async function POST(request) {
     
     // Atualiza confrontos com base no cronograma mesclado
     const updatedConfrontos = currentConfs.map(c => {
+      const defConf = defaultConfrontos.find(d => d.id === c.id);
+      let isDifferent = false;
+      let nextDate = c.match_date;
+      let nextTime = c.match_time;
+
+      if (defConf && (c.match_date !== defConf.match_date || c.match_time !== defConf.match_time)) {
+        nextDate = defConf.match_date;
+        nextTime = defConf.match_time;
+        isDifferent = true;
+      }
+
       let apiGame = null;
       if (c.id <= 72) {
         apiGame = allApiGames.find(g =>
@@ -102,6 +114,14 @@ export async function POST(request) {
       } else {
         apiGame = allApiGames.find(g => String(g.id) === String(c.id));
       }
+
+      let nextHomeScore = c.home_score;
+      let nextAwayScore = c.away_score;
+      let nextFinished = c.finished;
+      let nextHomeTeam = c.home_team;
+      let nextAwayTeam = c.away_team;
+      let nextHomeCode = c.home_code;
+      let nextAwayCode = c.away_code;
 
       if (apiGame) {
         const apiHomeName = apiGame.home_team_name_en && apiGame.home_team_name_en !== '0' && apiGame.home_team_name_en !== '' 
@@ -113,15 +133,6 @@ export async function POST(request) {
           
         const apiHomeCode = getFlagCode(apiHomeName) || 'placeholder';
         const apiAwayCode = getFlagCode(apiAwayName) || 'placeholder';
-
-        let isDifferent = false;
-        let nextHomeScore = c.home_score;
-        let nextAwayScore = c.away_score;
-        let nextFinished = c.finished;
-        let nextHomeTeam = c.home_team;
-        let nextAwayTeam = c.away_team;
-        let nextHomeCode = c.home_code;
-        let nextAwayCode = c.away_code;
 
         if (c.id >= 73 && (apiHomeName !== c.home_team || apiAwayName !== c.away_team || apiHomeCode !== c.home_code || apiAwayCode !== c.away_code)) {
           nextHomeTeam = apiHomeName;
@@ -164,21 +175,23 @@ export async function POST(request) {
             }
           }
         }
+      }
 
-        if (isDifferent) {
-          const updated = {
-            ...c,
-            home_team: nextHomeTeam,
-            away_team: nextAwayTeam,
-            home_code: nextHomeCode,
-            away_code: nextAwayCode,
-            home_score: nextHomeScore,
-            away_score: nextAwayScore,
-            finished: nextFinished
-          };
-          changedConfrontos.push(updated);
-          return updated;
-        }
+      if (isDifferent) {
+        const updated = {
+          ...c,
+          match_date: nextDate,
+          match_time: nextTime,
+          home_team: nextHomeTeam,
+          away_team: nextAwayTeam,
+          home_code: nextHomeCode,
+          away_code: nextAwayCode,
+          home_score: nextHomeScore,
+          away_score: nextAwayScore,
+          finished: nextFinished
+        };
+        changedConfrontos.push(updated);
+        return updated;
       }
       return c;
     });
@@ -187,6 +200,8 @@ export async function POST(request) {
       for (const uc of changedConfrontos) {
         await supabaseServer.from('confrontos')
           .update({ 
+            match_date: uc.match_date,
+            match_time: uc.match_time,
             home_team: uc.home_team,
             away_team: uc.away_team,
             home_code: uc.home_code,

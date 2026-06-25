@@ -686,6 +686,17 @@ function DashboardContent() {
 
         let updatedCount = 0;
         const nextConfs = localConfs.map(c => {
+          const defConf = defaultConfrontos.find(d => d.id === c.id);
+          let isDifferent = false;
+          let nextDate = c.match_date;
+          let nextTime = c.match_time;
+
+          if (defConf && (c.match_date !== defConf.match_date || c.match_time !== defConf.match_time)) {
+            nextDate = defConf.match_date;
+            nextTime = defConf.match_time;
+            isDifferent = true;
+          }
+
           let apiGame = null;
           if (c.id <= 72) {
             apiGame = allApiGames.find(g =>
@@ -696,6 +707,14 @@ function DashboardContent() {
             apiGame = allApiGames.find(g => String(g.id) === String(c.id));
           }
 
+          let nextHomeScore = c.home_score;
+          let nextAwayScore = c.away_score;
+          let nextFinished = c.finished;
+          let nextHomeTeam = c.home_team;
+          let nextAwayTeam = c.away_team;
+          let nextHomeCode = c.home_code;
+          let nextAwayCode = c.away_code;
+
           if (apiGame) {
             const apiHomeName = apiGame.home_team_name_en && apiGame.home_team_name_en !== '0' && apiGame.home_team_name_en !== '' 
               ? apiGame.home_team_name_en 
@@ -703,15 +722,6 @@ function DashboardContent() {
             const apiAwayName = apiGame.away_team_name_en && apiGame.away_team_name_en !== '0' && apiGame.away_team_name_en !== '' 
               ? apiGame.away_team_name_en 
               : (apiGame.away_team_label || c.away_team);
-
-            let isDifferent = false;
-            let nextHomeScore = c.home_score;
-            let nextAwayScore = c.away_score;
-            let nextFinished = c.finished;
-            let nextHomeTeam = c.home_team;
-            let nextAwayTeam = c.away_team;
-            let nextHomeCode = c.home_code;
-            let nextAwayCode = c.away_code;
 
             if (c.id >= 73 && (apiHomeName !== c.home_team || apiAwayName !== c.away_team)) {
               nextHomeTeam = apiHomeName;
@@ -752,20 +762,22 @@ function DashboardContent() {
                 }
               }
             }
+          }
 
-            if (isDifferent) {
-              updatedCount++;
-              return {
-                ...c,
-                home_team: nextHomeTeam,
-                away_team: nextAwayTeam,
-                home_code: nextHomeCode,
-                away_code: nextAwayCode,
-                home_score: nextHomeScore,
-                away_score: nextAwayScore,
-                finished: nextFinished
-              };
-            }
+          if (isDifferent) {
+            updatedCount++;
+            return {
+              ...c,
+              match_date: nextDate,
+              match_time: nextTime,
+              home_team: nextHomeTeam,
+              away_team: nextAwayTeam,
+              home_code: nextHomeCode,
+              away_code: nextAwayCode,
+              home_score: nextHomeScore,
+              away_score: nextAwayScore,
+              finished: nextFinished
+            };
           }
           return c;
         });

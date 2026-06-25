@@ -202,10 +202,10 @@ const getLocalDB = () => {
   if (typeof window === 'undefined') return { confrontos: [], palpites: [], boloes: [], usuarios: [], config: [] };
 
   // Robust migration/verification of local mock database to ensure all 104 World Cup 2026 matches are present
-  let needsReset = false;
+  let needsConfrontosReset = false;
   const storedConfs = localStorage.getItem('copa26_confrontos');
   if (!storedConfs) {
-    needsReset = true;
+    needsConfrontosReset = true;
   } else {
     try {
       const parsed = JSON.parse(storedConfs) || [];
@@ -213,19 +213,15 @@ const getLocalDB = () => {
       const firstMatch = parsed.find(c => c.id === 1);
       const isOutdated = firstMatch && firstMatch.match_time !== '16:00:00';
       if (parsed.length < 104 || hasItaly || isOutdated) {
-        needsReset = true;
+        needsConfrontosReset = true;
       }
     } catch (e) {
-      needsReset = true;
+      needsConfrontosReset = true;
     }
   }
 
-  if (needsReset) {
+  if (needsConfrontosReset) {
     localStorage.setItem('copa26_confrontos', JSON.stringify(defaultConfrontos));
-    localStorage.setItem('copa26_palpites', JSON.stringify([]));
-    localStorage.setItem('copa26_boloes', JSON.stringify(defaultBoloes));
-    localStorage.setItem('copa26_usuarios', JSON.stringify(defaultUsuarios));
-    localStorage.setItem('copa26_config', JSON.stringify(defaultConfig));
   }
 
   if (!localStorage.getItem('copa26_palpites')) {
