@@ -7,8 +7,77 @@ import { getFlagCode, formatMatchDate } from '@/lib/worldcupApi';
 import { supabase, defaultUsuarios, isSupabaseConfigured } from '@/lib/supabase';
 import { useChampion, CHAMPIONS } from '@/components/ChampionProvider';
 
-const ParticleCanvas = () => {
+const generateTrophyPoints = (numPoints, width, height) => {
+  const points = [];
+  const centerX = width / 2;
+  const centerY = height / 2 - 20;
+
+  // 1. Globe (sphere at the top)
+  const globeCount = Math.floor(numPoints * 0.35);
+  const globeCenterY = centerY - 45;
+  const globeRadius = 24;
+  for (let i = 0; i < globeCount; i++) {
+    const angle = (i / globeCount) * Math.PI * 2;
+    const r = globeRadius * (0.4 + 0.6 * Math.random());
+    const x = centerX + Math.sin(angle) * r;
+    const y = globeCenterY + Math.cos(angle) * r * 0.95;
+    points.push({ x, y });
+  }
+
+  // 2. Base (tiered cylinders at the bottom)
+  const baseCount = Math.floor(numPoints * 0.28);
+  for (let i = 0; i < baseCount; i++) {
+    const pct = i / (baseCount - 1);
+    const by = centerY + 35 + pct * 40;
+    
+    let baseW = 20;
+    if (by > centerY + 62) {
+      baseW = 38;
+    } else if (by > centerY + 48) {
+      baseW = 32;
+    } else {
+      baseW = 26;
+    }
+
+    const offsetPct = (Math.random() - 0.5) * 2;
+    const x = centerX + offsetPct * baseW;
+    points.push({ x, y: by });
+  }
+
+  // 3. Body/Stem/Arms (the stylized human figures)
+  const bodyCount = numPoints - points.length;
+  for (let i = 0; i < bodyCount; i++) {
+    const pct = i / (bodyCount - 1);
+    const by = centerY - 25 + pct * 60;
+    
+    let bodyW = 10;
+    if (by < centerY - 10) {
+      const armPct = (by - (centerY - 25)) / 15;
+      bodyW = 25 - armPct * 11;
+    } else if (by < centerY + 10) {
+      const waistPct = (by - (centerY - 10)) / 20;
+      bodyW = 14 - waistPct * 5;
+    } else {
+      const lowerPct = (by - (centerY + 10)) / 25;
+      bodyW = 9 + lowerPct * 11;
+    }
+
+    const side = i % 2 === 0 ? 1 : -1;
+    const spiralOffset = Math.sin(by * 0.1) * 3;
+    const x = centerX + side * (bodyW * 0.7) + spiralOffset;
+    points.push({ x, y: by });
+  }
+
+  return points;
+};
+
+const ParticleCanvas = ({ progress }) => {
   const canvasRef = React.useRef(null);
+  const progressRef = React.useRef(progress);
+
+  React.useEffect(() => {
+    progressRef.current = progress;
+  }, [progress]);
 
   React.useEffect(() => {
     const canvas = canvasRef.current;
@@ -18,84 +87,66 @@ const ParticleCanvas = () => {
     let animationFrameId;
     let width = (canvas.width = window.innerWidth);
     let height = (canvas.height = window.innerHeight);
+    let trophyPoints = generateTrophyPoints(350, width, height);
 
     const handleResize = () => {
       if (!canvas) return;
       width = canvas.width = window.innerWidth;
       height = canvas.height = window.innerHeight;
+      trophyPoints = generateTrophyPoints(350, width, height);
     };
     window.addEventListener('resize', handleResize);
 
+    const centerY = height / 2 - 20;
+
     class Particle {
-      constructor() {
+      constructor(index) {
+        this.index = index;
         this.reset(true);
       }
 
       reset(init = false) {
         this.x = init ? Math.random() * width : (Math.random() > 0.5 ? 0 : width);
         this.y = init ? Math.random() * height : (Math.random() > 0.5 ? 0 : height);
-        this.size = Math.random() * 2 + 1;
-        this.speedX = (Math.random() - 0.5) * 1.2;
-        this.speedY = (Math.random() - 0.5) * 1.2;
-        this.alpha = Math.random() * 0.5 + 0.3;
-        this.attracted = Math.random() < 0.6;
+        this.size = Math.random() * 1.8 + 1.2;
+        this.speedX = (Math.random() - 0.5) * 1.5;
+        this.speedY = (Math.random() - 0.5) * 1.5;
+        this.alpha = Math.random() * 0.4 + 0.4;
         this.angle = Math.random() * Math.PI * 2;
+        this.angularSpeed = (Math.random() - 0.5) * 0.05;
       }
 
-      update(time) {
-        if (this.attracted) {
-          const centerX = width / 2;
-          const centerY = height / 2 - 80;
-          
-          const seed = this.angle;
-          const step = Math.abs(Math.sin(seed * 100)) * 120 - 60; // -60 to 60
-          
-          let tx = 0;
-          let ty = step;
+      update(time, currentProgress) {
+        const target = trophyPoints[this.index % trophyPoints.length];
+        const ease = Math.min(1, Math.max(0, (currentProgress - 15) / 75));
 
-          if (ty < -20) {
-            // Globe at the top
-            const r = 28;
-            tx = Math.sin(seed * Math.PI * 2) * r;
-            ty = -35 + Math.cos(seed * Math.PI * 2) * r * 0.7;
-          } else if (ty < 25) {
-            // Stem
-            const w = 5 + Math.pow(Math.abs(ty - 5), 1.6) * 0.08;
-            tx = Math.sin(seed * Math.PI) > 0 ? w : -w;
-          } else {
-            // Base
-            const baseW = ty > 45 ? 42 : 28;
-            tx = (Math.sin(seed * Math.PI) > 0 ? baseW : -baseW) * Math.random();
-          }
+        if (ease > 0) {
+          const shimmerScale = (1 - ease) * 35 + 0.6;
+          const targetX = target.x + Math.sin(time * 0.04 + this.angle) * shimmerScale;
+          const targetY = target.y + Math.cos(time * 0.04 + this.angle) * shimmerScale;
 
-          // Handles (ears)
-          if (Math.cos(seed * 9) > 0.45 && ty > -35 && ty < 0) {
-            const side = Math.sin(seed * 3) > 0 ? 1 : -1;
-            const angleVal = ((ty + 35) / 35) * Math.PI;
-            tx = side * (26 + Math.sin(angleVal) * 16);
-          }
-          
-          const targetX = centerX + tx;
-          const targetY = centerY + ty;
-
+          const speed = 1.5 + ease * 4.5;
           const dx = targetX - this.x;
           const dy = targetY - this.y;
           const dist = Math.sqrt(dx * dx + dy * dy);
 
-          if (dist > 5) {
-            this.x += (dx / dist) * 2.5;
-            this.y += (dy / dist) * 2.5;
+          if (dist > 1) {
+            this.x += (dx / dist) * speed;
+            this.y += (dy / dist) * speed;
           } else {
-            this.x += Math.sin(time * 0.05 + this.angle) * 0.25;
-            this.y += Math.cos(time * 0.05 + this.angle) * 0.25;
+            this.x = targetX;
+            this.y = targetY;
           }
+          this.alpha = Math.min(1, 0.4 + 0.6 * ease);
         } else {
-          this.x += this.speedX + Math.sin(time * 0.01 + this.y * 0.01) * 0.5;
-          this.y += this.speedY + Math.cos(time * 0.01 + this.x * 0.01) * 0.5;
+          this.x += this.speedX + Math.sin(time * 0.02 + this.angle) * 0.4;
+          this.y += this.speedY + Math.cos(time * 0.02 + this.angle) * 0.4;
+          this.angle += this.angularSpeed;
 
-          if (this.x < 0 || this.x > width || this.y < 0 || this.y > height) {
-            this.reset();
-          }
+          if (this.x < -20) this.x = width + 20;
+          if (this.x > width + 20) this.x = -20;
+          if (this.y < -20) this.y = height + 20;
+          if (this.y > height + 20) this.y = -20;
         }
       }
 
@@ -103,15 +154,43 @@ const ParticleCanvas = () => {
         ctx.save();
         ctx.beginPath();
         ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(210, 167, 79, ${this.alpha})`;
-        ctx.shadowBlur = 6;
-        ctx.shadowColor = 'rgba(210, 167, 79, 0.8)';
+        
+        const target = trophyPoints[this.index % trophyPoints.length];
+        const ease = Math.min(1, Math.max(0, (progressRef.current - 15) / 75));
+        
+        let isMalachiteBand = false;
+        if (target && target.y) {
+          const relativeY = target.y - centerY;
+          if ((relativeY >= 44 && relativeY <= 48) || (relativeY >= 58 && relativeY <= 62)) {
+            isMalachiteBand = true;
+          }
+        }
+
+        const hue = 40 + (this.index % 3) * 3;
+        const light = 60 + (this.index % 2) * 10;
+
+        if (ease > 0.4 && isMalachiteBand) {
+          const blendProgress = Math.min(1, (ease - 0.4) / 0.6);
+          const targetHue = 145;
+          const targetLight = 40;
+          const currentHue = 40 + (targetHue - 40) * blendProgress;
+          const currentLight = light + (targetLight - light) * blendProgress;
+          
+          ctx.fillStyle = `hsla(${currentHue}, 75%, ${currentLight}%, ${this.alpha})`;
+          ctx.shadowBlur = this.size * 2;
+          ctx.shadowColor = `rgba(16, 185, 129, ${this.alpha * 0.6 * blendProgress})`;
+        } else {
+          ctx.fillStyle = `hsla(${hue}, 75%, ${light}%, ${this.alpha})`;
+          ctx.shadowBlur = this.size * 2.5;
+          ctx.shadowColor = `hsla(${hue}, 80%, 55%, ${this.alpha * 0.8})`;
+        }
+        
         ctx.fill();
         ctx.restore();
       }
     }
 
-    const particles = Array.from({ length: 150 }, () => new Particle());
+    const particles = Array.from({ length: 350 }, (_, i) => new Particle(i));
 
     let time = 0;
     const animate = () => {
@@ -119,8 +198,9 @@ const ParticleCanvas = () => {
       ctx.fillStyle = 'rgba(6, 21, 12, 0.15)';
       ctx.fillRect(0, 0, width, height);
 
+      const currentProgress = progressRef.current;
       particles.forEach(p => {
-        p.update(time);
+        p.update(time, currentProgress);
         p.draw();
       });
 
@@ -154,6 +234,7 @@ export default function Home() {
   const { theme } = useChampion();
   const activeChampionObj = CHAMPIONS[theme] || CHAMPIONS['brasil'];
   const [loading, setLoading] = useState(true);
+  const [progress, setProgress] = useState(0);
   const [showLogin, setShowLogin] = useState(false);
   const [showRegister, setShowRegister] = useState(false);
   const [showPixModal, setShowPixModal] = useState(false);
@@ -175,7 +256,17 @@ export default function Home() {
   const router = useRouter();
 
   useEffect(() => {
-    const timer = setTimeout(() => setLoading(false), 4500);
+    const startTime = Date.now();
+    const duration = 4500;
+    const interval = setInterval(() => {
+      const elapsed = Date.now() - startTime;
+      const pct = Math.min(100, (elapsed / duration) * 100);
+      setProgress(pct);
+      if (elapsed >= duration) {
+        clearInterval(interval);
+        setLoading(false);
+      }
+    }, 30);
 
     // PWA setup
     if (typeof window !== 'undefined') {
@@ -202,7 +293,7 @@ export default function Home() {
     fetchConfig();
 
     return () => {
-      clearTimeout(timer);
+      clearInterval(interval);
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     };
   }, []);
@@ -368,7 +459,7 @@ export default function Home() {
       {/* Loading Splash Screen */}
       {loading && (
         <div className="splash-screen" style={{ overflow: 'hidden' }}>
-          <ParticleCanvas />
+          <ParticleCanvas progress={progress} />
           <div className="splash-logo-container" style={{ zIndex: 2, height: '140px' }}>
             <div className="logo-glow" style={{
               width: '180px',
@@ -396,9 +487,9 @@ export default function Home() {
               left: 0,
               top: 0,
               height: '100%',
-              width: '100%',
+              width: `${progress}%`,
               background: 'linear-gradient(90deg, #D2A74F, #FBBF24, #D2A74F)',
-              animation: 'shimmerProgressBar 1.8s infinite linear',
+              transition: 'width 0.1s linear',
               borderRadius: '999px'
             }} />
           </div>
