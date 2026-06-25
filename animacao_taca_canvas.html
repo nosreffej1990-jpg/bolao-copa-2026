@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Animação Taça Partículas</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap');
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #051A10;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Inter', sans-serif;
+            color: white;
+        }
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+        /* Card só aparece no final */
+        .glass-card {
+            position: absolute;
+            bottom: 8%;
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            padding: 24px 60px;
+            text-align: center;
+            z-index: 3;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+            opacity: 0;
+            transition: opacity 2s ease-in-out;
+            pointer-events: none;
+        }
+        .glass-card h1 {
+            margin: 10px 0 0 0;
+            font-size: 28px;
+            letter-spacing: 3px;
+            background: linear-gradient(180deg, #FFFFFF 0%, #D4AF37 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-family: serif;
+        }
+        .show-card { opacity: 1; pointer-events: auto; }
+        
+        #error-msg {
+            position: absolute;
+            z-index: 10;
+            background: rgba(255,0,0,0.9);
+            padding: 20px;
+            border-radius: 8px;
+            display: none;
+            max-width: 600px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="canvas"></canvas>
+
+    <div class="glass-card" id="card">
+        <p style="margin: 0; font-size: 11px; color: #a8a8b3; letter-spacing: 2px;">CARREGANDO...</p>
+        <h1>BOLÃO<br>COPA 2026</h1>
+    </div>
+
+    <div id="error-msg">
+        <h3>Aviso de Segurança do Navegador (CORS)</h3>
+        Para a mágica acontecer e o script ler os pixels da sua imagem, você <b>NÃO</b> pode abrir este arquivo dando dois cliques (file://).<br><br>
+        Você precisa abrir usando um servidor local. Se estiver no <b>VS Code</b>, clique com o botão direito no HTML e selecione <b>"Open with Live Server"</b>. Se estiver usando Next.js/React, coloque este código em um componente rodando no localhost!
+    </div>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+        
+        let width, height;
+        let particles = [];
+        const image = new Image();
+        
+        // AQUI ESTÁ A IMAGEM. Deve estar na mesma pasta!
+        image.src = 'imagem_taca.jpg.png'; 
+
+        image.onload = () => {
+            init();
+        };
+
+        image.onerror = () => {
+            document.getElementById('error-msg').style.display = 'block';
+            document.getElementById('error-msg').innerHTML = "<b>Erro de Imagem:</b> Não foi possível carregar 'imagem_taca.jpg.png'. Salve a imagem na mesma pasta deste arquivo HTML com esse nome exato.";
+        };
+
+        function init() {
+            width = window.innerWidth;
+            height = window.innerHeight;
+            canvas.width = width;
+            canvas.height = height;
+
+            // Criar um canvas escondido para ler e "escanear" os pixels da imagem
+            const offscreenCanvas = document.createElement('canvas');
+            const offCtx = offscreenCanvas.getContext('2d', { willReadFrequently: true });
+
+            // Redimensionar a imagem para caber bonito na tela
+            const imgRatio = image.width / image.height;
+            let drawHeight = Math.min(height * 0.7, 600);
+            let drawWidth = drawHeight * imgRatio;
+
+            offscreenCanvas.width = drawWidth;
+            offscreenCanvas.height = drawHeight;
+
+            offCtx.drawImage(image, 0, 0, drawWidth, drawHeight);
+
+            let imageData;
+            try {
+                // Tenta ler os pixels. Se der erro de CORS, avisa o usuário.
+                imageData = offCtx.getImageData(0, 0, drawWidth, drawHeight);
+            } catch (e) {
+                document.getElementById('error-msg').style.display = 'block';
+                return;
+            }
+
+            const data = imageData.data;
+            particles = [];
+
+            // Posição para desenhar exatamente no centro
+            const offsetX = (width - drawWidth) / 2;
+            const offsetY = (height - drawHeight) / 2;
+
+            // "Step" é a resolução. Pula de 4 em 4 pixels para não travar o PC gerando 1 milhão de partículas.
+            const step = 4;
+
+            for (let y = 0; y < drawHeight; y += step) {
+                for (let x = 0; x < drawWidth; x += step) {
+                    const index = (y * drawWidth + x) * 4;
+                    const r = data[index];
+                    const g = data[index + 1];
+                    const b = data[index + 2];
+                    const alpha = data[index + 3];
+
+                    // O fundo da sua imagem é verde escuro. 
+                    // Vamos ignorar os pixels escuros e pegar só a taça (dourada e brilhante)
+                    const brightness = (r + g + b) / 3;
+                    
+                    if (alpha > 50 && brightness > 50) { // Se o pixel não for escuro...
+                        
+                        // Fazer as partículas explodirem bem de longe
+                        const angle = Math.random() * Math.PI * 2;
+                        const radius = Math.max(width, height) * 1.5; 
+                        const startX = width / 2 + Math.cos(angle) * radius;
+                        const startY = height / 2 + Math.sin(angle) * radius;
+
+                        // Delay para dar um efeito de formação gradual
+                        const delay = Math.random() * 100 + (y * 0.1); 
+
+                        particles.push({
+                            targetX: x + offsetX,
+                            targetY: y + offsetY,
+                            x: startX,
+                            y: startY,
+                            color: `rgba(${r}, ${g}, ${b}, ${alpha/255})`,
+                            size: Math.random() * 2 + 1.2,
+                            delay: delay,
+                            timer: 0,
+                            speed: Math.random() * 0.04 + 0.03
+                        });
+                    }
+                }
+            }
+
+            animate();
+            
+            // Exibir o card "Bolão Copa 2026" quando a taça estiver quase montada
+            setTimeout(() => {
+                document.getElementById('card').classList.add('show-card');
+            }, 3500);
+        }
+
+        function animate() {
+            // Efeito de "rastro" suave preenchendo o fundo gradualmente
+            ctx.fillStyle = 'rgba(5, 26, 16, 0.2)';
+            ctx.fillRect(0, 0, width, height);
+
+            let allArrived = true;
+
+            for (let i = 0; i < particles.length; i++) {
+                const p = particles[i];
+
+                if (p.timer >= p.delay) {
+                    // Magia da física: A partícula é atraída magneticamente para o pixel alvo exato dela
+                    const dx = p.targetX - p.x;
+                    const dy = p.targetY - p.y;
+                    
+                    p.x += dx * p.speed;
+                    p.y += dy * p.speed;
+
+                    // Deixa o voo levemente caótico antes de "grudar"
+                    const distance = Math.sqrt(dx*dx + dy*dy);
+                    if (distance > 5) {
+                        allArrived = false;
+                        p.x += (Math.random() - 0.5) * 4;
+                        p.y += (Math.random() - 0.5) * 4;
+                    }
+
+                    // Desenha a partícula
+                    ctx.fillStyle = p.color;
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                    ctx.fill();
+                } else {
+                    p.timer++;
+                    allArrived = false;
+                }
+            }
+
+            if (!allArrived) {
+                requestAnimationFrame(animate);
+            } else {
+                // Quando todas chegarem, desenha o estado final estático brilhando
+                ctx.fillStyle = 'rgba(5, 26, 16, 0.05)';
+                ctx.fillRect(0,0,width,height);
+                for (let i = 0; i < particles.length; i++) {
+                    const p = particles[i];
+                    ctx.fillStyle = p.color;
+                    ctx.beginPath();
+                    ctx.arc(p.targetX, p.targetY, p.size, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                requestAnimationFrame(animate); 
+            }
+        }
+
+        window.addEventListener('resize', () => {
+            width = window.innerWidth;
+            height = window.innerHeight;
+            canvas.width = width;
+            canvas.height = height;
+        });
+    </script>
+</body>
+</html>

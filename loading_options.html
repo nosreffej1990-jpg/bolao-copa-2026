@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Opções de Tela de Carregamento - Bolão 2026</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #121214;
+            color: #fff;
+            margin: 0;
+            padding: 20px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+
+        .option-container {
+            background-color: #202024;
+            border-radius: 16px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 300px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            border: 1px solid #323238;
+        }
+
+        .option-title {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #00b37e;
+        }
+
+        /* Opção 1: Spinner Clássico Moderno */
+        .soccer-spinner {
+            width: 60px;
+            height: 60px;
+            border: 5px solid rgba(255, 255, 255, 0.1);
+            border-top-color: #00b37e; /* Verde */
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            position: relative;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Opção 2: Barras Pulando (Cores do Brasil) */
+        .bars-container {
+            display: flex;
+            gap: 8px;
+        }
+        .bar {
+            width: 12px;
+            height: 40px;
+            border-radius: 6px;
+            animation: bounce 1s ease-in-out infinite;
+        }
+        .bar:nth-child(1) { background-color: #00b37e; animation-delay: 0s; } /* Verde */
+        .bar:nth-child(2) { background-color: #f1e700; animation-delay: 0.15s; } /* Amarelo */
+        .bar:nth-child(3) { background-color: #005cba; animation-delay: 0.3s; } /* Azul */
+        
+        @keyframes bounce {
+            0%, 100% { transform: scaleY(1); }
+            50% { transform: scaleY(2); }
+        }
+
+        /* Opção 3: Pulso Vibrante */
+        .pulse-ring {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #00b37e, #f1e700);
+            position: relative;
+            animation: pulse 1.5s ease-out infinite;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 1.5rem;
+            color: #121214;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(0.8); box-shadow: 0 0 0 0 rgba(0, 179, 126, 0.7); }
+            50% { transform: scale(1); box-shadow: 0 0 0 20px rgba(0, 179, 126, 0); }
+            100% { transform: scale(0.8); box-shadow: 0 0 0 0 rgba(0, 179, 126, 0); }
+        }
+
+        /* Opção 4: Skeleton Loading (Dashboard) */
+        .skeleton-container {
+            width: 100%;
+            max-width: 250px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .skeleton-header {
+            width: 60%;
+            height: 24px;
+            border-radius: 4px;
+            background: linear-gradient(90deg, #323238 25%, #404046 50%, #323238 75%);
+            background-size: 200% 100%;
+            animation: skeleton-load 1.5s infinite;
+        }
+        .skeleton-card {
+            width: 100%;
+            height: 60px;
+            border-radius: 8px;
+            background: linear-gradient(90deg, #323238 25%, #404046 50%, #323238 75%);
+            background-size: 200% 100%;
+            animation: skeleton-load 1.5s infinite;
+        }
+        .skeleton-card:nth-child(3) { animation-delay: 0.1s; }
+        .skeleton-card:nth-child(4) { animation-delay: 0.2s; }
+
+        @keyframes skeleton-load {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        /* Opção 5: Barra de Progresso Gradiente */
+        .field-loader {
+            width: 150px;
+            height: 8px;
+            background-color: #323238;
+            border-radius: 4px;
+            overflow: hidden;
+            position: relative;
+        }
+        .field-progress {
+            width: 50%;
+            height: 100%;
+            background: linear-gradient(90deg, #00b37e, #f1e700);
+            border-radius: 4px;
+            animation: progress 2s ease-in-out infinite;
+            position: absolute;
+        }
+
+        @keyframes progress {
+            0% { left: -50%; }
+            100% { left: 100%; }
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="option-container">
+        <div class="option-title">1. Spinner Clássico Moderno</div>
+        <div class="soccer-spinner"></div>
+        <p style="margin-top: 20px; color: #a8a8b3; font-size: 0.9rem; text-align: center;">Simples, elegante e rápido.<br>Ideal para pequenos carregamentos.</p>
+    </div>
+
+    <div class="option-container">
+        <div class="option-title">2. Barras Brasil</div>
+        <div class="bars-container">
+            <div class="bar"></div>
+            <div class="bar"></div>
+            <div class="bar"></div>
+        </div>
+        <p style="margin-top: 30px; color: #a8a8b3; font-size: 0.9rem; text-align: center;">Traz as cores da seleção de forma dinâmica.<br>Muito visual e divertido.</p>
+    </div>
+
+    <div class="option-container">
+        <div class="option-title">3. Pulso Vibrante</div>
+        <div class="pulse-ring">26</div>
+        <p style="margin-top: 30px; color: #a8a8b3; font-size: 0.9rem; text-align: center;">Chama atenção para a marca/ano.<br>Passa uma sensação de energia e premium.</p>
+    </div>
+
+    <div class="option-container">
+        <div class="option-title">4. Skeleton Loading</div>
+        <div class="skeleton-container">
+            <div class="skeleton-header"></div>
+            <div class="skeleton-card"></div>
+            <div class="skeleton-card"></div>
+        </div>
+        <p style="margin-top: 20px; color: #a8a8b3; font-size: 0.9rem; text-align: center;">Ideal para carregar listas de jogos ou ranking.<br>Mantém o layout estável sem pular elementos na tela.</p>
+    </div>
+
+    <div class="option-container" style="grid-column: 1 / -1;">
+        <div class="option-title">5. Barra de Progresso Gradiente</div>
+        <div class="field-loader">
+            <div class="field-progress"></div>
+        </div>
+        <p style="margin-top: 20px; color: #a8a8b3; font-size: 0.9rem; text-align: center;">Para carregamentos que demoram um pouco mais (ex: carregar todos os dados da API inicial).<br>O movimento contínuo reduz a ansiedade de espera.</p>
+    </div>
+
+</body>
+</html>
