@@ -390,7 +390,7 @@ export default function Home() {
 
   return (
     <>
-      {/* Loading Splash Screen */}
+      {/* Loading Splash Screen (Opção 2 - Pulso Luminoso) */}
       {loading && (
         <div className="splash-screen" style={{
           overflow: 'hidden',
@@ -398,36 +398,63 @@ export default function Home() {
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          position: 'relative',
-          background: '#03100B'
+          position: 'fixed',
+          inset: 0,
+          background: '#051A10',
+          zIndex: 9999
         }}>
-          {/* Cinematic Zoom Background Image */}
+          <div style={{
+            position: 'relative',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center'
+          }}>
+            <div style={{
+              position: 'absolute',
+              width: '120px',
+              height: '120px',
+              background: 'radial-gradient(circle, rgba(212,175,55,0.7) 0%, rgba(212,175,55,0) 70%)',
+              borderRadius: '50%',
+              zIndex: 1,
+              animation: 'pulse-glow 2s ease-in-out infinite alternate',
+              filter: 'blur(25px)'
+            }} />
+            <img 
+              src="/icons/icon-512.png" 
+              alt="Logo" 
+              style={{
+                width: '140px',
+                height: '140px',
+                objectFit: 'contain',
+                zIndex: 5,
+                position: 'relative'
+              }}
+              onError={(e) => { e.target.src = '/icons/logo-transparent.png'; }}
+            />
+          </div>
+          
           <div style={{
             position: 'absolute',
-            inset: 0,
-            background: 'url("/loading_option_e.png") no-repeat center center / cover',
-            animation: 'cinematicZoom 6s ease-out forwards',
-            zIndex: 1
-          }} />
+            bottom: '40px',
+            fontSize: '12px',
+            letterSpacing: '4px',
+            color: 'rgba(255,255,255,0.4)',
+            textTransform: 'uppercase',
+            animation: 'text-pulse 1.5s infinite alternate'
+          }}>
+            Carregando
+          </div>
 
-          {/* Real-time particle overlay */}
-          <ParticleCanvas />
-
-          {/* Real rotating gold spinner placed exactly on top of the background image's static spinner */}
-          <div style={{
-            position: 'absolute',
-            top: '70.3%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            width: '28px',
-            height: '28px',
-            border: '2px solid rgba(210, 167, 79, 0.05)',
-            borderTopColor: '#FBBF24',
-            borderRadius: '50%',
-            animation: 'spin 1s linear infinite',
-            zIndex: 10,
-            boxShadow: '0 0 15px rgba(251, 191, 36, 0.6)'
-          }} />
+          <style dangerouslySetInnerHTML={{__html: `
+            @keyframes pulse-glow {
+              0% { transform: scale(1); opacity: 0.3; }
+              100% { transform: scale(2.2); opacity: 1; }
+            }
+            @keyframes text-pulse {
+              0% { opacity: 0.4; }
+              100% { opacity: 1; }
+            }
+          `}} />
         </div>
       )}
 

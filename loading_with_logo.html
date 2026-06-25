@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Opções de Tela de Carregamento (Logo Original)</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap');
+
+        body {
+            margin: 0;
+            padding: 40px;
+            background-color: #051A10; /* Fundo verde escuro do app */
+            font-family: 'Inter', sans-serif;
+            color: white;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 40px;
+            box-sizing: border-box;
+            min-height: 100vh;
+        }
+
+        h2.page-title {
+            grid-column: 1 / -1;
+            text-align: center;
+            font-weight: 300;
+            letter-spacing: 2px;
+            margin-bottom: 20px;
+            color: #d4af37;
+        }
+
+        .option-container {
+            padding: 40px 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+            height: 400px;
+        }
+
+        .option-title {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #a8a8b3;
+            letter-spacing: 1px;
+            z-index: 10;
+        }
+
+        /* Imagem base INTACTA */
+        .logo {
+            width: 140px;
+            height: 140px;
+            object-fit: contain;
+            z-index: 5;
+            position: relative;
+        }
+
+        /* OPÇÃO 1: Anel de Progresso Giratório */
+        .opt1-wrapper {
+            position: relative;
+            margin: auto;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .opt1-ring {
+            position: absolute;
+            width: 180px;
+            height: 180px;
+            border-radius: 50%;
+            border: 3px solid transparent;
+            border-top-color: #D4AF37;
+            border-right-color: rgba(212, 175, 55, 0.2);
+            animation: spin 1.5s linear infinite;
+        }
+        .opt1-ring::before {
+            content: '';
+            position: absolute;
+            top: -8px; left: -8px; right: -8px; bottom: -8px;
+            border-radius: 50%;
+            border: 3px solid transparent;
+            border-bottom-color: #00A859;
+            border-left-color: rgba(0, 168, 89, 0.2);
+            animation: spin 2.5s linear infinite reverse;
+        }
+
+        /* OPÇÃO 2: Pulso de Luz (Glow) */
+        .opt2-wrapper {
+            position: relative;
+            margin: auto;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .opt2-glow {
+            position: absolute;
+            width: 120px;
+            height: 120px;
+            background: radial-gradient(circle, rgba(212,175,55,0.7) 0%, rgba(212,175,55,0) 70%);
+            border-radius: 50%;
+            z-index: 1;
+            animation: pulse-glow 2s ease-in-out infinite alternate;
+            filter: blur(25px);
+        }
+
+        /* OPÇÃO 3: Ondas Circulares (Ripples) */
+        .opt3-wrapper {
+            position: relative;
+            margin: auto;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .opt3-ripple {
+            position: absolute;
+            width: 140px;
+            height: 140px;
+            border-radius: 50%;
+            border: 2px solid rgba(212, 175, 55, 0.5);
+            animation: ripple 2.5s cubic-bezier(0.1, 0.8, 0.3, 1) infinite;
+            z-index: 1;
+        }
+        .opt3-ripple:nth-child(2) {
+            animation-delay: 1.25s;
+        }
+
+        /* OPÇÃO 4: Barra Premium e Glassmorphism */
+        .opt4-wrapper {
+            margin: auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 40px;
+            width: 100%;
+        }
+        .opt4-card {
+            width: 70%;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            align-items: center;
+        }
+        .opt4-loading-text {
+            font-size: 11px;
+            letter-spacing: 3px;
+            color: #D4AF37;
+            text-transform: uppercase;
+            animation: text-pulse 1.5s infinite alternate;
+        }
+        .opt4-bar-bg {
+            width: 100%;
+            height: 4px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 2px;
+            overflow: hidden;
+            position: relative;
+        }
+        .opt4-bar-fill {
+            position: absolute;
+            top: 0; left: 0;
+            height: 100%;
+            width: 40%;
+            background: linear-gradient(90deg, #00A859, #D4AF37);
+            border-radius: 2px;
+            animation: loading-bar 2s ease-in-out infinite;
+        }
+
+        /* Keyframes */
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+        @keyframes pulse-glow {
+            0% { transform: scale(1); opacity: 0.3; }
+            100% { transform: scale(2.2); opacity: 1; }
+        }
+        @keyframes ripple {
+            0% { transform: scale(1); opacity: 1; }
+            100% { transform: scale(2.5); opacity: 0; }
+        }
+        @keyframes text-pulse {
+            0% { opacity: 0.4; }
+            100% { opacity: 1; }
+        }
+        @keyframes loading-bar {
+            0% { left: -40%; }
+            100% { left: 100%; }
+        }
+
+        .loading-text-bottom {
+            position: absolute;
+            bottom: 30px;
+            font-size: 12px;
+            letter-spacing: 4px;
+            color: rgba(255,255,255,0.4);
+            text-transform: uppercase;
+        }
+    </style>
+</head>
+<body>
+
+    <h2 class="page-title">Sugestões de Carregamento com o Ícone Atual</h2>
+
+    <!-- Opção 1 -->
+    <div class="option-container">
+        <div class="option-title">Opção 1: Anel Duplo Giratório</div>
+        <div class="opt1-wrapper">
+            <div class="opt1-ring"></div>
+            <!-- IMAGEM INTACTA -->
+            <img src="public/icons/icon-512.png" alt="Logo" class="logo" onerror="this.src='public/icons/logo-transparent.png';">
+        </div>
+        <div class="loading-text-bottom">Iniciando...</div>
+    </div>
+
+    <!-- Opção 2 -->
+    <div class="option-container">
+        <div class="option-title">Opção 2: Pulso Luminoso</div>
+        <div class="opt2-wrapper">
+            <div class="opt2-glow"></div>
+            <!-- IMAGEM INTACTA -->
+            <img src="public/icons/icon-512.png" alt="Logo" class="logo" onerror="this.src='public/icons/logo-transparent.png';">
+        </div>
+        <div class="loading-text-bottom" style="animation: text-pulse 1.5s infinite alternate;">Carregando</div>
+    </div>
+
+    <!-- Opção 3 -->
+    <div class="option-container">
+        <div class="option-title">Opção 3: Ondas Radiais</div>
+        <div class="opt3-wrapper">
+            <div class="opt3-ripple"></div>
+            <div class="opt3-ripple"></div>
+            <!-- IMAGEM INTACTA -->
+            <img src="public/icons/icon-512.png" alt="Logo" class="logo" style="border-radius: 50%;" onerror="this.src='public/icons/logo-transparent.png';">
+        </div>
+        <div class="loading-text-bottom">Sincronizando...</div>
+    </div>
+
+    <!-- Opção 4 -->
+    <div class="option-container">
+        <div class="option-title">Opção 4: Barra Premium Glassmorphism</div>
+        <div class="opt4-wrapper">
+            <!-- IMAGEM INTACTA -->
+            <img src="public/icons/icon-512.png" alt="Logo" class="logo" style="width: 100px; height: 100px;" onerror="this.src='public/icons/logo-transparent.png';">
+            <div class="opt4-card">
+                <div class="opt4-loading-text">Preparando o Bolão</div>
+                <div class="opt4-bar-bg">
+                    <div class="opt4-bar-fill"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>

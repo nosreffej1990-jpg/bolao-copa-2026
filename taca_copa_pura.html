@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Taça da Copa - Partículas Mágicas</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap');
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #051A10;
+            background-image: radial-gradient(circle at center, #0A2E1C 0%, #051A10 100%);
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Inter', sans-serif;
+            color: white;
+        }
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+        .glass-card {
+            position: absolute;
+            bottom: 8%;
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            padding: 24px 60px;
+            text-align: center;
+            z-index: 3;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+            opacity: 0;
+            transition: opacity 2s ease-in-out;
+            pointer-events: none;
+        }
+        .glass-card h1 {
+            margin: 10px 0 0 0;
+            font-size: 28px;
+            letter-spacing: 3px;
+            background: linear-gradient(180deg, #FFFFFF 0%, #D4AF37 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-family: serif;
+        }
+        .show-card { opacity: 1; pointer-events: auto; }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    <div class="glass-card" id="card">
+        <p style="margin: 0; font-size: 11px; color: #a8a8b3; letter-spacing: 2px;">CARREGANDO...</p>
+        <h1>BOLÃO<br>COPA 2026</h1>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d', { alpha: false });
+        
+        let width, height;
+        let particles = [];
+        
+        function drawWorldCupShape(ctxShape) {
+            // Desenha a silhueta da Taça ATUAL da Copa do Mundo matematicamente
+            ctxShape.fillStyle = '#FFFFFF';
+            ctxShape.beginPath();
+            
+            // Base da taça
+            ctxShape.moveTo(120, 450); 
+            ctxShape.lineTo(280, 450); 
+            ctxShape.lineTo(260, 400); 
+            
+            // Curva da cintura (Figuras Humanas segurando) - Lado Direito
+            ctxShape.bezierCurveTo(240, 350, 220, 270, 225, 200);
+            
+            // Ombro direito segurando o globo
+            ctxShape.bezierCurveTo(230, 140, 250, 110, 250, 100);
+            
+            // O Globo (Mundo) no topo
+            ctxShape.arc(200, 100, 50, 0, Math.PI, true);
+            
+            // Ombro esquerdo segurando o globo
+            ctxShape.bezierCurveTo(150, 110, 170, 140, 175, 200);
+            
+            // Curva da cintura (Figuras Humanas) - Lado Esquerdo
+            ctxShape.bezierCurveTo(180, 270, 160, 350, 140, 400);
+            
+            ctxShape.closePath();
+            ctxShape.fill();
+            
+            // Recortes internos para formar o espaço das duas figuras humanas separadas
+            ctxShape.globalCompositeOperation = 'destination-out';
+            
+            // Espaço entre as figuras no centro do corpo
+            ctxShape.beginPath();
+            ctxShape.moveTo(200, 180);
+            ctxShape.bezierCurveTo(215, 230, 215, 270, 200, 320);
+            ctxShape.bezierCurveTo(185, 270, 185, 230, 200, 180);
+            ctxShape.fill();
+            
+            // Recortes sob os braços
+            ctxShape.beginPath();
+            ctxShape.arc(170, 125, 12, 0, Math.PI*2);
+            ctxShape.arc(230, 125, 12, 0, Math.PI*2);
+            ctxShape.fill();
+            
+            // Linhas dos continentes (cortes sutis no globo de ouro)
+            ctxShape.beginPath();
+            ctxShape.arc(200, 80, 30, 0, Math.PI);
+            ctxShape.lineWidth = 4;
+            ctxShape.stroke();
+            
+            ctxShape.globalCompositeOperation = 'source-over';
+        }
+
+        function init() {
+            width = window.innerWidth;
+            height = window.innerHeight;
+            canvas.width = width;
+            canvas.height = height;
+
+            // Canvas invisível para servir de "MOLDE" das partículas
+            const offCanvas = document.createElement('canvas');
+            offCanvas.width = 400;
+            offCanvas.height = 500;
+            const offCtx = offCanvas.getContext('2d', { willReadFrequently: true });
+            
+            // Desenha a taça no molde
+            drawWorldCupShape(offCtx);
+            
+            // Extrai as coordenadas
+            const imageData = offCtx.getImageData(0, 0, 400, 500);
+            const data = imageData.data;
+            particles = [];
+
+            // Calcular escala baseada na tela do usuário
+            const scale = Math.min(height * 0.7 / 500, width * 0.8 / 400);
+            const scaledWidth = 400 * scale;
+            const scaledHeight = 500 * scale;
+            
+            const offsetX = (width - scaledWidth) / 2;
+            const offsetY = (height - scaledHeight) / 2 - 20;
+
+            const step = 3; // Qualidade das partículas (3 = muitas partículas, formato nítido)
+
+            for (let y = 0; y < 500; y += step) {
+                for (let x = 0; x < 400; x += step) {
+                    const index = (y * 400 + x) * 4;
+                    const alpha = data[index + 3];
+
+                    // Se essa coordenada pertence à taça
+                    if (alpha > 100) {
+                        let color = '#FFD700'; // Dourado padrão
+                        
+                        // Recriando as cores exatas da Taça Oficial da FIFA!
+                        if (y >= 430) {
+                            color = '#D4AF37'; // Base de Ouro
+                        } else if (y >= 415 && y < 430) {
+                            color = '#008A54'; // Anel de Malaquita (Verde 1)
+                        } else if (y >= 400 && y < 415) {
+                            color = '#FFD700'; // Anel central de Ouro
+                        } else if (y >= 385 && y < 400) {
+                            color = '#008A54'; // Anel de Malaquita (Verde 2)
+                        } else if (y < 120) {
+                            // Globo terrestre dourado brilhante
+                            color = (Math.random() > 0.8) ? '#FFFFFF' : '#FFDF00'; 
+                        } else {
+                            // Corpo de ouro puro com variação para dar profundidade 3D
+                            const goldShades = ['#FFD700', '#D4AF37', '#DAA520', '#C5A059'];
+                            color = goldShades[Math.floor(Math.random() * goldShades.length)];
+                        }
+
+                        const targetX = offsetX + x * scale;
+                        const targetY = offsetY + y * scale;
+
+                        // Partículas nascem muito espalhadas, como um furacão de poeira cósmica
+                        const angle = Math.random() * Math.PI * 2;
+                        const radius = Math.max(width, height) * 1.5;
+                        const startX = width / 2 + Math.cos(angle) * radius;
+                        const startY = height / 2 + Math.sin(angle) * radius;
+
+                        particles.push({
+                            targetX: targetX,
+                            targetY: targetY,
+                            x: startX,
+                            y: startY,
+                            color: color,
+                            size: Math.random() * 1.5 + 1 * scale,
+                            speed: Math.random() * 0.04 + 0.015, // Velocidade suave
+                            angle: angle,
+                            orbit: Math.random() * 20 // força do redemoinho
+                        });
+                    }
+                }
+            }
+            animate();
+            
+            setTimeout(() => {
+                document.getElementById('card').classList.add('show-card');
+            }, 3500); // Mostra o card depois que a taça se formou
+        }
+
+        function animate() {
+            // Fundo que apaga lentamente deixando um rastro de luz
+            ctx.fillStyle = 'rgba(5, 26, 16, 0.2)';
+            ctx.fillRect(0, 0, width, height);
+
+            let allArrived = true;
+
+            for (let i = 0; i < particles.length; i++) {
+                const p = particles[i];
+
+                const dx = p.targetX - p.x;
+                const dy = p.targetY - p.y;
+                const distance = Math.sqrt(dx*dx + dy*dy);
+                
+                if (distance > 1) {
+                    allArrived = false;
+                    
+                    // Movimento atraído para o centro (gravidade da forma)
+                    p.x += dx * p.speed;
+                    p.y += dy * p.speed;
+                    
+                    // Movimento de redemoinho enquanto estiverem longe
+                    if (distance > 30) {
+                        p.x += Math.sin(p.angle) * p.orbit;
+                        p.y += Math.cos(p.angle) * p.orbit;
+                        p.angle += 0.05;
+                    }
+                } else {
+                    p.x = p.targetX;
+                    p.y = p.targetY;
+                }
+
+                ctx.fillStyle = p.color;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            if (!allArrived) {
+                requestAnimationFrame(animate);
+            } else {
+                // Taça formada - Manter o brilho de partículas vivas
+                ctx.fillStyle = 'rgba(5, 26, 16, 0.05)';
+                ctx.fillRect(0,0,width,height);
+                for (let i = 0; i < particles.length; i++) {
+                    const p = particles[i];
+                    ctx.fillStyle = p.color;
+                    ctx.beginPath();
+                    ctx.arc(p.targetX, p.targetY, p.size, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                requestAnimationFrame(animate); 
+            }
+        }
+
+        window.onload = init;
+        window.addEventListener('resize', init);
+    </script>
+</body>
+</html>

@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Novas Opções (Logo Sem Borda)</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap');
+
+        body {
+            margin: 0;
+            padding: 40px;
+            background-color: #051A10; /* Fundo verde escuro */
+            font-family: 'Inter', sans-serif;
+            color: white;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 40px;
+            box-sizing: border-box;
+            min-height: 100vh;
+        }
+
+        h2.page-title {
+            grid-column: 1 / -1;
+            text-align: center;
+            font-weight: 300;
+            letter-spacing: 2px;
+            margin-bottom: 20px;
+            color: #d4af37;
+        }
+
+        .option-container {
+            padding: 40px 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+            height: 400px;
+        }
+
+        .option-title {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #a8a8b3;
+            letter-spacing: 1px;
+            z-index: 10;
+        }
+
+        /* 
+           O TRUQUE MÁGICO PARA REMOVER A BORDA: Clip-path!
+           Isso recorta as beiradas da imagem pelo código, escondendo a borda creme.
+        */
+        .logo-cropped-circle {
+            width: 140px;
+            height: 140px;
+            object-fit: contain;
+            /* Corta 6% das beiradas e forma um círculo perfeito */
+            clip-path: circle(44%);
+            z-index: 5;
+            position: relative;
+        }
+
+        .logo-cropped-square {
+            width: 140px;
+            height: 140px;
+            object-fit: contain;
+            /* Recorta as beiradas em formato de quadrado levemente arredondado */
+            clip-path: inset(6% round 24px);
+            z-index: 5;
+            position: relative;
+        }
+
+        /* OPÇÃO 5: Esferas Orbitando */
+        .opt5-wrapper {
+            position: relative;
+            margin: auto;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .orbit {
+            position: absolute;
+            width: 200px;
+            height: 200px;
+            animation: spin-orbit 4s linear infinite;
+        }
+        .orbit-sphere {
+            position: absolute;
+            width: 14px;
+            height: 14px;
+            background: #D4AF37;
+            border-radius: 50%;
+            box-shadow: 0 0 15px #D4AF37;
+        }
+        /* Posicionando 3 esferas (2 douradas, 1 verde) */
+        .orbit-sphere:nth-child(1) { top: -7px; left: 93px; }
+        .orbit-sphere:nth-child(2) { bottom: 25px; left: 15px; background: #00A859; box-shadow: 0 0 15px #00A859;}
+        .orbit-sphere:nth-child(3) { bottom: 25px; right: 15px; }
+
+        /* OPÇÃO 6: Batimento Cardíaco (Heartbeat) */
+        .opt6-wrapper {
+            position: relative;
+            margin: auto;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .logo-heartbeat {
+            animation: heartbeat 1.5s ease-in-out infinite;
+            filter: drop-shadow(0 0 15px rgba(212, 175, 55, 0.4));
+        }
+
+        /* OPÇÃO 7: Traço de Luz Giratório (Sweep) */
+        .opt7-wrapper {
+            position: relative;
+            margin: auto;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 160px;
+            height: 160px;
+            border-radius: 50%;
+            /* Cria o gradiente rotativo */
+            background: conic-gradient(from 0deg, transparent 70%, #D4AF37 100%);
+            animation: spin 1.5s linear infinite;
+        }
+        .opt7-inner {
+            position: absolute;
+            width: 154px;
+            height: 154px;
+            background-color: #051A10; /* Esconde o meio para virar um anel */
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .opt7-inner img {
+            width: 130px; 
+            height: 130px;
+        }
+
+        /* OPÇÃO 8: Preenchimento Mágico (Grayscale to Color) */
+        .opt8-wrapper {
+            position: relative;
+            margin: auto;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 140px; height: 140px;
+        }
+        .logo-gray {
+            position: absolute;
+            filter: grayscale(100%) opacity(0.2);
+            z-index: 1;
+        }
+        .logo-color {
+            position: absolute;
+            z-index: 2;
+            /* Animação que revela de baixo para cima */
+            animation: fillUp 2.5s ease-in-out infinite;
+        }
+
+        /* Keyframes das animações */
+        @keyframes spin-orbit { 100% { transform: rotate(360deg); } }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+        @keyframes heartbeat {
+            0%, 100% { transform: scale(1); filter: drop-shadow(0 0 10px rgba(212, 175, 55, 0.2)); }
+            50% { transform: scale(1.1); filter: drop-shadow(0 0 35px rgba(212, 175, 55, 0.9)); }
+        }
+        @keyframes fillUp {
+            0% { clip-path: inset(100% 0 0 0 round 24px); }
+            50%, 100% { clip-path: inset(6% round 24px); } /* O estado final também deve manter o corte da borda creme */
+        }
+
+        .loading-text-bottom {
+            position: absolute;
+            bottom: 30px;
+            font-size: 11px;
+            letter-spacing: 4px;
+            color: rgba(255,255,255,0.4);
+            text-transform: uppercase;
+        }
+    </style>
+</head>
+<body>
+
+    <h2 class="page-title">Novas Animações (Borda Removida via CSS)</h2>
+
+    <!-- Opção 5 -->
+    <div class="option-container">
+        <div class="option-title">Opção 5: Esferas em Órbita</div>
+        <div class="opt5-wrapper">
+            <div class="orbit">
+                <div class="orbit-sphere"></div>
+                <div class="orbit-sphere"></div>
+                <div class="orbit-sphere"></div>
+            </div>
+            <!-- Cortando a imagem em círculo -->
+            <img src="public/icons/icon-512.png" alt="Logo" class="logo-cropped-circle" onerror="this.src='public/icons/logo-transparent.png';">
+        </div>
+        <div class="loading-text-bottom">Iniciando...</div>
+    </div>
+
+    <!-- Opção 6 -->
+    <div class="option-container">
+        <div class="option-title">Opção 6: Batimento (Heartbeat)</div>
+        <div class="opt6-wrapper">
+            <!-- Cortando a imagem em quadrado arredondado e pulsando -->
+            <img src="public/icons/icon-512.png" alt="Logo" class="logo-cropped-square logo-heartbeat" onerror="this.src='public/icons/logo-transparent.png';">
+        </div>
+        <div class="loading-text-bottom">Conectando...</div>
+    </div>
+
+    <!-- Opção 7 -->
+    <div class="option-container">
+        <div class="option-title">Opção 7: Traço de Luz (Sweep)</div>
+        <div class="opt7-wrapper">
+            <div class="opt7-inner">
+                <!-- Cortando em círculo -->
+                <img src="public/icons/icon-512.png" alt="Logo" class="logo-cropped-circle" style="width: 125px; height: 125px;" onerror="this.src='public/icons/logo-transparent.png';">
+            </div>
+        </div>
+        <div class="loading-text-bottom">Buscando Jogos...</div>
+    </div>
+
+    <!-- Opção 8 -->
+    <div class="option-container">
+        <div class="option-title">Opção 8: Preenchimento Mágico</div>
+        <div class="opt8-wrapper">
+            <img src="public/icons/icon-512.png" alt="Logo Gray" class="logo-cropped-square logo-gray" onerror="this.src='public/icons/logo-transparent.png';">
+            <img src="public/icons/icon-512.png" alt="Logo Color" class="logo-cropped-square logo-color" onerror="this.src='public/icons/logo-transparent.png';">
+        </div>
+        <div class="loading-text-bottom">Carregando...</div>
+    </div>
+
+</body>
+</html>
