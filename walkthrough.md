@@ -82,6 +82,6 @@ Extraímos lógicas utilitárias complexas do frontend para hooks reutilizáveis
   - **Fagulhas à Esquerda**: Partículas douradas que brotam dinamicamente do lado esquerdo do globo da taça e sobem flutuando em arco para a esquerda, simulando respingos em movimento real-time.
   - **Poeira Estelar de Fundo**: Partículas sutis flutuando em diferentes opacidades e tamanhos para dar profundidade espacial.
   - **Sheen Sweep (Reflexo de Luz)**: Um reflexo vertical dourado metálico que desliza continuamente pelo corpo da taça.
-- **Card de Vidro Ocultando o Estático**: Posicionamos um card HTML glassmorphic nítido e responsivo sobre o card impresso na imagem de fundo, cobrindo-o perfeitamente e exibindo um spinner circular dourado animado sobre o título do Bolão.
+- **Overlay Perfeito do Spinner**: Removemos o card HTML duplicado. Como a imagem original já contém o lindo card de vidro e todos os textos em alta resolução, posicionamos o spinner dourado animado em HTML via coordenadas absolutas (`top: 70.3%` e `left: 50%`) exatamente em cima do círculo estático da imagem, dando vida e rotação ao loader oficial de forma nativa e sem desalinhamento.
 
 
