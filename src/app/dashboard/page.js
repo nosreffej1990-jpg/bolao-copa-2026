@@ -34,42 +34,7 @@ const normalizeTeamName = (name) => {
   };
 
 const convertToBrasiliaTime = (matchDate, matchTime, stadium) => {
-  if (!matchDate || !matchTime) return { date: matchDate, time: matchTime };
-  
-  let offset = 0;
-  const stad = (stadium || '').toLowerCase();
-  
-  if (stad.includes('vancouver') || stad.includes('seattle') || stad.includes('los angeles') || stad.includes('san francisco')) {
-    offset = 4;
-  } else if (stad.includes('cdmx') || stad.includes('mexico') || stad.includes('guadalajara')) {
-    offset = 3;
-  } else if (stad.includes('dallas') || stad.includes('houston') || stad.includes('kansas') || stad.includes('monterrey')) {
-    offset = 2;
-  } else if (stad.includes('atlanta') || stad.includes('miami') || stad.includes('ny') || stad.includes('new york') || stad.includes('philadelphia') || stad.includes('toronto') || stad.includes('boston')) {
-    offset = 1;
-  }
-  
-  try {
-    const [year, month, day] = matchDate.split('-').map(Number);
-    const [hours, minutes, seconds] = matchTime.split(':').map(Number);
-    
-    const dateObj = new Date(year, month - 1, day, hours, minutes, seconds || 0);
-    dateObj.setHours(dateObj.getHours() + offset);
-    
-    const yyyy = dateObj.getFullYear();
-    const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
-    const dd = String(dateObj.getDate()).padStart(2, '0');
-    const hh = String(dateObj.getHours()).padStart(2, '0');
-    const min = String(dateObj.getMinutes()).padStart(2, '0');
-    
-    return {
-      date: `${yyyy}-${mm}-${dd}`,
-      time: `${hh}:${min}:00`
-    };
-  } catch (e) {
-    console.error('Error converting timezone:', e);
-    return { date: matchDate, time: matchTime };
-  }
+  return { date: matchDate, time: matchTime };
 };
 
 const formatMatchDateSafe = (dateStr) => {

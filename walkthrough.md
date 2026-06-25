@@ -1,10 +1,3 @@
-# Walkthrough - Refatoração do Dashboard, Custom Hooks, Design Premium & Segurança
-
-Abaixo está o resumo consolidado de todas as melhorias implementadas na arquitetura, no design e na segurança do app do Bolão Copa 2026.
-
----
-
-## 1. Refatoração e Desacoplamento do Painel (Dashboard)
 Para resolver a quebra do princípio de responsabilidade única (SRP) no antigo arquivo centralizador de ~5.000 linhas, desmembramos o painel em subcomponentes modulares e isolados:
 - **Aba de Ranking**: Migrada para [RankingTab.js](file:///C:/Users/nosre/OneDrive/Documentos/GitHub/bolao-copa-2026/src/components/dashboard/RankingTab.js).
 - **Aba de Jogos e Resultados**: Migrada para [MatchesTab.js](file:///C:/Users/nosre/OneDrive/Documentos/GitHub/bolao-copa-2026/src/components/dashboard/MatchesTab.js).

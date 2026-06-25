@@ -275,11 +275,27 @@ export async function getUpcomingMatches(limit = 15) {
 
 // Formata a data do jogo para exibição em pt-BR
 export function formatMatchDate(localDate) {
-  const d = parseApiDate(localDate);
-  const timePart = localDate && localDate.includes(' ') ? localDate.split(' ')[1] : '00:00';
+  if (!localDate) return { date: '', time: '00:00', full: new Date(0) };
+  
+  const parts = localDate.split(' ');
+  const datePart = parts[0];
+  const timePart = parts[1] || '00:00';
   const formattedTime = timePart ? timePart.slice(0, 5) : '00:00';
+  
+  let formattedDate = '';
+  if (datePart) {
+    if (datePart.includes('-')) {
+      const [year, month, day] = datePart.split('-');
+      formattedDate = `${day}/${month}`;
+    } else if (datePart.includes('/')) {
+      const [month, day, year] = datePart.split('/');
+      formattedDate = `${day}/${month}`;
+    }
+  }
+  
+  const d = parseApiDate(localDate);
   return {
-    date: d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }),
+    date: formattedDate || d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }),
     time: formattedTime,
     full: d,
   };
