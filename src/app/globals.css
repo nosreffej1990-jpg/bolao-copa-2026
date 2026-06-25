@@ -81,6 +81,11 @@ body {
     100% { transform: translateX(100%); }
 }
 
+@keyframes cinematicZoom {
+    0% { transform: scale(1.08); }
+    100% { transform: scale(1.0); }
+}
+
 /* Splash/Loading Screen */
 .splash-screen {
     position: absolute;

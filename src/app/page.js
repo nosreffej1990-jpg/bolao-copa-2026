@@ -7,119 +7,8 @@ import { getFlagCode, formatMatchDate } from '@/lib/worldcupApi';
 import { supabase, defaultUsuarios, isSupabaseConfigured } from '@/lib/supabase';
 import { useChampion, CHAMPIONS } from '@/components/ChampionProvider';
 
-const generateTrophyPoints = (numPoints, width, height) => {
-  const points = [];
-  const centerX = width / 2;
-  const centerY = height / 2 - 80;
-
-  // Let's model the World Cup Trophy outline and internal details precisely.
-  // Height ranges from centerY - 70 (top of globe) to centerY + 90 (bottom of base).
-
-  // 1. Globe (Top sphere): centerY - 70 to centerY - 20
-  const globeCenterY = centerY - 45;
-  const globeRadius = 26;
-  const globeCount = Math.floor(numPoints * 0.38);
-
-  for (let i = 0; i < globeCount; i++) {
-    const seed = i / globeCount;
-    // Outer shell of the globe
-    if (seed < 0.6) {
-      const angle = (seed / 0.6) * Math.PI * 2;
-      const x = centerX + Math.sin(angle) * globeRadius;
-      const y = globeCenterY + Math.cos(angle) * globeRadius * 0.95;
-      points.push({ x, y, type: 'globe-shell' });
-    } else {
-      // Internal continental lines/texture matching the stylized globe on the FIFA trophy
-      const mapSeed = (seed - 0.6) / 0.4;
-      const r = globeRadius * 0.85;
-      // Stretched spiral lines inside the globe to simulate continents
-      const angle = mapSeed * Math.PI * 3;
-      const x = centerX + Math.cos(angle) * r * Math.sin(mapSeed * Math.PI);
-      const y = globeCenterY - r * 0.5 + mapSeed * r * 1.1;
-      points.push({ x, y, type: 'globe-texture' });
-    }
-  }
-
-  // 2. Base (Bottom pedestal with bands): centerY + 50 to centerY + 95
-  const baseCount = Math.floor(numPoints * 0.28);
-  for (let i = 0; i < baseCount; i++) {
-    const pct = i / (baseCount - 1);
-    const by = centerY + 50 + pct * 45;
-    
-    // Predetermined silhouette widths at specific heights of the tiered pedestal
-    let baseW = 18;
-    let type = 'gold-base';
-    if (by > centerY + 82) {
-      // Bottom tier
-      baseW = 42;
-    } else if (by > centerY + 78) {
-      // Spacer/ring
-      baseW = 39;
-    } else if (by > centerY + 66) {
-      // Lower malachite band band
-      baseW = 36;
-      type = 'malachite-band-2';
-    } else if (by > centerY + 58) {
-      // Mid gold spacer
-      baseW = 32;
-    } else if (by > centerY + 52) {
-      // Upper malachite band
-      baseW = 29;
-      type = 'malachite-band-1';
-    } else {
-      // Top base neck
-      baseW = 25;
-    }
-
-    const sidePct = (Math.random() - 0.5) * 2;
-    const x = centerX + sidePct * baseW;
-    points.push({ x, y: by, type });
-  }
-
-  // 3. Stylized human arms/body (Stem/core): centerY - 20 to centerY + 50
-  const bodyCount = numPoints - points.length;
-  for (let i = 0; i < bodyCount; i++) {
-    const pct = i / (bodyCount - 1);
-    const by = centerY - 20 + pct * 70;
-    
-    // The trophy consists of two sweeping upward human figures holding up the globe.
-    // Let's model their curvy, dynamic profile.
-    let bodyW = 10;
-    let type = 'trophy-body';
-
-    if (by < centerY - 5) {
-      // Arms sweeping out to cradle the globe
-      const armPct = (by - (centerY - 20)) / 15; // 0 to 1
-      bodyW = 26 - armPct * 12; // starts wide at globe base, narrows down
-    } else if (by < centerY + 18) {
-      // Core waist / twisting bodies
-      const waistPct = (by - (centerY - 5)) / 23;
-      bodyW = 14 - Math.sin(waistPct * Math.PI) * 4;
-    } else {
-      // Base flare joining the pedestal
-      const lowerPct = (by - (centerY + 18)) / 32;
-      bodyW = 10 + lowerPct * 14;
-    }
-
-    // Add double-helix/spiral twist look of the figures
-    const side = i % 2 === 0 ? 1 : -1;
-    // Spiral twist offset based on Y position
-    const twistOffset = Math.sin(by * 0.08) * 4;
-    const x = centerX + side * (bodyW * 0.75) + twistOffset;
-    
-    points.push({ x, y: by, type });
-  }
-
-  return points;
-};
-
-const ParticleCanvas = ({ progress }) => {
+const ParticleCanvas = () => {
   const canvasRef = React.useRef(null);
-  const progressRef = React.useRef(progress);
-
-  React.useEffect(() => {
-    progressRef.current = progress;
-  }, [progress]);
 
   React.useEffect(() => {
     const canvas = canvasRef.current;
@@ -129,80 +18,79 @@ const ParticleCanvas = ({ progress }) => {
     let animationFrameId;
     let width = (canvas.width = window.innerWidth);
     let height = (canvas.height = window.innerHeight);
-    let trophyPoints = generateTrophyPoints(420, width, height);
 
     const handleResize = () => {
       if (!canvas) return;
       width = canvas.width = window.innerWidth;
       height = canvas.height = window.innerHeight;
-      trophyPoints = generateTrophyPoints(420, width, height);
     };
     window.addEventListener('resize', handleResize);
 
-    const centerY = height / 2 - 80;
+    const centerY = height / 2 - 100;
 
     class Particle {
-      constructor(index) {
-        this.index = index;
+      constructor(isBackground = false) {
+        this.isBackground = isBackground;
         this.reset(true);
       }
 
       reset(init = false) {
-        // Starfield starting positions
-        this.x = init ? Math.random() * width : (Math.random() > 0.5 ? -10 : width + 10);
-        this.y = init ? Math.random() * height : (Math.random() > 0.5 ? -10 : height + 10);
-        
-        // Varying sizes for depth - identical to the volumetric look of Option E
-        this.size = Math.random() * 1.5 + 0.8;
-        if (this.index % 12 === 0) {
-          this.size = Math.random() * 1.5 + 2.0; // occasional larger glowing embers
+        if (this.isBackground) {
+          // Floating background gold dust
+          this.x = Math.random() * width;
+          this.y = init ? Math.random() * height : height + 10;
+          this.size = Math.random() * 1.5 + 0.5;
+          this.speedX = (Math.random() - 0.5) * 0.3;
+          this.speedY = -Math.random() * 0.5 - 0.2; // slowly floats up
+          this.alpha = init ? Math.random() * 0.4 + 0.1 : 0;
+          this.life = Math.random() * 150 + 100;
+          this.maxLife = this.life;
+        } else {
+          // Splash particles emitting from the left of the globe
+          const centerX = width / 2;
+          const tCenterY = height / 2 - 130; // Approximate globe center Y on mockup background
+          
+          // Clustered around the left-middle of the globe
+          this.x = centerX - 12 - Math.random() * 15;
+          this.y = tCenterY - 10 + Math.random() * 20;
+          
+          this.size = Math.random() * 1.5 + 0.6;
+          // Eject left and up
+          this.speedX = -Math.random() * 1.5 - 0.2;
+          this.speedY = -Math.random() * 1.2 - 0.1;
+          
+          this.alpha = Math.random() * 0.6 + 0.4;
+          this.life = Math.random() * 50 + 30;
+          this.maxLife = this.life;
         }
-        
-        this.speedX = (Math.random() - 0.5) * 0.8;
-        this.speedY = (Math.random() - 0.5) * 0.8;
-        this.alpha = Math.random() * 0.4 + 0.3;
-        this.angle = Math.random() * Math.PI * 2;
-        this.angularSpeed = (Math.random() - 0.5) * 0.03;
       }
 
-      update(time, currentProgress) {
-        const target = trophyPoints[this.index % trophyPoints.length];
-        
-        // Morphing transition curve
-        // 0% - 15%: particles float freely
-        // 15% - 100%: particles gradually pull into the trophy silhouette
-        const ease = Math.min(1, Math.max(0, (currentProgress - 15) / 85));
-
-        if (ease > 0) {
-          // Dynamic swirling effect that consolidates as progress increases
-          const swirlRadius = (1 - ease) * 55 + 0.3;
-          const targetX = target.x + Math.sin(time * 0.04 + this.angle) * swirlRadius;
-          const targetY = target.y + Math.cos(time * 0.04 + this.angle) * swirlRadius;
-
-          // Accelerating magnetic pull towards silhouette
-          const speed = 1.0 + ease * 5.0;
-          const dx = targetX - this.x;
-          const dy = targetY - this.y;
-          const dist = Math.sqrt(dx * dx + dy * dy);
-
-          if (dist > 0.8) {
-            this.x += (dx / dist) * speed;
-            this.y += (dy / dist) * speed;
+      update(time) {
+        if (this.isBackground) {
+          this.x += this.speedX;
+          this.y += this.speedY;
+          this.life--;
+          
+          if (this.life <= 0 || this.y < -10) {
+            this.reset();
           } else {
-            this.x = targetX;
-            this.y = targetY;
+            const ratio = this.life / this.maxLife;
+            this.alpha = Math.sin(ratio * Math.PI) * 0.35;
           }
-          this.alpha = Math.min(1, 0.3 + 0.7 * ease);
         } else {
-          // Idle floating physics before morphing starts
-          this.x += this.speedX + Math.sin(time * 0.01 + this.angle) * 0.25;
-          this.y += this.speedY + Math.cos(time * 0.01 + this.angle) * 0.25;
-          this.angle += this.angularSpeed;
+          this.x += this.speedX;
+          this.y += this.speedY;
+          
+          // Float drift physics
+          this.speedY -= 0.003; // float upwards
+          this.speedX += Math.sin(time * 0.05 + this.alpha) * 0.01; // wobble
 
-          if (this.x < -30) this.x = width + 30;
-          if (this.x > width + 30) this.x = -30;
-          if (this.y < -30) this.y = height + 30;
-          if (this.y > height + 30) this.y = -30;
+          this.life--;
+          if (this.life <= 0) {
+            this.reset();
+          } else {
+            this.alpha = (this.life / this.maxLife) * 0.8;
+          }
         }
       }
 
@@ -211,65 +99,42 @@ const ParticleCanvas = ({ progress }) => {
         ctx.beginPath();
         ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
         
-        const target = trophyPoints[this.index % trophyPoints.length];
-        const ease = Math.min(1, Math.max(0, (progressRef.current - 15) / 85));
-
-        const isMalachite = target && (target.type === 'malachite-band-1' || target.type === 'malachite-band-2');
-
-        // Color palette parameters from option E:
-        // Vibrant Gold / Warm Amber (HSL 42, 100%, 65%) with occasional bright white sparks
-        const isSparkle = this.index % 15 === 0;
-        let hue = 40 + (this.index % 5) * 2;
-        let saturation = 95;
-        let lightness = isSparkle ? 90 : 60 + (this.index % 3) * 6;
-
-        if (ease > 0.45 && isMalachite) {
-          const blendProgress = Math.min(1, (ease - 0.45) / 0.55);
-          // Dark Emerald green malachite ring blend
-          const targetHue = 152;
-          const targetSat = 85;
-          const targetLight = 38;
-          
-          hue = hue + (targetHue - hue) * blendProgress;
-          saturation = saturation + (targetSat - saturation) * blendProgress;
-          lightness = lightness + (targetLight - lightness) * blendProgress;
-          
-          ctx.fillStyle = `hsla(${hue}, ${saturation}%, ${lightness}%, ${this.alpha})`;
-          ctx.shadowBlur = this.size * 2;
-          ctx.shadowColor = `rgba(16, 185, 129, ${this.alpha * 0.5 * blendProgress})`;
-        } else {
-          ctx.fillStyle = `hsla(${hue}, ${saturation}%, ${lightness}%, ${this.alpha})`;
-          ctx.shadowBlur = this.size * (isSparkle ? 4.5 : 2.5);
-          ctx.shadowColor = `hsla(${hue}, 100%, 50%, ${this.alpha * 0.85})`;
-        }
+        const hue = 41 + (this.isBackground ? 0 : Math.floor(Math.random() * 4));
+        ctx.fillStyle = `hsla(${hue}, 95%, 65%, ${this.alpha})`;
         
+        ctx.shadowBlur = this.size * 2.5;
+        ctx.shadowColor = `hsla(${hue}, 100%, 55%, ${this.alpha * 0.8})`;
         ctx.fill();
         ctx.restore();
       }
     }
 
-    const particles = Array.from({ length: 420 }, (_, i) => new Particle(i));
+    // Initialize particles: 60 background dust and 50 splash particles
+    const particles = [
+      ...Array.from({ length: 60 }, () => new Particle(true)),
+      ...Array.from({ length: 50 }, () => new Particle(false))
+    ];
 
     let time = 0;
     const animate = () => {
       time++;
-      // Deep dark emerald green velvet background texture overlay
-      ctx.fillStyle = 'rgba(4, 18, 12, 0.16)';
-      ctx.fillRect(0, 0, width, height);
+      ctx.clearRect(0, 0, width, height);
 
-      // Render subtle background dust/glow in the center
       const centerX = width / 2;
-      const tCenterY = height / 2 - 85;
-      const grad = ctx.createRadialGradient(centerX, tCenterY, 5, centerX, tCenterY, 180);
-      grad.addColorStop(0, 'rgba(251, 191, 36, 0.035)');
-      grad.addColorStop(0.5, 'rgba(16, 185, 129, 0.015)');
-      grad.addColorStop(1, 'transparent');
-      ctx.fillStyle = grad;
-      ctx.fillRect(0, 0, width, height);
+      const tCenterY = height / 2 - 130;
 
-      const currentProgress = progressRef.current;
+      // Soft sweeping light reflection over the trophy core
+      const sweepY = tCenterY + 70 + Math.sin(time * 0.015) * 80;
+      const sweepGrad = ctx.createLinearGradient(0, sweepY - 40, 0, sweepY + 40);
+      sweepGrad.addColorStop(0, 'rgba(255, 255, 255, 0)');
+      sweepGrad.addColorStop(0.5, 'rgba(251, 191, 36, 0.08)'); // soft gold sheen
+      sweepGrad.addColorStop(1, 'rgba(255, 255, 255, 0)');
+      
+      ctx.fillStyle = sweepGrad;
+      ctx.fillRect(centerX - 35, tCenterY - 40, 70, 160);
+
       particles.forEach(p => {
-        p.update(time, currentProgress);
+        p.update(time);
         p.draw();
       });
 
@@ -292,7 +157,7 @@ const ParticleCanvas = ({ progress }) => {
         inset: 0,
         width: '100%',
         height: '100%',
-        zIndex: 1,
+        zIndex: 2,
         pointerEvents: 'none'
       }}
     />
@@ -534,30 +399,41 @@ export default function Home() {
           alignItems: 'center',
           justifyContent: 'space-between',
           padding: '2.5rem 1.5rem',
-          background: 'radial-gradient(circle at center, #072617 0%, #03100B 100%)'
+          position: 'relative'
         }}>
-          <ParticleCanvas progress={progress} />
+          {/* Cinematic Zoom Background Image */}
+          <div style={{
+            position: 'absolute',
+            inset: 0,
+            background: 'url("/loading_option_e.png") no-repeat center center / cover',
+            animation: 'cinematicZoom 6s ease-out forwards',
+            zIndex: 1
+          }} />
+
+          {/* Real-time particle overlay */}
+          <ParticleCanvas />
           
           {/* Spacer to push card to bottom */}
-          <div style={{ flexGrow: 1 }} />
+          <div style={{ flexGrow: 1, zIndex: 3 }} />
 
           {/* Elegant glassmorphic control card at the bottom matching option E exactly */}
           <div style={{
             width: '90%',
             maxWidth: '380px',
-            background: 'rgba(10, 28, 19, 0.45)',
+            background: 'rgba(6, 21, 12, 0.96)', /* high opacity to cover background card */
             backdropFilter: 'blur(20px)',
             WebkitBackdropFilter: 'blur(20px)',
-            border: '1px solid rgba(210, 167, 79, 0.25)',
+            border: '1px solid rgba(210, 167, 79, 0.28)',
             borderRadius: '16px',
             padding: '1.5rem',
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            boxShadow: '0 20px 50px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1)',
+            boxShadow: '0 20px 50px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.1)',
             zIndex: 10,
-            position: 'relative'
+            position: 'relative',
+            marginBottom: '1rem'
           }}>
             {/* Top-right/Bottom-left visual corners inside the glass card like the mockup */}
             <div style={{ position: 'absolute', top: '8px', right: '8px', width: '12px', height: '12px', borderTop: '1px solid rgba(210, 167, 79, 0.4)', borderRight: '1px solid rgba(210, 167, 79, 0.4)' }} />
@@ -576,19 +452,19 @@ export default function Home() {
 
             {/* Glowing gold circular loader */}
             <div style={{
-              width: '28px',
-              height: '28px',
+              width: '32px',
+              height: '32px',
               border: '2px solid rgba(210, 167, 79, 0.15)',
               borderTopColor: '#FBBF24',
               borderRadius: '50%',
               animation: 'spin 1s linear infinite',
-              marginBottom: '1rem',
-              boxShadow: '0 0 10px rgba(251, 191, 36, 0.3)'
+              marginBottom: '1.25rem',
+              boxShadow: '0 0 12px rgba(251, 191, 36, 0.4)'
             }} />
 
             <h2 style={{
               margin: 0,
-              fontSize: '1.9rem',
+              fontSize: '2.0rem',
               fontWeight: '300',
               color: '#ffffff',
               letterSpacing: '0.08em',
@@ -600,7 +476,7 @@ export default function Home() {
             </h2>
             <h2 style={{
               margin: 0,
-              fontSize: '1.9rem',
+              fontSize: '2.0rem',
               fontWeight: '300',
               color: '#ffffff',
               letterSpacing: '0.08em',
