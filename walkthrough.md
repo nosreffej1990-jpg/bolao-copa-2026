@@ -75,9 +75,13 @@ Extraímos lógicas utilitárias complexas do frontend para hooks reutilizáveis
 
 ---
 
-## 11. Tela de Carregamento Premium de Partículas e Progresso Real (Opção E)
-- **Silhueta Precisa da Taça da Copa**: Substituímos as fórmulas matemáticas genéricas por um mapeamento detalhado da silhueta da Taça da Copa do Mundo FIFA (globo no topo, corpo curvo e estreito simulando as figuras humanas e a base escalonada).
-- **Faixas de Malaquita em Esmeralda**: Adicionamos o efeito degradê de cor nas partículas que formam as duas icônicas faixas de pedra malaquita na base da taça. Conforme as partículas se unem para consolidar o desenho, as faixas mudam gradualmente de dourado para verde-esmeralda.
-- **Progresso Real Sincronizado**: Vinculamos a animação das partículas e a barra de progresso linear dourada a um contador real de porcentagem de carregamento (0% a 100%) durante os 4,5 segundos. Ao atingir 100%, as partículas terminam de se alinhar no formato perfeito e nítido da taça, proporcionando uma transição suave e um efeito "wow" imediato antes da tela de login.
+## 11. Tela de Carregamento Premium da Opção E (Animada sobre Imagem Gerada)
+- **Integração com Imagem Oficial**: Salvamos a imagem da proposta visual gerada (`loading_option_e_1782353410630.png`) como o ativo oficial de carregamento do app (`public/loading_option_e.png`), garantindo que o visual final da taça 3D dourada e do fundo de veludo verde seja idêntico ao mockup.
+- **Efeito de Câmera Zoom Cinemático**: Adicionamos uma animação CSS `@keyframes cinematicZoom` na camada de fundo. A imagem começa ampliada e realiza um suave afastamento e estabilização de escala ao longo dos 4,5 segundos.
+- **Partículas de Fluido e Brilho em Tempo Real**: Adicionamos um canvas transparente sobre a imagem para simular o efeito do fluido líquido da taça:
+  - **Fagulhas à Esquerda**: Partículas douradas que brotam dinamicamente do lado esquerdo do globo da taça e sobem flutuando em arco para a esquerda, simulando respingos em movimento real-time.
+  - **Poeira Estelar de Fundo**: Partículas sutis flutuando em diferentes opacidades e tamanhos para dar profundidade espacial.
+  - **Sheen Sweep (Reflexo de Luz)**: Um reflexo vertical dourado metálico que desliza continuamente pelo corpo da taça.
+- **Card de Vidro Ocultando o Estático**: Posicionamos um card HTML glassmorphic nítido e responsivo sobre o card impresso na imagem de fundo, cobrindo-o perfeitamente e exibindo um spinner circular dourado animado sobre o título do Bolão.
 
 
