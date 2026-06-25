@@ -65,14 +65,20 @@ export function convertToBrasiliaDate(localDateStr, stadiumId) {
   }
 }
 
-// Parser robusto de data da API ("MM/DD/YYYY HH:mm") que funciona em TODOS os navegadores (inclusive iOS/Safari)
+// Parser robusto de data da API ("MM/DD/YYYY HH:mm" ou "YYYY-MM-DD HH:mm:ss") que funciona em TODOS os navegadores (inclusive iOS/Safari)
 export function parseApiDate(localDateStr) {
   if (!localDateStr) return new Date(0);
   try {
     const [datePart, timePart] = localDateStr.split(' ');
     if (!datePart || !timePart) return new Date(localDateStr);
-    const [month, day, year] = datePart.split('/');
-    return new Date(`${year}-${month}-${day}T${timePart}:00`);
+    
+    if (datePart.includes('/')) {
+      const [month, day, year] = datePart.split('/');
+      return new Date(`${year}-${month}-${day}T${timePart}`);
+    } else if (datePart.includes('-')) {
+      return new Date(`${datePart}T${timePart}`);
+    }
+    return new Date(localDateStr);
   } catch (e) {
     console.error('Erro ao fazer parse da data:', localDateStr, e);
     return new Date(localDateStr);
@@ -271,9 +277,10 @@ export async function getUpcomingMatches(limit = 15) {
 export function formatMatchDate(localDate) {
   const d = parseApiDate(localDate);
   const timePart = localDate && localDate.includes(' ') ? localDate.split(' ')[1] : '00:00';
+  const formattedTime = timePart ? timePart.slice(0, 5) : '00:00';
   return {
     date: d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }),
-    time: timePart || '00:00',
+    time: formattedTime,
     full: d,
   };
 }

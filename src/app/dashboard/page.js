@@ -33,6 +33,57 @@ const normalizeTeamName = (name) => {
     return n;
   };
 
+const convertToBrasiliaTime = (matchDate, matchTime, stadium) => {
+  if (!matchDate || !matchTime) return { date: matchDate, time: matchTime };
+  
+  let offset = 0;
+  const stad = (stadium || '').toLowerCase();
+  
+  if (stad.includes('vancouver') || stad.includes('seattle') || stad.includes('los angeles') || stad.includes('san francisco')) {
+    offset = 4;
+  } else if (stad.includes('cdmx') || stad.includes('mexico') || stad.includes('guadalajara')) {
+    offset = 3;
+  } else if (stad.includes('dallas') || stad.includes('houston') || stad.includes('kansas') || stad.includes('monterrey')) {
+    offset = 2;
+  } else if (stad.includes('atlanta') || stad.includes('miami') || stad.includes('ny') || stad.includes('new york') || stad.includes('philadelphia') || stad.includes('toronto') || stad.includes('boston')) {
+    offset = 1;
+  }
+  
+  try {
+    const [year, month, day] = matchDate.split('-').map(Number);
+    const [hours, minutes, seconds] = matchTime.split(':').map(Number);
+    
+    const dateObj = new Date(year, month - 1, day, hours, minutes, seconds || 0);
+    dateObj.setHours(dateObj.getHours() + offset);
+    
+    const yyyy = dateObj.getFullYear();
+    const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
+    const dd = String(dateObj.getDate()).padStart(2, '0');
+    const hh = String(dateObj.getHours()).padStart(2, '0');
+    const min = String(dateObj.getMinutes()).padStart(2, '0');
+    
+    return {
+      date: `${yyyy}-${mm}-${dd}`,
+      time: `${hh}:${min}:00`
+    };
+  } catch (e) {
+    console.error('Error converting timezone:', e);
+    return { date: matchDate, time: matchTime };
+  }
+};
+
+const formatMatchDateSafe = (dateStr) => {
+  if (!dateStr) return '';
+  try {
+    const parts = dateStr.split('-');
+    if (parts.length === 3) {
+      const [year, month, day] = parts;
+      return `${day}/${month}/${year}`;
+    }
+  } catch (e) {}
+  return dateStr;
+};
+
 // Helper to dynamically calculate points and results for bets based on current confrontos scores
 const getCalculatedBets = (betsData, confrontosList) => {
   if (!Array.isArray(betsData)) return [];
@@ -423,7 +474,15 @@ function DashboardContent() {
       allMatchesMap[m.id] = { ...m };
     });
     const complete = Object.values(allMatchesMap).sort((a, b) => a.id - b.id);
-    setConfrontos(complete);
+    const converted = complete.map(m => {
+      const { date, time } = convertToBrasiliaTime(m.match_date, m.match_time, m.stadium);
+      return {
+        ...m,
+        match_date: date,
+        match_time: time
+      };
+    });
+    setConfrontos(converted);
 
     const { data: bols } = await supabase.from('boloes').select('*');
     let mergedBols = bols || [];
@@ -2214,7 +2273,7 @@ function DashboardContent() {
                     <div className="matchup-card" key={match.id}>
                       <div className="matchup-meta">
                         <span>Grupo {match.grupo} • {match.stadium}</span>
-                        <span>{new Date(match.match_date).toLocaleDateString('pt-BR')} {match.match_time.slice(0, 5)}</span>
+                        <span>{formatMatchDateSafe(match.match_date)} {match.match_time.slice(0, 5)}</span>
                       </div>
                       <div className="matchup-teams-row">
                         <div className="matchup-team-item">
@@ -2607,7 +2666,7 @@ function DashboardContent() {
                     >
                       <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-muted)', marginBottom: '0.25rem', fontSize: '0.65rem' }}>
                         <span>Jogo #{g.id}</span>
-                        <span>{g.match_date}</span>
+                        <span>{formatMatchDateSafe(g.match_date)}</span>
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', justifyContent: 'space-between' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
@@ -2644,7 +2703,7 @@ function DashboardContent() {
                     >
                       <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-muted)', marginBottom: '0.25rem', fontSize: '0.65rem' }}>
                         <span>Jogo #{g.id}</span>
-                        <span>{g.match_date}</span>
+                        <span>{formatMatchDateSafe(g.match_date)}</span>
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', justifyContent: 'space-between' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
@@ -2681,7 +2740,7 @@ function DashboardContent() {
                     >
                       <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-muted)', marginBottom: '0.25rem', fontSize: '0.65rem' }}>
                         <span>Jogo #{g.id}</span>
-                        <span>{g.match_date}</span>
+                        <span>{formatMatchDateSafe(g.match_date)}</span>
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', justifyContent: 'space-between' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
@@ -2718,7 +2777,7 @@ function DashboardContent() {
                     >
                       <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-muted)', marginBottom: '0.25rem', fontSize: '0.65rem' }}>
                         <span>Jogo #{g.id}</span>
-                        <span>{g.match_date}</span>
+                        <span>{formatMatchDateSafe(g.match_date)}</span>
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', justifyContent: 'space-between' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
@@ -2757,7 +2816,7 @@ function DashboardContent() {
                     >
                       <div style={{ display: 'flex', justifyContent: 'space-between', color: '#D2A74F', fontWeight: 'bold', marginBottom: '0.25rem', fontSize: '0.65rem' }}>
                         <span>FINAL (Jogo #{g.id})</span>
-                        <span>{g.match_date}</span>
+                        <span>{formatMatchDateSafe(g.match_date)}</span>
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', justifyContent: 'space-between', fontWeight: 'bold' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
@@ -2791,7 +2850,7 @@ function DashboardContent() {
                     >
                       <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-muted)', marginBottom: '0.25rem', fontSize: '0.65rem' }}>
                         <span>3º Lugar (Jogo #{g.id})</span>
-                        <span>{g.match_date}</span>
+                        <span>{formatMatchDateSafe(g.match_date)}</span>
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', justifyContent: 'space-between' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
@@ -3285,7 +3344,7 @@ function DashboardContent() {
                                 }}>
                                   <div className="matchup-meta">
                                     <span>Jogo #{match.id} • {match.stadium}</span>
-                                    <span>{new Date(match.match_date).toLocaleDateString('pt-BR')} {match.match_time.slice(0, 5)}</span>
+                                    <span>{formatMatchDateSafe(match.match_date)} {match.match_time.slice(0, 5)}</span>
                                   </div>
                                   <div className="matchup-teams-row">
                                     <div className="matchup-team-item">

@@ -33,61 +33,19 @@ export default function MatchesTab({
   if (mode === 'results') {
     const finishedMatches = formattedMatches
       .filter(g => g.finished)
-      .sort((a, b) => parseInt(b.id) - parseInt(a.id)); // Mais recentes no topo
+      .sort((a, b) => {
+        const timeA = new Date(a.local_date).getTime();
+        const timeB = new Date(b.local_date).getTime();
+        if (timeA !== timeB) return timeB - timeA;
+        return parseInt(b.id) - parseInt(a.id);
+      }); // Mais recentes no topo
 
     return (
       <div>
-        <div style={{ marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          <div>
-            <h3 style={{ fontSize: '1.05rem', marginBottom: '0.2rem' }}>Resultados dos Jogos</h3>
-            <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Placares oficiais e consolidados do torneio</p>
-          </div>
-          {apiLive.length > 0 && (
-            <span style={{ 
-              background: '#ef4444', 
-              color: 'var(--text-primary)', 
-              fontSize: '0.65rem', 
-              fontWeight: 'bold', 
-              padding: '0.2rem 0.5rem', 
-              borderRadius: '999px', 
-              animation: 'pulse 1.5s infinite' 
-            }}>🔴 AO VIVO</span>
-          )}
+        <div style={{ marginBottom: '1.25rem' }}>
+          <h3 style={{ fontSize: '1.05rem', marginBottom: '0.2rem' }}>Resultados dos Jogos</h3>
+          <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Placares oficiais e consolidados do torneio</p>
         </div>
-
-        {/* Partidas ao vivo */}
-        {apiLive.map(g => {
-          const hFlag = g.home_code && g.home_code !== 'placeholder' ? g.home_code : getFlagCode(g.home_team_name_en);
-          const aFlag = g.away_code && g.away_code !== 'placeholder' ? g.away_code : getFlagCode(g.away_team_name_en);
-          return (
-            <div
-              className="matchup-card"
-              key={`live-${g.id}`}
-              style={{ borderColor: '#ef4444', boxShadow: '0 0 12px rgba(239,68,68,0.25)', cursor: 'pointer' }}
-              onClick={() => { setShowMatchModal(g); setMatchModalTab('palpites'); }}
-            >
-              <div className="matchup-meta">
-                <span style={{ color: '#ef4444', fontWeight: 'bold' }}>🔴 AO VIVO • Grupo {g.group}</span>
-                <span>{g.time_elapsed}</span>
-              </div>
-              <div className="matchup-teams-row">
-                <div className="matchup-team-item">
-                  <img src={`https://flagcdn.com/w80/${hFlag}.png`} className="team-flag" alt={g.home_team_name_en} />
-                  <span>{g.home_team_name_en}</span>
-                </div>
-                <div className="matchup-scores-center">
-                  <input type="number" className="score-field" value={g.home_score} readOnly />
-                  <span className="score-sep">x</span>
-                  <input type="number" className="score-field" value={g.away_score} readOnly />
-                </div>
-                <div className="matchup-team-item">
-                  <img src={`https://flagcdn.com/w80/${aFlag}.png`} className="team-flag" alt={g.away_team_name_en} />
-                  <span>{g.away_team_name_en}</span>
-                </div>
-              </div>
-            </div>
-          );
-        })}
 
         {/* Partidas finalizadas */}
         {apiLoading && finishedMatches.length === 0 ? (
@@ -147,6 +105,7 @@ export default function MatchesTab({
   if (mode === 'upcoming') {
     // Filtra confrontos pela fase selecionada
     const filteredMatches = formattedMatches.filter(g => {
+      if (g.finished) return false;
       const matchId = parseInt(g.id);
       if (selectedStage === 'grupos') return matchId <= 72;
       if (selectedStage === 'r32') return g.group === 'R32';
@@ -172,6 +131,59 @@ export default function MatchesTab({
           <h3 style={{ fontSize: '1.05rem', marginBottom: '0.2rem' }}>Confrontos da Copa</h3>
           <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Calendário de todos os confrontos oficiais do torneio</p>
         </div>
+
+        {/* Partidas ao vivo no topo dos confrontos */}
+        {apiLive.length > 0 && (
+          <div style={{ marginBottom: '1.5rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
+              <span style={{ 
+                background: '#ef4444', 
+                color: 'var(--text-primary)', 
+                fontSize: '0.65rem', 
+                fontWeight: 'bold', 
+                padding: '0.2rem 0.5rem', 
+                borderRadius: '999px', 
+                animation: 'pulse 1.5s infinite' 
+              }}>🔴 AO VIVO</span>
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Acompanhe em tempo real</span>
+            </div>
+            <div className="matchup-list">
+              {apiLive.map(g => {
+                const hFlag = g.home_code && g.home_code !== 'placeholder' ? g.home_code : getFlagCode(g.home_team_name_en);
+                const aFlag = g.away_code && g.away_code !== 'placeholder' ? g.away_code : getFlagCode(g.away_team_name_en);
+                return (
+                  <div
+                    className="matchup-card"
+                    key={`live-${g.id}`}
+                    style={{ borderColor: '#ef4444', boxShadow: '0 0 12px rgba(239,68,68,0.25)', cursor: 'pointer' }}
+                    onClick={() => { setShowMatchModal(g); setMatchModalTab('palpites'); }}
+                  >
+                    <div className="matchup-meta">
+                      <span style={{ color: '#ef4444', fontWeight: 'bold' }}>🔴 AO VIVO • Grupo {g.group}</span>
+                      <span>{g.time_elapsed}</span>
+                    </div>
+                    <div className="matchup-teams-row">
+                      <div className="matchup-team-item">
+                        <img src={`https://flagcdn.com/w80/${hFlag}.png`} className="team-flag" alt={g.home_team_name_en} />
+                        <span>{g.home_team_name_en}</span>
+                      </div>
+                      <div className="matchup-scores-center">
+                        <input type="number" className="score-field" value={g.home_score} readOnly style={{ width: '30px', textAlign: 'center' }} />
+                        <span className="score-sep">x</span>
+                        <input type="number" className="score-field" value={g.away_score} readOnly style={{ width: '30px', textAlign: 'center' }} />
+                      </div>
+                      <div className="matchup-team-item">
+                        <img src={`https://flagcdn.com/w80/${aFlag}.png`} className="team-flag" alt={g.away_team_name_en} />
+                        <span>{g.away_team_name_en}</span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            <hr style={{ border: '0', height: '1px', background: 'rgba(255,255,255,0.08)', marginTop: '1.5rem', marginBottom: '1.5rem' }} />
+          </div>
+        )}
 
         {/* Seletor de Fases (Scroll horizontal) */}
         <div style={{

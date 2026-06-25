@@ -55,14 +55,43 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Nenhum confronto encontrado no banco.' }, { status: 404 });
     }
 
-    const allApiGames = await fetchAllGames(true);
+    const allApiGames = await fetchAllGames(true); // Cronograma completo
+    let espnGames = [];
+    try {
+      espnGames = await fetchAllGames(false); // Jogos de hoje da ESPN com placares
+    } catch (e) {
+      console.error('Recalculate: erro ao carregar jogos da ESPN:', e);
+    }
+
     if (!allApiGames || allApiGames.length === 0) {
-      return NextResponse.json({ error: 'Erro ao buscar jogos na ESPN API.' }, { status: 500 });
+      return NextResponse.json({ error: 'Erro ao buscar dados na API do cronograma.' }, { status: 500 });
+    }
+
+    // Mescla os placares da ESPN no cronograma completo (allApiGames)
+    if (espnGames && espnGames.length > 0) {
+      allApiGames.forEach(g => {
+        if (g.home_team_name_en && g.away_team_name_en && 
+            normalizeTeamName(g.home_team_name_en) !== 'tbd' && 
+            normalizeTeamName(g.away_team_name_en) !== 'tbd') {
+            
+          const espnMatch = espnGames.find(eg =>
+            normalizeTeamName(eg.home_team_name_en) === normalizeTeamName(g.home_team_name_en) &&
+            normalizeTeamName(eg.away_team_name_en) === normalizeTeamName(g.away_team_name_en)
+          );
+          
+          if (espnMatch) {
+            g.finished = espnMatch.finished;
+            g.home_score = espnMatch.home_score;
+            g.away_score = espnMatch.away_score;
+            g.time_elapsed = espnMatch.time_elapsed;
+          }
+        }
+      });
     }
 
     const changedConfrontos = [];
     
-    // Atualiza confrontos com base na ESPN
+    // Atualiza confrontos com base no cronograma mesclado
     const updatedConfrontos = currentConfs.map(c => {
       let apiGame = null;
       if (c.id <= 72) {
@@ -102,9 +131,10 @@ export async function POST(request) {
           isDifferent = true;
         }
 
-        if (apiGame.finished === 'TRUE') {
-          const apiHomeScore = apiGame.home_score !== null && apiGame.home_score !== undefined ? parseInt(apiGame.home_score) : null;
-          const apiAwayScore = apiGame.away_score !== null && apiGame.away_score !== undefined ? parseInt(apiGame.away_score) : null;
+        const apiFinishedVal = apiGame.finished === 'TRUE' || apiGame.finished === true;
+        if (apiFinishedVal) {
+          const apiHomeScore = apiGame.home_score !== null && apiGame.home_score !== undefined && String(apiGame.home_score) !== 'null' ? parseInt(apiGame.home_score) : null;
+          const apiAwayScore = apiGame.away_score !== null && apiGame.away_score !== undefined && String(apiGame.away_score) !== 'null' ? parseInt(apiGame.away_score) : null;
           
           if (apiHomeScore !== null && apiAwayScore !== null && (c.home_score !== apiHomeScore || c.away_score !== apiAwayScore || !c.finished)) {
             nextHomeScore = apiHomeScore;
@@ -113,11 +143,25 @@ export async function POST(request) {
             isDifferent = true;
           }
         } else {
-          if ((c.home_score !== null || c.away_score !== null) && !c.finished) {
-            nextHomeScore = null;
-            nextAwayScore = null;
-            nextFinished = false;
-            isDifferent = true;
+          // Se o jogo não está finalizado na API mas já está finalizado no banco, NÃO reverte!
+          if (!c.finished) {
+            const apiHomeScore = apiGame.home_score !== null && apiGame.home_score !== undefined && String(apiGame.home_score) !== 'null' && String(apiGame.home_score).trim() !== '' ? parseInt(apiGame.home_score) : null;
+            const apiAwayScore = apiGame.away_score !== null && apiGame.away_score !== undefined && String(apiGame.away_score) !== 'null' && String(apiGame.away_score).trim() !== '' ? parseInt(apiGame.away_score) : null;
+            
+            if (apiHomeScore !== null && apiAwayScore !== null) {
+              if (c.home_score !== apiHomeScore || c.away_score !== apiAwayScore) {
+                nextHomeScore = apiHomeScore;
+                nextAwayScore = apiAwayScore;
+                isDifferent = true;
+              }
+            } else {
+              // Limpa se o placar ainda não foi registrado e a API também não tem placar
+              if (c.home_score !== null || c.away_score !== null) {
+                nextHomeScore = null;
+                nextAwayScore = null;
+                isDifferent = true;
+              }
+            }
           }
         }
 
