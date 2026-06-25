@@ -73,4 +73,11 @@ Extraímos lógicas utilitárias complexas do frontend para hooks reutilizáveis
 - **Sincronização Total (Fases Anteriores)**: Ajustamos a função `fetchAllGames` em [worldcupApi.js](file:///c:/Users/nosre/OneDrive/Documentos/GitHub/bolao-copa-2026/src/lib/worldcupApi.js) para aceitar o parâmetro `forceWorldCupApi`. Quando acionado no painel de administração, o sistema faz o bypass da ESPN e consulta diretamente a listagem completa de 104 confrontos na API do WorldCup26.ir.
 - **Resolução de Restaurações**: Desta forma, se o administrador precisar restaurar/limpar o banco de dados e recalcular os pontos, clicar em "Recalcular" irá re-sincronizar e preencher imediatamente **todos os jogos já finalizados** desde o início do torneio, e não apenas os jogos do dia corrente.
 
+---
+
+## 11. Tela de Carregamento Premium de Partículas e Progresso Real (Opção E)
+- **Silhueta Precisa da Taça da Copa**: Substituímos as fórmulas matemáticas genéricas por um mapeamento detalhado da silhueta da Taça da Copa do Mundo FIFA (globo no topo, corpo curvo e estreito simulando as figuras humanas e a base escalonada).
+- **Faixas de Malaquita em Esmeralda**: Adicionamos o efeito degradê de cor nas partículas que formam as duas icônicas faixas de pedra malaquita na base da taça. Conforme as partículas se unem para consolidar o desenho, as faixas mudam gradualmente de dourado para verde-esmeralda.
+- **Progresso Real Sincronizado**: Vinculamos a animação das partículas e a barra de progresso linear dourada a um contador real de porcentagem de carregamento (0% a 100%) durante os 4,5 segundos. Ao atingir 100%, as partículas terminam de se alinhar no formato perfeito e nítido da taça, proporcionando uma transição suave e um efeito "wow" imediato antes da tela de login.
+
 
