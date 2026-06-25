@@ -2495,8 +2495,8 @@ function DashboardContent() {
         {activeTab === 'placares_geral' && (
           <MatchesTab
             mode="results"
+            confrontos={confrontos}
             apiLive={apiLive}
-            apiFinished={apiFinished}
             apiLoading={apiLoading}
             getFlagCode={getFlagCode}
             formatMatchDate={formatMatchDate}
@@ -2508,7 +2508,7 @@ function DashboardContent() {
         {activeTab === 'confrontos_geral' && (
           <MatchesTab
             mode="upcoming"
-            apiUpcoming={apiUpcoming}
+            confrontos={confrontos}
             apiLoading={apiLoading}
             getFlagCode={getFlagCode}
             formatMatchDate={formatMatchDate}
