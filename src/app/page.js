@@ -7,6 +7,136 @@ import { getFlagCode, formatMatchDate } from '@/lib/worldcupApi';
 import { supabase, defaultUsuarios, isSupabaseConfigured } from '@/lib/supabase';
 import { useChampion, CHAMPIONS } from '@/components/ChampionProvider';
 
+const ParticleCanvas = () => {
+  const canvasRef = React.useRef(null);
+
+  React.useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    
+    let animationFrameId;
+    let width = (canvas.width = window.innerWidth);
+    let height = (canvas.height = window.innerHeight);
+
+    const handleResize = () => {
+      if (!canvas) return;
+      width = canvas.width = window.innerWidth;
+      height = canvas.height = window.innerHeight;
+    };
+    window.addEventListener('resize', handleResize);
+
+    class Particle {
+      constructor() {
+        this.reset(true);
+      }
+
+      reset(init = false) {
+        this.x = init ? Math.random() * width : (Math.random() > 0.5 ? 0 : width);
+        this.y = init ? Math.random() * height : (Math.random() > 0.5 ? 0 : height);
+        this.size = Math.random() * 2 + 1;
+        this.speedX = (Math.random() - 0.5) * 1.2;
+        this.speedY = (Math.random() - 0.5) * 1.2;
+        this.alpha = Math.random() * 0.5 + 0.3;
+        this.attracted = Math.random() < 0.6;
+        this.angle = Math.random() * Math.PI * 2;
+      }
+
+      update(time) {
+        if (this.attracted) {
+          const centerX = width / 2;
+          const centerY = height / 2 - 80;
+          
+          const targetYOffset = (this.angle % 6) * 15 - 45;
+          let targetXOffset = 0;
+          
+          if (targetYOffset < -20) {
+            targetXOffset = Math.sin(this.angle) * 35;
+          } else if (targetYOffset < 15) {
+            targetXOffset = Math.sin(this.angle * 2) * 8;
+          } else {
+            targetXOffset = (this.angle % 2 === 0 ? -30 : 30) * Math.random();
+          }
+
+          if (Math.sin(this.angle) > 0.8 && targetYOffset < -10 && targetYOffset > -40) {
+            targetXOffset = (this.angle % 2 === 0 ? -50 : 50);
+          }
+          
+          const targetX = centerX + targetXOffset;
+          const targetY = centerY + targetYOffset;
+
+          const dx = targetX - this.x;
+          const dy = targetY - this.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+
+          if (dist > 5) {
+            this.x += (dx / dist) * 2.5;
+            this.y += (dy / dist) * 2.5;
+          } else {
+            this.x += Math.sin(time * 0.05 + this.angle) * 0.2;
+            this.y += Math.cos(time * 0.05 + this.angle) * 0.2;
+          }
+        } else {
+          this.x += this.speedX + Math.sin(time * 0.01 + this.y * 0.01) * 0.5;
+          this.y += this.speedY + Math.cos(time * 0.01 + this.x * 0.01) * 0.5;
+
+          if (this.x < 0 || this.x > width || this.y < 0 || this.y > height) {
+            this.reset();
+          }
+        }
+      }
+
+      draw() {
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(210, 167, 79, ${this.alpha})`;
+        ctx.shadowBlur = 6;
+        ctx.shadowColor = 'rgba(210, 167, 79, 0.8)';
+        ctx.fill();
+        ctx.restore();
+      }
+    }
+
+    const particles = Array.from({ length: 150 }, () => new Particle());
+
+    let time = 0;
+    const animate = () => {
+      time++;
+      ctx.fillStyle = 'rgba(6, 21, 12, 0.15)';
+      ctx.fillRect(0, 0, width, height);
+
+      particles.forEach(p => {
+        p.update(time);
+        p.draw();
+      });
+
+      animationFrameId = requestAnimationFrame(animate);
+    };
+
+    animate();
+
+    return () => {
+      cancelAnimationFrame(animationFrameId);
+      window.removeEventListener('resize', handleResize);
+    };
+  }, []);
+
+  return (
+    <canvas
+      ref={canvasRef}
+      style={{
+        position: 'absolute',
+        inset: 0,
+        width: '100%',
+        height: '100%',
+        zIndex: 1,
+        pointerEvents: 'none'
+      }}
+    />
+  );
+};
+
 export default function Home() {
   const { theme } = useChampion();
   const activeChampionObj = CHAMPIONS[theme] || CHAMPIONS['brasil'];
@@ -224,10 +354,10 @@ export default function Home() {
     <>
       {/* Loading Splash Screen */}
       {loading && (
-        <div className="splash-screen">
-          <div className="splash-logo-container">
+        <div className="splash-screen" style={{ overflow: 'hidden' }}>
+          <ParticleCanvas />
+          <div className="splash-logo-container" style={{ zIndex: 2 }}>
             <div className="logo-glow"></div>
-            {/* Trophy icon with no white border - use filter drop-shadow instead of boxShadow */}
             <img
               src="/icons/icon-512.png"
               className="splash-logo-img"
@@ -239,13 +369,36 @@ export default function Home() {
                 borderRadius: '16px',
                 background: 'transparent',
                 mixBlendMode: 'normal',
-                filter: 'drop-shadow(0 0 24px rgba(251,191,36,0.6))'
+                filter: 'drop-shadow(0 0 24px rgba(251,191,36,0.6))',
+                animation: 'pulseGlow 2.5s infinite ease-in-out'
               }}
             />
           </div>
-          <h2>BOLÃO COPA 2026</h2>
-          <span>Carregando...</span>
-          <div className="loader"></div>
+          <h2 style={{ zIndex: 2, textShadow: '0 2px 10px rgba(0,0,0,0.5)' }}>BOLÃO COPA 2026</h2>
+          <span style={{ zIndex: 2, textShadow: '0 1px 5px rgba(0,0,0,0.5)' }}>Carregando...</span>
+          
+          {/* Elegant gold progress bar indicator */}
+          <div style={{
+            width: '180px',
+            height: '3px',
+            background: 'rgba(255,255,255,0.08)',
+            borderRadius: '999px',
+            overflow: 'hidden',
+            position: 'relative',
+            zIndex: 2,
+            marginTop: '1rem'
+          }}>
+            <div style={{
+              position: 'absolute',
+              left: 0,
+              top: 0,
+              height: '100%',
+              width: '100%',
+              background: 'linear-gradient(90deg, #D2A74F, #FBBF24, #D2A74F)',
+              animation: 'shimmerProgressBar 1.8s infinite linear',
+              borderRadius: '999px'
+            }} />
+          </div>
         </div>
       )}
 

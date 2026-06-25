@@ -76,6 +76,11 @@ body {
     to { transform: rotate(360deg); }
 }
 
+@keyframes shimmerProgressBar {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+
 /* Splash/Loading Screen */
 .splash-screen {
     position: absolute;
