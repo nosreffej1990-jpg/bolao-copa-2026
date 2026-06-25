@@ -47,23 +47,36 @@ const ParticleCanvas = () => {
           const centerX = width / 2;
           const centerY = height / 2 - 80;
           
-          const targetYOffset = (this.angle % 6) * 15 - 45;
-          let targetXOffset = 0;
+          const seed = this.angle;
+          const step = Math.abs(Math.sin(seed * 100)) * 120 - 60; // -60 to 60
           
-          if (targetYOffset < -20) {
-            targetXOffset = Math.sin(this.angle) * 35;
-          } else if (targetYOffset < 15) {
-            targetXOffset = Math.sin(this.angle * 2) * 8;
+          let tx = 0;
+          let ty = step;
+
+          if (ty < -20) {
+            // Globe at the top
+            const r = 28;
+            tx = Math.sin(seed * Math.PI * 2) * r;
+            ty = -35 + Math.cos(seed * Math.PI * 2) * r * 0.7;
+          } else if (ty < 25) {
+            // Stem
+            const w = 5 + Math.pow(Math.abs(ty - 5), 1.6) * 0.08;
+            tx = Math.sin(seed * Math.PI) > 0 ? w : -w;
           } else {
-            targetXOffset = (this.angle % 2 === 0 ? -30 : 30) * Math.random();
+            // Base
+            const baseW = ty > 45 ? 42 : 28;
+            tx = (Math.sin(seed * Math.PI) > 0 ? baseW : -baseW) * Math.random();
           }
 
-          if (Math.sin(this.angle) > 0.8 && targetYOffset < -10 && targetYOffset > -40) {
-            targetXOffset = (this.angle % 2 === 0 ? -50 : 50);
+          // Handles (ears)
+          if (Math.cos(seed * 9) > 0.45 && ty > -35 && ty < 0) {
+            const side = Math.sin(seed * 3) > 0 ? 1 : -1;
+            const angleVal = ((ty + 35) / 35) * Math.PI;
+            tx = side * (26 + Math.sin(angleVal) * 16);
           }
           
-          const targetX = centerX + targetXOffset;
-          const targetY = centerY + targetYOffset;
+          const targetX = centerX + tx;
+          const targetY = centerY + ty;
 
           const dx = targetX - this.x;
           const dy = targetY - this.y;
@@ -73,8 +86,8 @@ const ParticleCanvas = () => {
             this.x += (dx / dist) * 2.5;
             this.y += (dy / dist) * 2.5;
           } else {
-            this.x += Math.sin(time * 0.05 + this.angle) * 0.2;
-            this.y += Math.cos(time * 0.05 + this.angle) * 0.2;
+            this.x += Math.sin(time * 0.05 + this.angle) * 0.25;
+            this.y += Math.cos(time * 0.05 + this.angle) * 0.25;
           }
         } else {
           this.x += this.speedX + Math.sin(time * 0.01 + this.y * 0.01) * 0.5;
@@ -162,7 +175,7 @@ export default function Home() {
   const router = useRouter();
 
   useEffect(() => {
-    const timer = setTimeout(() => setLoading(false), 2000);
+    const timer = setTimeout(() => setLoading(false), 4500);
 
     // PWA setup
     if (typeof window !== 'undefined') {
@@ -356,23 +369,13 @@ export default function Home() {
       {loading && (
         <div className="splash-screen" style={{ overflow: 'hidden' }}>
           <ParticleCanvas />
-          <div className="splash-logo-container" style={{ zIndex: 2 }}>
-            <div className="logo-glow"></div>
-            <img
-              src="/icons/icon-512.png"
-              className="splash-logo-img"
-              alt="Logo Oficial"
-              style={{
-                width: '150px',
-                height: '150px',
-                objectFit: 'contain',
-                borderRadius: '16px',
-                background: 'transparent',
-                mixBlendMode: 'normal',
-                filter: 'drop-shadow(0 0 24px rgba(251,191,36,0.6))',
-                animation: 'pulseGlow 2.5s infinite ease-in-out'
-              }}
-            />
+          <div className="splash-logo-container" style={{ zIndex: 2, height: '140px' }}>
+            <div className="logo-glow" style={{
+              width: '180px',
+              height: '180px',
+              background: 'radial-gradient(circle, rgba(251, 191, 36, 0.2) 0%, transparent 70%)',
+              animation: 'pulseGlow 2.5s infinite ease-in-out'
+            }}></div>
           </div>
           <h2 style={{ zIndex: 2, textShadow: '0 2px 10px rgba(0,0,0,0.5)' }}>BOLÃO COPA 2026</h2>
           <span style={{ zIndex: 2, textShadow: '0 1px 5px rgba(0,0,0,0.5)' }}>Carregando...</span>
