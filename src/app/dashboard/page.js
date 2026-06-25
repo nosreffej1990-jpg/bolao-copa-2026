@@ -419,11 +419,21 @@ function DashboardContent() {
   const fetchData = async () => {
     let confs;
     const isSb = typeof window !== 'undefined' && localStorage.getItem('copa26_sandbox') === 'true';
-    if (isSb && typeof window !== 'undefined' && localStorage.getItem('copa26_confrontos_sandbox')) {
-      try {
-        confs = JSON.parse(localStorage.getItem('copa26_confrontos_sandbox'));
-      } catch (e) {
-        console.error('Erro ao ler sandbox confrontos:', e);
+    if (isSb && typeof window !== 'undefined') {
+      const sbConfsRaw = localStorage.getItem('copa26_confrontos_sandbox');
+      if (sbConfsRaw) {
+        try {
+          const parsedSb = JSON.parse(sbConfsRaw) || [];
+          const firstSb = parsedSb.find(c => c.id === 1);
+          if (firstSb && firstSb.match_time !== '16:00:00') {
+            localStorage.setItem('copa26_confrontos_sandbox', JSON.stringify(defaultConfrontos));
+            confs = JSON.parse(JSON.stringify(defaultConfrontos));
+          } else {
+            confs = parsedSb;
+          }
+        } catch (e) {
+          console.error('Erro ao ler sandbox confrontos:', e);
+        }
       }
     }
     
