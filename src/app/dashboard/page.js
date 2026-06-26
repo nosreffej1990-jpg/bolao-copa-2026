@@ -417,6 +417,13 @@ function DashboardContent() {
   };
 
   const fetchData = async () => {
+    // Sincronização automática antes de carregar os dados para garantir placares atualizados
+    try {
+      await fetch('/api/sync', { method: 'POST' });
+    } catch (e) {
+      console.error('Erro no auto-sync', e);
+    }
+
     let confs;
     const isSb = typeof window !== 'undefined' && localStorage.getItem('copa26_sandbox') === 'true';
     if (isSb && typeof window !== 'undefined') {
@@ -2715,6 +2722,7 @@ function DashboardContent() {
           <MatchesTab
             mode="upcoming"
             confrontos={confrontos}
+            apiLive={apiLive}
             apiLoading={apiLoading}
             getFlagCode={getFlagCode}
             formatMatchDate={formatMatchDate}

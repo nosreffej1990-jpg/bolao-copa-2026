@@ -248,6 +248,9 @@ export default function Home() {
 
   const fetchLiveMatches = async () => {
     try {
+      // Dispara a sincronização de pontos e mata-mata em background silenciosamente
+      fetch('/api/sync', { method: 'POST' }).catch(() => {});
+
       const res = await fetch('/api/games', { cache: 'no-store' });
       if (!res.ok) return;
       const data = await res.json();
@@ -820,40 +823,37 @@ export default function Home() {
                     <Icons.ChevronRight size={18} style={{ color: 'var(--accent-gold)', cursor: 'pointer' }} onClick={() => handleDirectNavigate('confrontos_geral')} />
                   </div>
                   <div style={{ display: 'flex', gap: '0.85rem', overflowX: 'auto', paddingBottom: '0.5rem', width: '100%', scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}>
-                    {upcomingMatches.map((g, idx) => (
-                      <div key={idx} style={{
-                        minWidth: '200px',
-                        background: 'linear-gradient(135deg, rgba(251, 191, 36, 0.18) 0%, rgba(212, 160, 23, 0.08) 100%)',
-                        border: '1px solid rgba(251, 191, 36, 0.35)',
-                        borderRadius: '16px',
-                        padding: '0.85rem',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        gap: '0.5rem',
-                        boxSizing: 'border-box',
-                        boxShadow: '0 4px 20px rgba(251, 191, 36, 0.08)'
-                      }}>
-                        <span style={{ fontSize: '0.65rem', fontWeight: 'bold', color: '#FBBF24' }}>
-                          {formatMatchDate(g.local_date).date} {g.local_date && g.local_date.includes(' ') ? g.local_date.split(' ')[1].slice(0, 5) : ''}
-                        </span>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'center', width: '100%' }}>
-                          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1, gap: '0.2rem' }}>
-                            <img src={`https://flagcdn.com/w40/${getFlagCode(g.home_team_name_en)}.png`} style={{ width: '26px', height: '17px', objectFit: 'cover', borderRadius: '2px' }} alt="" />
-                            <span style={{ fontSize: '0.7rem', fontWeight: 'bold', color: '#fff', textAlign: 'center', maxWidth: '65px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                              {g.home_team_name_en}
-                            </span>
+                    {upcomingMatches.map((g, idx) => {
+                      const hFlag = getFlagCode(g.home_team_name_en);
+                      const aFlag = getFlagCode(g.away_team_name_en);
+                      const parsedDate = formatMatchDate(g.local_date);
+                      
+                      return (
+                        <div key={idx} className="matchup-card" style={{
+                          minWidth: '280px',
+                          cursor: 'pointer',
+                          flexShrink: 0
+                        }} onClick={() => handleDirectNavigate('confrontos_geral')}>
+                          <div className="matchup-meta">
+                            <span>Fase {g.group || 'Grupos'}</span>
+                            <span style={{ color: 'var(--accent-gold)' }}>{parsedDate.date} {parsedDate.time}</span>
                           </div>
-                          <span style={{ fontSize: '0.7rem', color: '#FBBF24', fontWeight: '900' }}>VS</span>
-                          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1, gap: '0.2rem' }}>
-                            <img src={`https://flagcdn.com/w40/${getFlagCode(g.away_team_name_en)}.png`} style={{ width: '26px', height: '17px', objectFit: 'cover', borderRadius: '2px' }} alt="" />
-                            <span style={{ fontSize: '0.7rem', fontWeight: 'bold', color: '#fff', textAlign: 'center', maxWidth: '65px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                              {g.away_team_name_en}
-                            </span>
+                          <div className="matchup-teams-row">
+                            <div className="matchup-team-item">
+                              <img src={`https://flagcdn.com/w80/${hFlag}.png`} className="team-flag" alt={g.home_team_name_en} />
+                              <span>{g.home_team_name_en}</span>
+                            </div>
+                            <div className="matchup-scores-center">
+                              <span style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', fontWeight: '900', opacity: 0.6 }}>VS</span>
+                            </div>
+                            <div className="matchup-team-item">
+                              <img src={`https://flagcdn.com/w80/${aFlag}.png`} className="team-flag" alt={g.away_team_name_en} />
+                              <span>{g.away_team_name_en}</span>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                     {upcomingMatches.length === 0 && (
                       <div style={{ color: 'var(--text-secondary)', fontSize: '0.75rem', width: '100%', textAlign: 'center', padding: '1rem' }}>
                         Nenhum jogo próximo agendado
