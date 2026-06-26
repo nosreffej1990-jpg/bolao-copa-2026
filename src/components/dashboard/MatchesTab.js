@@ -8,9 +8,11 @@ export default function MatchesTab({
   getFlagCode,
   formatMatchDate,
   setShowMatchModal,
-  setMatchModalTab
+  setMatchModalTab,
+  defaultStage = 'grupos',
+  hideGroups = false
 }) {
-  const [selectedStage, setSelectedStage] = useState('grupos');
+  const [selectedStage, setSelectedStage] = useState(defaultStage);
 
   // Normaliza os confrontos do banco para o formato esperado pelo layout
   const formattedMatches = (confrontos || []).map(c => {
@@ -116,7 +118,7 @@ export default function MatchesTab({
       return false;
     });
 
-    const stages = [
+    let stages = [
       { id: 'grupos', label: 'Grupos' },
       { id: 'r32', label: '1/16' },
       { id: 'r16', label: 'Oitavas' },
@@ -125,12 +127,19 @@ export default function MatchesTab({
       { id: 'final', label: 'Finais' }
     ];
 
+    if (hideGroups) {
+      stages = stages.filter(s => s.id !== 'grupos');
+    }
+
     return (
       <div>
-        <div style={{ marginBottom: '1.25rem' }}>
-          <h3 style={{ fontSize: '1.05rem', marginBottom: '0.2rem' }}>Confrontos da Copa</h3>
-          <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Calendário de todos os confrontos oficiais do torneio</p>
-        </div>
+        {/* Renderização de cabeçalho dependendo de hideGroups */}
+        {!hideGroups && (
+          <div style={{ marginBottom: '1.25rem' }}>
+            <h3 style={{ fontSize: '1.05rem', marginBottom: '0.2rem' }}>Confrontos da Copa</h3>
+            <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Calendário de todos os confrontos oficiais do torneio</p>
+          </div>
+        )}
 
         {/* Partidas ao vivo no topo dos confrontos */}
         {apiLive.length > 0 && (

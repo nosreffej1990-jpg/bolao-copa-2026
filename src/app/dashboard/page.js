@@ -2078,6 +2078,89 @@ function DashboardContent() {
 
   const groupsList = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L'];
 
+  const simulatedConfrontos = useMemo(() => {
+    if (activeTab !== 'simulador_fases') return [];
+    const completeConfs = getCompleteConfs(confrontos);
+    const standings = calculateGroupStandings(completeConfs);
+    const winners = {};
+    const runnersUp = {};
+    const thirdPlaced = [];
+
+    standings.forEach(g => {
+      const gName = g.group;
+      if (g.teams && g.teams.length >= 3) {
+        winners[gName] = g.teams[0].team;
+        runnersUp[gName] = g.teams[1].team;
+        thirdPlaced.push({
+          team: g.teams[2].team,
+          points: g.teams[2].points,
+          goalDifference: g.teams[2].goalDifference || g.teams[2].goal_difference,
+          gf: g.teams[2].gf
+        });
+      }
+    });
+
+    thirdPlaced.sort((a, b) => {
+      if (b.points !== a.points) return b.points - a.points;
+      if (b.goalDifference !== a.goalDifference) return b.goalDifference - a.goalDifference;
+      if (b.gf !== a.gf) return b.gf - a.gf;
+      return a.team.localeCompare(b.team);
+    });
+
+    const qualified3rds = thirdPlaced.slice(0, 8);
+    const assigned3rds = assign3rdPlacedTeams(qualified3rds);
+
+    return completeConfs.map(m => {
+      if (m.id >= 73 && m.id <= 88) {
+        let home = m.home_team;
+        let away = m.away_team;
+        
+        if (m.id === 73) home = runnersUp['A'];
+        else if (m.id === 74) home = winners['E'];
+        else if (m.id === 75) home = winners['F'];
+        else if (m.id === 76) home = winners['C'];
+        else if (m.id === 77) home = winners['I'];
+        else if (m.id === 78) home = runnersUp['E'];
+        else if (m.id === 79) home = winners['A'];
+        else if (m.id === 80) home = winners['L'];
+        else if (m.id === 81) home = winners['D'];
+        else if (m.id === 82) home = winners['G'];
+        else if (m.id === 83) home = runnersUp['K'];
+        else if (m.id === 84) home = winners['H'];
+        else if (m.id === 85) home = winners['B'];
+        else if (m.id === 86) home = winners['J'];
+        else if (m.id === 87) home = winners['K'];
+        else if (m.id === 88) home = runnersUp['D'];
+
+        if (m.id === 73) away = runnersUp['B'];
+        else if (m.id === 74) away = assigned3rds[74]?.team || 'A definir';
+        else if (m.id === 75) away = runnersUp['C'];
+        else if (m.id === 76) away = runnersUp['F'];
+        else if (m.id === 77) away = assigned3rds[77]?.team || 'A definir';
+        else if (m.id === 78) away = runnersUp['I'];
+        else if (m.id === 79) away = assigned3rds[79]?.team || 'A definir';
+        else if (m.id === 80) away = assigned3rds[80]?.team || 'A definir';
+        else if (m.id === 81) away = assigned3rds[81]?.team || 'A definir';
+        else if (m.id === 82) away = assigned3rds[82]?.team || 'A definir';
+        else if (m.id === 83) away = runnersUp['L'];
+        else if (m.id === 84) away = runnersUp['J'];
+        else if (m.id === 85) away = assigned3rds[85]?.team || 'A definir';
+        else if (m.id === 86) away = runnersUp['H'];
+        else if (m.id === 87) away = assigned3rds[87]?.team || 'A definir';
+        else if (m.id === 88) away = runnersUp['G'];
+
+        return {
+          ...m,
+          home_team: home || 'A definir',
+          away_team: away || 'A definir',
+          home_code: getFlagCode(home) || 'placeholder',
+          away_code: getFlagCode(away) || 'placeholder',
+        };
+      }
+      return m;
+    });
+  }, [confrontos, activeTab]);
+
   return (
     <div className="dashboard-container" style={{ 
       paddingTop: sandboxMode ? '100px' : '68px',
@@ -2293,6 +2376,22 @@ function DashboardContent() {
             >
               <Icons.Calendar size={18} />
               <span>Próximos Confrontos</span>
+            </button>
+
+            <button
+              className={`drawer-link ${activeTab === 'terceiros' ? 'active' : ''}`}
+              onClick={() => { setActiveTab('terceiros'); setIsDrawerOpen(false); }}
+            >
+              <Icons.List size={18} />
+              <span>3º Colocados (Ao Vivo)</span>
+            </button>
+
+            <button
+              className={`drawer-link ${activeTab === 'simulador_fases' ? 'active' : ''}`}
+              onClick={() => { setActiveTab('simulador_fases'); setIsDrawerOpen(false); }}
+            >
+              <Icons.GitBranch size={18} />
+              <span>Próximas Fases (Simulador)</span>
             </button>
 
             {((currentUser && (currentUserRole === 'Admin' || currentUserRole === 'Moderador')) || mataMataPublic) && (
@@ -2729,6 +2828,108 @@ function DashboardContent() {
             setShowMatchModal={setShowMatchModal}
             setMatchModalTab={setMatchModalTab}
           />
+        )}
+
+        {activeTab === 'simulador_fases' && (
+          <div className="tab-pane active" style={{ animation: 'fadeIn 0.4s ease-out' }}>
+            <div style={{ marginBottom: '1.25rem' }}>
+              <h3 style={{ fontSize: '1.1rem', marginBottom: '0.2rem', color: '#D2A74F' }}>Próximas Fases (Simulador)</h3>
+              <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                Projeção dos confrontos de mata-mata com base na classificação atual (tempo real) da fase de grupos.
+              </p>
+            </div>
+            
+            <MatchesTab
+              mode="upcoming"
+              confrontos={simulatedConfrontos}
+              apiLive={apiLiveMatches}
+              onMatchClick={(m) => {
+                setShowMatchModal(m);
+                setMatchModalTab(m.finished ? 'detalhes' : 'palpites');
+              }}
+              defaultStage="1/16"
+              hideGroups={true}
+            />
+          </div>
+        )}
+
+        {activeTab === 'terceiros' && (
+          <div>
+            <div style={{ marginBottom: '1rem' }}>
+              <h3 style={{ fontSize: '1.05rem', marginBottom: '0.2rem', color: '#D2A74F' }}>3º Colocados (Ao Vivo)</h3>
+              <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Ranking em tempo real dos terceiros colocados. Os 8 melhores avançam.</p>
+            </div>
+            {confrontos.length === 0 ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem', padding: '1rem' }}>
+                <div className="skeleton" style={{ height: '80px', width: '100%', borderRadius: '12px' }}></div>
+              </div>
+            ) : (() => {
+              const localGroups = calculateGroupStandings(confrontos);
+              const thirdPlaced = [];
+              localGroups.forEach(g => {
+                if (g.teams && g.teams.length >= 3) {
+                  thirdPlaced.push({
+                    team: g.teams[2].team,
+                    group: g.group || g.name,
+                    played: g.teams[2].played,
+                    won: g.teams[2].won,
+                    drawn: g.teams[2].drawn,
+                    lost: g.teams[2].lost,
+                    gf: g.teams[2].gf,
+                    goalDifference: g.teams[2].goalDifference || g.teams[2].goal_difference,
+                    points: g.teams[2].points
+                  });
+                }
+              });
+              thirdPlaced.sort((a, b) => {
+                if (b.points !== a.points) return b.points - a.points;
+                if (b.goalDifference !== a.goalDifference) return b.goalDifference - a.goalDifference;
+                if (b.gf !== a.gf) return b.gf - a.gf;
+                return a.team.localeCompare(b.team);
+              });
+
+              return (
+                <div style={{ overflowX: 'auto', background: 'var(--bg-card)', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.75rem' }}>
+                    <thead>
+                      <tr style={{ borderBottom: '1px solid var(--border-color)' }}>
+                        {['Pos','País','Gr','J','V','E','D','SG','Pts'].map(h => (
+                          <th key={h} style={{ padding: '0.6rem 0.4rem', color: h === 'Pts' ? 'var(--accent-gold)' : 'var(--text-secondary)', textAlign: h === 'País' ? 'left' : 'center' }}>{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {thirdPlaced.map((t, idx) => {
+                        const isQualifying = idx < 8;
+                        return (
+                          <tr key={t.team} style={{ 
+                            borderBottom: '1px solid rgba(255,255,255,0.04)', 
+                            background: isQualifying ? 'rgba(16,185,129,0.05)' : 'transparent',
+                            opacity: isQualifying ? 1 : 0.6
+                          }}>
+                            <td style={{ padding: '0.7rem 0.4rem', color: isQualifying ? 'var(--accent-gold)' : 'var(--text-secondary)', fontWeight: 'bold', textAlign: 'center' }}>{idx+1}º</td>
+                            <td style={{ padding: '0.7rem 0.4rem', fontWeight: '600' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                <img src={`https://flagcdn.com/w40/${getFlagCode(t.team)}.png`} style={{ width: '22px', borderRadius: '2px' }} alt="" />
+                                <span>{t.team}</span>
+                              </div>
+                            </td>
+                            <td style={{ textAlign: 'center', padding: '0.7rem 0.4rem', color: 'var(--text-secondary)' }}>{t.group}</td>
+                            <td style={{ textAlign: 'center', padding: '0.7rem 0.4rem' }}>{t.played ?? '-'}</td>
+                            <td style={{ textAlign: 'center', padding: '0.7rem 0.4rem' }}>{t.won ?? '-'}</td>
+                            <td style={{ textAlign: 'center', padding: '0.7rem 0.4rem' }}>{t.drawn ?? '-'}</td>
+                            <td style={{ textAlign: 'center', padding: '0.7rem 0.4rem' }}>{t.lost ?? '-'}</td>
+                            <td style={{ textAlign: 'center', padding: '0.7rem 0.4rem' }}>{t.goalDifference ?? '-'}</td>
+                            <td style={{ textAlign: 'center', padding: '0.7rem 0.4rem', fontWeight: '900', color: '#D2A74F' }}>{t.points ?? '-'}</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              );
+            })()}
+          </div>
         )}
 
         {activeTab === 'grupos' && (
