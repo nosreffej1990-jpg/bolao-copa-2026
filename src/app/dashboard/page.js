@@ -2080,85 +2080,91 @@ function DashboardContent() {
 
   const simulatedConfrontos = useMemo(() => {
     if (activeTab !== 'simulador_fases') return [];
-    const completeConfs = getCompleteConfs(confrontos);
-    const standings = calculateGroupStandings(completeConfs);
-    const winners = {};
-    const runnersUp = {};
-    const thirdPlaced = [];
+    if (!confrontos || confrontos.length === 0) return [];
+    try {
+      const completeConfs = getCompleteConfs(confrontos);
+      const standings = calculateGroupStandings(completeConfs);
+      const winners = {};
+      const runnersUp = {};
+      const thirdPlaced = [];
 
-    standings.forEach(g => {
-      const gName = g.group;
-      if (g.teams && g.teams.length >= 3) {
-        winners[gName] = g.teams[0].team;
-        runnersUp[gName] = g.teams[1].team;
-        thirdPlaced.push({
-          team: g.teams[2].team,
-          points: g.teams[2].points,
-          goalDifference: g.teams[2].goalDifference || g.teams[2].goal_difference,
-          gf: g.teams[2].gf
-        });
-      }
-    });
+      standings.forEach(g => {
+        const gName = g.group || g.name;
+        if (g.teams && g.teams.length >= 3) {
+          winners[gName] = g.teams[0]?.team;
+          runnersUp[gName] = g.teams[1]?.team;
+          thirdPlaced.push({
+            team: g.teams[2]?.team || '',
+            points: g.teams[2]?.points || 0,
+            goalDifference: g.teams[2]?.goalDifference || g.teams[2]?.goal_difference || 0,
+            gf: g.teams[2]?.gf || 0
+          });
+        }
+      });
 
-    thirdPlaced.sort((a, b) => {
-      if (b.points !== a.points) return b.points - a.points;
-      if (b.goalDifference !== a.goalDifference) return b.goalDifference - a.goalDifference;
-      if (b.gf !== a.gf) return b.gf - a.gf;
-      return a.team.localeCompare(b.team);
-    });
+      thirdPlaced.sort((a, b) => {
+        if (b.points !== a.points) return b.points - a.points;
+        if (b.goalDifference !== a.goalDifference) return b.goalDifference - a.goalDifference;
+        if (b.gf !== a.gf) return b.gf - a.gf;
+        return (a.team || '').localeCompare(b.team || '');
+      });
 
-    const qualified3rds = thirdPlaced.slice(0, 8);
-    const assigned3rds = assign3rdPlacedTeams(qualified3rds);
+      const qualified3rds = thirdPlaced.slice(0, 8);
+      const assigned3rds = assign3rdPlacedTeams(qualified3rds) || {};
 
-    return completeConfs.map(m => {
-      if (m.id >= 73 && m.id <= 88) {
-        let home = m.home_team;
-        let away = m.away_team;
-        
-        if (m.id === 73) home = runnersUp['A'];
-        else if (m.id === 74) home = winners['E'];
-        else if (m.id === 75) home = winners['F'];
-        else if (m.id === 76) home = winners['C'];
-        else if (m.id === 77) home = winners['I'];
-        else if (m.id === 78) home = runnersUp['E'];
-        else if (m.id === 79) home = winners['A'];
-        else if (m.id === 80) home = winners['L'];
-        else if (m.id === 81) home = winners['D'];
-        else if (m.id === 82) home = winners['G'];
-        else if (m.id === 83) home = runnersUp['K'];
-        else if (m.id === 84) home = winners['H'];
-        else if (m.id === 85) home = winners['B'];
-        else if (m.id === 86) home = winners['J'];
-        else if (m.id === 87) home = winners['K'];
-        else if (m.id === 88) home = runnersUp['D'];
+      return completeConfs.map(m => {
+        if (m.id >= 73 && m.id <= 88) {
+          let home = m.home_team;
+          let away = m.away_team;
+          
+          if (m.id === 73) home = runnersUp['A'];
+          else if (m.id === 74) home = winners['E'];
+          else if (m.id === 75) home = winners['F'];
+          else if (m.id === 76) home = winners['C'];
+          else if (m.id === 77) home = winners['I'];
+          else if (m.id === 78) home = runnersUp['E'];
+          else if (m.id === 79) home = winners['A'];
+          else if (m.id === 80) home = winners['L'];
+          else if (m.id === 81) home = winners['D'];
+          else if (m.id === 82) home = winners['G'];
+          else if (m.id === 83) home = runnersUp['K'];
+          else if (m.id === 84) home = winners['H'];
+          else if (m.id === 85) home = winners['B'];
+          else if (m.id === 86) home = winners['J'];
+          else if (m.id === 87) home = winners['K'];
+          else if (m.id === 88) home = runnersUp['D'];
 
-        if (m.id === 73) away = runnersUp['B'];
-        else if (m.id === 74) away = assigned3rds[74]?.team || 'A definir';
-        else if (m.id === 75) away = runnersUp['C'];
-        else if (m.id === 76) away = runnersUp['F'];
-        else if (m.id === 77) away = assigned3rds[77]?.team || 'A definir';
-        else if (m.id === 78) away = runnersUp['I'];
-        else if (m.id === 79) away = assigned3rds[79]?.team || 'A definir';
-        else if (m.id === 80) away = assigned3rds[80]?.team || 'A definir';
-        else if (m.id === 81) away = assigned3rds[81]?.team || 'A definir';
-        else if (m.id === 82) away = assigned3rds[82]?.team || 'A definir';
-        else if (m.id === 83) away = runnersUp['L'];
-        else if (m.id === 84) away = runnersUp['J'];
-        else if (m.id === 85) away = assigned3rds[85]?.team || 'A definir';
-        else if (m.id === 86) away = runnersUp['H'];
-        else if (m.id === 87) away = assigned3rds[87]?.team || 'A definir';
-        else if (m.id === 88) away = runnersUp['G'];
+          if (m.id === 73) away = runnersUp['B'];
+          else if (m.id === 74) away = assigned3rds[74]?.team || 'A definir';
+          else if (m.id === 75) away = runnersUp['C'];
+          else if (m.id === 76) away = runnersUp['F'];
+          else if (m.id === 77) away = assigned3rds[77]?.team || 'A definir';
+          else if (m.id === 78) away = runnersUp['I'];
+          else if (m.id === 79) away = assigned3rds[79]?.team || 'A definir';
+          else if (m.id === 80) away = assigned3rds[80]?.team || 'A definir';
+          else if (m.id === 81) away = assigned3rds[81]?.team || 'A definir';
+          else if (m.id === 82) away = assigned3rds[82]?.team || 'A definir';
+          else if (m.id === 83) away = runnersUp['L'];
+          else if (m.id === 84) away = runnersUp['J'];
+          else if (m.id === 85) away = assigned3rds[85]?.team || 'A definir';
+          else if (m.id === 86) away = runnersUp['H'];
+          else if (m.id === 87) away = assigned3rds[87]?.team || 'A definir';
+          else if (m.id === 88) away = runnersUp['G'];
 
-        return {
-          ...m,
-          home_team: home || 'A definir',
-          away_team: away || 'A definir',
-          home_code: getFlagCode(home) || 'placeholder',
-          away_code: getFlagCode(away) || 'placeholder',
-        };
-      }
-      return m;
-    });
+          return {
+            ...m,
+            home_team: home || 'A definir',
+            away_team: away || 'A definir',
+            home_code: getFlagCode(home) || 'placeholder',
+            away_code: getFlagCode(away) || 'placeholder',
+          };
+        }
+        return m;
+      });
+    } catch (err) {
+      console.error('Error in simulatedConfrontos', err);
+      return confrontos || [];
+    }
   }, [confrontos, activeTab]);
 
   return (
@@ -2847,7 +2853,7 @@ function DashboardContent() {
                 setShowMatchModal(m);
                 setMatchModalTab(m.finished ? 'detalhes' : 'palpites');
               }}
-              defaultStage="1/16"
+              defaultStage="r32"
               hideGroups={true}
             />
           </div>
@@ -2885,7 +2891,7 @@ function DashboardContent() {
                 if (b.points !== a.points) return b.points - a.points;
                 if (b.goalDifference !== a.goalDifference) return b.goalDifference - a.goalDifference;
                 if (b.gf !== a.gf) return b.gf - a.gf;
-                return a.team.localeCompare(b.team);
+                return (a.team || '').localeCompare(b.team || '');
               });
 
               return (
