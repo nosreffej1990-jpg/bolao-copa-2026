@@ -2848,11 +2848,12 @@ function DashboardContent() {
             <MatchesTab
               mode="upcoming"
               confrontos={simulatedConfrontos}
-              apiLive={apiLiveMatches}
-              onMatchClick={(m) => {
-                setShowMatchModal(m);
-                setMatchModalTab(m.finished ? 'detalhes' : 'palpites');
-              }}
+              apiLive={apiLive}
+              apiLoading={apiLoading}
+              getFlagCode={getFlagCode}
+              formatMatchDate={formatMatchDate}
+              setShowMatchModal={setShowMatchModal}
+              setMatchModalTab={setMatchModalTab}
               defaultStage="r32"
               hideGroups={true}
             />
