@@ -77,6 +77,18 @@ export async function POST(request) {
       return NextResponse.json({ success: true });
     }
 
+    if (action === 'revokeUser') {
+      const { targetUserId, phaseField } = body;
+      const isSelfRevoke = String(user.id) === String(targetUserId);
+      const isAdminOrModUser = user.role === 'Admin' || user.role === 'Moderador';
+      if (!isAdminOrModUser && !isSelfRevoke) {
+        return NextResponse.json({ error: 'Acesso negado' }, { status: 403 });
+      }
+      const { error } = await supabaseServer.from('usuarios').update({ [phaseField]: false }).eq('id', targetUserId);
+      if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+      return NextResponse.json({ success: true });
+    }
+
     const isAdminOrMod = user.role === 'Admin' || user.role === 'Moderador';
     if (!isAdminOrMod) {
       return NextResponse.json({ error: 'Acesso negado' }, { status: 403 });
@@ -92,13 +104,6 @@ export async function POST(request) {
     if (action === 'approveUser') {
       const { targetUserId, phaseField } = body;
       const { error } = await supabaseServer.from('usuarios').update({ [phaseField]: true }).eq('id', targetUserId);
-      if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-      return NextResponse.json({ success: true });
-    }
-
-    if (action === 'revokeUser') {
-      const { targetUserId, phaseField } = body;
-      const { error } = await supabaseServer.from('usuarios').update({ [phaseField]: false }).eq('id', targetUserId);
       if (error) return NextResponse.json({ error: error.message }, { status: 500 });
       return NextResponse.json({ success: true });
     }

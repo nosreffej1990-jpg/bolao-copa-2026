@@ -27,12 +27,31 @@ export async function POST(request) {
     const isAdminOrMod = user.role === 'Admin' || user.role === 'Moderador';
     const isAdmin = user.role === 'Admin';
 
-    if (!isAdminOrMod) {
+    // Permite que o próprio jogador envie seu próprio palpite (bolão) do mata-mata
+    const isSelfInsert = action === 'insertBolao' && username === body.username;
+
+    if (!isAdminOrMod && !isSelfInsert) {
       return NextResponse.json({ error: 'Acesso negado. Apenas Admin ou Moderador' }, { status: 403 });
     }
 
     if (action === 'insertBolao') {
       const { bettorName, photoUrl, betsData, avatarUrl } = body;
+      
+      let phaseField = 'approved_r32';
+      if (betsData && betsData.length > 0) {
+        const firstMatchId = betsData[0]?.match_id;
+        if (firstMatchId >= 89 && firstMatchId <= 96) phaseField = 'approved_r16';
+        else if (firstMatchId >= 97 && firstMatchId <= 100) phaseField = 'approved_qf';
+        else if (firstMatchId >= 101 && firstMatchId <= 102) phaseField = 'approved_sf';
+        else if (firstMatchId >= 103 && firstMatchId <= 104) phaseField = 'approved_final';
+      }
+
+      // Se for um jogador comum, verifica se ele está aprovado para esta fase
+      if (!isAdminOrMod) {
+        if (!user[phaseField]) {
+          return NextResponse.json({ error: 'Você não tem liberação para apostar nesta fase. Realize o pagamento e envie o comprovante.' }, { status: 403 });
+        }
+      }
       
       const { data, error } = await supabaseServer.from('boloes').insert({
         username,
@@ -43,6 +62,12 @@ export async function POST(request) {
       }).select();
 
       if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+      // Se for jogador comum, revoga o acesso imediatamente após o sucesso
+      if (!isAdminOrMod) {
+        await supabaseServer.from('usuarios').update({ [phaseField]: false }).eq('id', user.id);
+      }
+
       return NextResponse.json({ success: true, data });
     }
 
