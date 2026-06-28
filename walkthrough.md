@@ -84,4 +84,11 @@ Extraímos lógicas utilitárias complexas do frontend para hooks reutilizáveis
   - **Sheen Sweep (Reflexo de Luz)**: Um reflexo vertical dourado metálico que desliza continuamente pelo corpo da taça.
 - **Overlay Perfeito do Spinner**: Removemos o card HTML duplicado. Como a imagem original já contém o lindo card de vidro e todos os textos em alta resolução, posicionamos o spinner dourado animado em HTML via coordenadas absolutas (`top: 70.3%` e `left: 50%`) exatamente em cima do círculo estático da imagem, dando vida e rotação ao loader oficial de forma nativa e sem desalinhamento.
 
+---
+
+## 12. Sincronização do Mata-mata (Fase R32) e Correção de Banco de Dados
+- **Ajuste de VARCHAR na Coluna Grupo**: Corrigimos o tipo da coluna `grupo` na tabela `confrontos` no script [schema.sql](file:///C:/Users/nosre/OneDrive/Documentos/GitHub/bolao-copa-2026/schema.sql) de `VARCHAR(2)` para `VARCHAR(10)`. Isso permite salvar e atualizar os jogos do mata-mata correspondentes a `'R32'`, `'R16'`, `'THIRD'` e `'FINAL'` sem truncamento ou erros do PostgreSQL.
+- **Auto-Sincronização Local Fallback**: Modificamos a função `fetchData` no arquivo [page.js](file:///C:/Users/nosre/OneDrive/Documentos/GitHub/bolao-copa-2026/src/app/dashboard/page.js) para detectar se a aplicação está rodando em modo sandbox ou local sem conexão ativa com o Supabase. Caso o servidor não esteja configurado, o cliente realiza a sincronização dos dados da API diretamente no navegador e atualiza o `localStorage` com os confrontos oficiais do Round of 32 (R32) de forma 100% transparente.
+
+
 

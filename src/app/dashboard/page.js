@@ -418,14 +418,161 @@ function DashboardContent() {
 
   const fetchData = async () => {
     // Sincronização automática antes de carregar os dados para garantir placares atualizados
-    try {
-      await fetch('/api/sync', { method: 'POST' });
-    } catch (e) {
-      console.error('Erro no auto-sync', e);
+    const isSb = typeof window !== 'undefined' && localStorage.getItem('copa26_sandbox') === 'true';
+    if (isSupabaseConfigured && !isSb) {
+      try {
+        await fetch('/api/sync', { method: 'POST' });
+      } catch (e) {
+        console.error('Erro no auto-sync', e);
+      }
+    } else {
+      // Sincronização local automática para LocalStorage / Sandbox
+      try {
+        const allApiGames = await fetchAllGames(true); // Cronograma completo
+        if (allApiGames && allApiGames.length > 0) {
+          let espnGames = [];
+          try {
+            espnGames = await fetchAllGames(false); // ESPN
+          } catch (e) {
+            console.error('Auto local sync: erro ao buscar ESPN:', e);
+          }
+
+          // Mescla ESPN no cronograma
+          if (espnGames && espnGames.length > 0) {
+            allApiGames.forEach(g => {
+              if (g.home_team_name_en && g.away_team_name_en && 
+                  normalizeTeamName(g.home_team_name_en) !== 'tbd' && 
+                  normalizeTeamName(g.away_team_name_en) !== 'tbd') {
+                const espnMatch = espnGames.find(eg =>
+                  normalizeTeamName(eg.home_team_name_en) === normalizeTeamName(g.home_team_name_en) &&
+                  normalizeTeamName(eg.away_team_name_en) === normalizeTeamName(g.away_team_name_en)
+                );
+                if (espnMatch) {
+                  g.finished = espnMatch.finished;
+                  g.home_score = espnMatch.home_score;
+                  g.away_score = espnMatch.away_score;
+                  g.time_elapsed = espnMatch.time_elapsed;
+                }
+              }
+            });
+          }
+
+          const storageKey = isSb ? 'copa26_confrontos_sandbox' : 'copa26_confrontos';
+          let localConfs = [];
+          if (typeof window !== 'undefined' && localStorage.getItem(storageKey)) {
+            localConfs = JSON.parse(localStorage.getItem(storageKey));
+          } else {
+            localConfs = JSON.parse(JSON.stringify(defaultConfrontos));
+          }
+
+          let updated = false;
+          const nextConfs = localConfs.map(c => {
+            const defConf = defaultConfrontos.find(d => d.id === c.id);
+            let isDifferent = false;
+            let nextDate = c.match_date;
+            let nextTime = c.match_time;
+
+            if (defConf && (c.match_date !== defConf.match_date || c.match_time !== defConf.match_time)) {
+              nextDate = defConf.match_date;
+              nextTime = defConf.match_time;
+              isDifferent = true;
+            }
+
+            let apiGame = null;
+            if (c.id <= 72) {
+              apiGame = allApiGames.find(g =>
+                normalizeTeamName(g.home_team_name_en) === normalizeTeamName(c.home_team) &&
+                normalizeTeamName(g.away_team_name_en) === normalizeTeamName(c.away_team)
+              );
+            } else {
+              apiGame = allApiGames.find(g => String(g.id) === String(c.id));
+            }
+
+            let nextHomeScore = c.home_score;
+            let nextAwayScore = c.away_score;
+            let nextFinished = c.finished;
+            let nextHomeTeam = c.home_team;
+            let nextAwayTeam = c.away_team;
+            let nextHomeCode = c.home_code;
+            let nextAwayCode = c.away_code;
+
+            if (apiGame) {
+              const apiHomeName = apiGame.home_team_name_en && apiGame.home_team_name_en !== '0' && apiGame.home_team_name_en !== '' 
+                ? apiGame.home_team_name_en 
+                : (apiGame.home_team_label || c.home_team);
+              const apiAwayName = apiGame.away_team_name_en && apiGame.away_team_name_en !== '0' && apiGame.away_team_name_en !== '' 
+                ? apiGame.away_team_name_en 
+                : (apiGame.away_team_label || c.away_team);
+
+              if (c.id >= 73 && (apiHomeName !== c.home_team || apiAwayName !== c.away_team)) {
+                nextHomeTeam = apiHomeName;
+                nextAwayTeam = apiAwayName;
+                nextHomeCode = getFlagCode(apiHomeName) || 'placeholder';
+                nextAwayCode = getFlagCode(apiAwayName) || 'placeholder';
+                isDifferent = true;
+              }
+
+              const apiFinishedVal = apiGame.finished === 'TRUE' || apiGame.finished === true;
+              if (apiFinishedVal) {
+                const apiHomeScore = apiGame.home_score !== null && apiGame.home_score !== undefined && String(apiGame.home_score) !== 'null' ? parseInt(apiGame.home_score) : null;
+                const apiAwayScore = apiGame.away_score !== null && apiGame.away_score !== undefined && String(apiGame.away_score) !== 'null' ? parseInt(apiGame.away_score) : null;
+                
+                if (apiHomeScore !== null && apiAwayScore !== null && (c.home_score !== apiHomeScore || c.away_score !== apiAwayScore || !c.finished)) {
+                  nextHomeScore = apiHomeScore;
+                  nextAwayScore = apiAwayScore;
+                  nextFinished = true;
+                  isDifferent = true;
+                }
+              } else {
+                if (!c.finished) {
+                  const apiHomeScore = apiGame.home_score !== null && apiGame.home_score !== undefined && String(apiGame.home_score) !== 'null' && String(apiGame.home_score).trim() !== '' ? parseInt(apiGame.home_score) : null;
+                  const apiAwayScore = apiGame.away_score !== null && apiGame.away_score !== undefined && String(apiGame.away_score) !== 'null' && String(apiGame.away_score).trim() !== '' ? parseInt(apiGame.away_score) : null;
+                  
+                  if (apiHomeScore !== null && apiAwayScore !== null) {
+                    if (c.home_score !== apiHomeScore || c.away_score !== apiAwayScore) {
+                      nextHomeScore = apiHomeScore;
+                      nextAwayScore = apiAwayScore;
+                      isDifferent = true;
+                    }
+                  } else {
+                    if (c.home_score !== null || c.away_score !== null) {
+                      nextHomeScore = null;
+                      nextAwayScore = null;
+                      isDifferent = true;
+                    }
+                  }
+                }
+              }
+            }
+
+            if (isDifferent) {
+              updated = true;
+              return {
+                ...c,
+                match_date: nextDate,
+                match_time: nextTime,
+                home_team: nextHomeTeam,
+                away_team: nextAwayTeam,
+                home_code: nextHomeCode,
+                away_code: nextAwayCode,
+                home_score: nextHomeScore,
+                away_score: nextAwayScore,
+                finished: nextFinished
+              };
+            }
+            return c;
+          });
+
+          if (updated && typeof window !== 'undefined') {
+            localStorage.setItem(storageKey, JSON.stringify(nextConfs));
+          }
+        }
+      } catch (err) {
+        console.error('Erro na sincronização local automática:', err);
+      }
     }
 
     let confs;
-    const isSb = typeof window !== 'undefined' && localStorage.getItem('copa26_sandbox') === 'true';
     if (isSb && typeof window !== 'undefined') {
       const sbConfsRaw = localStorage.getItem('copa26_confrontos_sandbox');
       if (sbConfsRaw) {

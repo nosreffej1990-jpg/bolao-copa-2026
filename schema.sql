@@ -4,7 +4,7 @@
 -- 1. Tabela de Confrontos (Jogos da Copa 2026)
 CREATE TABLE IF NOT EXISTS public.confrontos (
     id SERIAL PRIMARY KEY,
-    grupo VARCHAR(2) NOT NULL, -- A, B, C, D, E, F, G, H, I, J, K, L
+    grupo VARCHAR(10) NOT NULL, -- A, B, C, D, E, F, G, H, I, J, K, L, R32, R16, QF, SF, THIRD, FINAL
     home_team VARCHAR(50) NOT NULL,
     home_code VARCHAR(10) NOT NULL, -- Código ISO da bandeira
     away_team VARCHAR(50) NOT NULL,
