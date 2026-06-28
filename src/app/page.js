@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Icons } from '@/components/Icons';
-import { getFlagCode, formatMatchDate } from '@/lib/worldcupApi';
+import { getFlagCode, formatMatchDate, fetchAllGames } from '@/lib/worldcupApi';
 import { supabase, defaultUsuarios, isSupabaseConfigured } from '@/lib/supabase';
 import { useChampion, CHAMPIONS } from '@/components/ChampionProvider';
 
@@ -251,24 +251,47 @@ export default function Home() {
       // Dispara a sincronização de pontos e mata-mata em background silenciosamente
       fetch('/api/sync', { method: 'POST' }).catch(() => {});
 
-      const res = await fetch('/api/games', { cache: 'no-store' });
-      if (!res.ok) return;
-      const data = await res.json();
-      const games = data.games || [];
+      const games = await fetchAllGames();
+      if (!games || games.length === 0) return;
+
       const live = games.filter(g =>
         g.finished === 'FALSE' &&
         g.time_elapsed !== 'notstarted' &&
         g.time_elapsed !== 'finished'
-      );
+      ).map(g => {
+        const homeName = g.home_team_name_en && g.home_team_name_en !== '0' && g.home_team_name_en !== 'tbd' ? g.home_team_name_en : (g.home_team_label || 'A definir');
+        const awayName = g.away_team_name_en && g.away_team_name_en !== '0' && g.away_team_name_en !== 'tbd' ? g.away_team_name_en : (g.away_team_label || 'A definir');
+        return {
+          ...g,
+          home_team_name_en: homeName,
+          away_team_name_en: awayName
+        };
+      });
       setLiveMatches(live);
 
       const upcoming = games.filter(g =>
         g.finished === 'FALSE' &&
         (g.time_elapsed === 'notstarted' || !g.time_elapsed)
-      );
+      ).map(g => {
+        const homeName = g.home_team_name_en && g.home_team_name_en !== '0' && g.home_team_name_en !== 'tbd' ? g.home_team_name_en : (g.home_team_label || 'A definir');
+        const awayName = g.away_team_name_en && g.away_team_name_en !== '0' && g.away_team_name_en !== 'tbd' ? g.away_team_name_en : (g.away_team_label || 'A definir');
+        return {
+          ...g,
+          home_team_name_en: homeName,
+          away_team_name_en: awayName
+        };
+      });
+
+      // Ordenar por data ascendente para mostrar os próximos cronologicamente
+      upcoming.sort((a, b) => {
+        const dateA = new Date(a.local_date);
+        const dateB = new Date(b.local_date);
+        return dateA - dateB;
+      });
+
       setUpcomingMatches(upcoming.slice(0, 3));
     } catch (e) {
-      // silently fail - live scores are optional
+      console.error('Error fetching live matches on landing page:', e);
     }
   };
 
