@@ -44,7 +44,7 @@ export async function POST(request) {
         password: regPassword,
         whatsapp: regWhatsapp,
         role: 'Jogador',
-        approved: false
+        approved: true
       };
 
       const { data, error } = await supabaseServer.from('usuarios').insert(newUser).select();
@@ -104,6 +104,29 @@ export async function POST(request) {
     if (action === 'approveUser') {
       const { targetUserId, phaseField } = body;
       const { error } = await supabaseServer.from('usuarios').update({ [phaseField]: true }).eq('id', targetUserId);
+      if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+      return NextResponse.json({ success: true });
+    }
+
+    if (action === 'deleteUser') {
+      if (user.role !== 'Admin') {
+        return NextResponse.json({ error: 'Apenas Administradores podem excluir usuários.' }, { status: 403 });
+      }
+      const { targetUserId } = body;
+      const { error } = await supabaseServer.from('usuarios').delete().eq('id', targetUserId);
+      if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+      return NextResponse.json({ success: true });
+    }
+
+    if (action === 'editUser') {
+      const { targetUserId, newUsername, newRole, newWhatsapp, newPassword } = body;
+      const updates = {};
+      if (newUsername !== undefined) updates.username = newUsername;
+      if (newRole !== undefined) updates.role = newRole;
+      if (newWhatsapp !== undefined) updates.whatsapp = newWhatsapp;
+      if (newPassword !== undefined) updates.password = newPassword;
+
+      const { error } = await supabaseServer.from('usuarios').update(updates).eq('id', targetUserId);
       if (error) return NextResponse.json({ error: error.message }, { status: 500 });
       return NextResponse.json({ success: true });
     }

@@ -221,6 +221,11 @@ function DashboardContent() {
   const [boloes, setBoloes] = useState([]);
   const [usersList, setUsersList] = useState([]);
   const [selectedPlayerDetails, setSelectedPlayerDetails] = useState(null);
+  const [editingUser, setEditingUser] = useState(null);
+  const [editUsername, setEditUsername] = useState('');
+  const [editWhatsapp, setEditWhatsapp] = useState('');
+  const [editRole, setEditRole] = useState('');
+  const [editUserPassword, setEditUserPassword] = useState('');
   const [expandedSection, setExpandedSection] = useState(null); // 'grupos', 'matamata'
   const [allowGroupUpload, setAllowGroupUpload] = useState(true);
   const [allowDrawerMenu, setAllowDrawerMenu] = useState(true);
@@ -1125,6 +1130,80 @@ function DashboardContent() {
       }
     } catch (e) {
       console.error('Erro ao suspender acesso:', e);
+    }
+  };
+
+  const handleDeleteUser = async (userId, targetUsername) => {
+    const confirmDelete = window.confirm(`⚠️ Tem certeza de que deseja excluir permanentemente o usuário "${targetUsername}"? Esta ação não pode ser desfeita.`);
+    if (!confirmDelete) return;
+
+    try {
+      const password = localStorage.getItem('copa26_pass') || '';
+      const response = await fetch('/api/usuarios', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'deleteUser',
+          username: currentUser,
+          password,
+          targetUserId: userId
+        })
+      });
+      const data = await response.json();
+      if (response.ok && data.success) {
+        showToast('Usuário excluído com sucesso! 🗑️');
+        fetchData();
+      } else {
+        alert(data.error || 'Erro ao excluir usuário.');
+      }
+    } catch (e) {
+      console.error('Erro ao excluir usuário:', e);
+      alert('Erro de conexão ao excluir.');
+    }
+  };
+
+  const handleStartEditUser = (userObj) => {
+    setEditingUser(userObj);
+    setEditUsername(userObj.username || '');
+    setEditWhatsapp(userObj.whatsapp || '');
+    setEditRole(userObj.role || 'Jogador');
+    setEditUserPassword(userObj.password || '');
+  };
+
+  const handleSaveEditUser = async () => {
+    if (!editingUser) return;
+    if (!editUsername.trim()) {
+      alert('Nome de usuário não pode ser vazio!');
+      return;
+    }
+
+    try {
+      const password = localStorage.getItem('copa26_pass') || '';
+      const response = await fetch('/api/usuarios', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'editUser',
+          username: currentUser,
+          password,
+          targetUserId: editingUser.id,
+          newUsername: editUsername.trim(),
+          newRole: editRole,
+          newWhatsapp: editWhatsapp.trim(),
+          newPassword: editUserPassword.trim()
+        })
+      });
+      const data = await response.json();
+      if (response.ok && data.success) {
+        showToast('Usuário atualizado com sucesso! ✏️');
+        setEditingUser(null);
+        fetchData();
+      } else {
+        alert(data.error || 'Erro ao atualizar usuário.');
+      }
+    } catch (e) {
+      console.error('Erro ao atualizar usuário:', e);
+      alert('Erro de conexão ao atualizar.');
     }
   };
 
@@ -3415,12 +3494,13 @@ function DashboardContent() {
                         {stages.map(s => (
                           <th key={s.key} style={{ padding: '0.75rem 1rem', textAlign: 'center', color: 'var(--text-secondary)' }}>{s.label}</th>
                         ))}
+                        <th style={{ padding: '0.75rem 1rem', textAlign: 'center', color: 'var(--text-secondary)' }}>Ações</th>
                       </tr>
                     </thead>
                     <tbody>
                       {usersList.length === 0 ? (
                         <tr>
-                          <td colSpan="9" style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-secondary)' }}>
+                          <td colSpan="10" style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-secondary)' }}>
                             Nenhum jogador registrado no sistema.
                           </td>
                         </tr>
@@ -3493,6 +3573,30 @@ function DashboardContent() {
                                 </td>
                               );
                             })}
+                            <td style={{ padding: '0.75rem 1rem', textAlign: 'center' }}>
+                              <div style={{ display: 'flex', gap: '0.4rem', justifyContent: 'center', alignItems: 'center' }}>
+                                <button
+                                  onClick={() => handleStartEditUser(u)}
+                                  style={{
+                                    padding: '0.25rem 0.5rem', borderRadius: '4px', border: '1px solid var(--accent-gold)',
+                                    background: 'transparent', color: 'var(--accent-gold)', cursor: 'pointer', fontSize: '0.65rem'
+                                  }}
+                                >
+                                  ✏ Editar
+                                </button>
+                                {u.role !== 'Admin' && (
+                                  <button
+                                    onClick={() => handleDeleteUser(u.id, u.username)}
+                                    style={{
+                                      padding: '0.25rem 0.5rem', borderRadius: '4px', border: '1px solid #ef4444',
+                                      background: 'transparent', color: '#f87171', cursor: 'pointer', fontSize: '0.65rem'
+                                    }}
+                                  >
+                                    🗑 Excluir
+                                  </button>
+                                )}
+                              </div>
+                            </td>
                           </tr>
                         ))
                       )}
@@ -3585,6 +3689,91 @@ function DashboardContent() {
                 ))}
               </div>
             </div>
+
+            {editingUser && (
+              <div className="modal-overlay" style={{
+                position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+                background: 'rgba(0,0,0,0.85)', display: 'flex', justifyContent: 'center', alignItems: 'center',
+                zIndex: 9999, padding: '1rem'
+              }}>
+                <div style={{
+                  background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '16px',
+                  padding: '1.5rem', width: '100%', maxWidth: '400px', display: 'flex', flexDirection: 'column', gap: '1rem',
+                  boxShadow: '0 8px 32px rgba(0, 0, 0, 0.5)'
+                }}>
+                  <h3 style={{ fontSize: '1.1rem', color: 'var(--accent-gold)', marginBottom: '0.2rem', textAlign: 'center' }}>
+                    Editar Jogador
+                  </h3>
+                  
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                    <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', textAlign: 'left' }}>Usuário</label>
+                    <input
+                      type="text"
+                      className="input-palpite"
+                      style={{ width: '100%', padding: '0.5rem', background: '#111827', border: '1px solid var(--border-color)', borderRadius: '8px', color: '#fff' }}
+                      value={editUsername}
+                      onChange={(e) => setEditUsername(e.target.value)}
+                    />
+                  </div>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                    <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', textAlign: 'left' }}>WhatsApp</label>
+                    <input
+                      type="text"
+                      className="input-palpite"
+                      style={{ width: '100%', padding: '0.5rem', background: '#111827', border: '1px solid var(--border-color)', borderRadius: '8px', color: '#fff' }}
+                      value={editWhatsapp}
+                      onChange={(e) => setEditWhatsapp(e.target.value)}
+                    />
+                  </div>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                    <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', textAlign: 'left' }}>Senha</label>
+                    <input
+                      type="text"
+                      className="input-palpite"
+                      style={{ width: '100%', padding: '0.5rem', background: '#111827', border: '1px solid var(--border-color)', borderRadius: '8px', color: '#fff' }}
+                      value={editUserPassword}
+                      onChange={(e) => setEditUserPassword(e.target.value)}
+                    />
+                  </div>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                    <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', textAlign: 'left' }}>Perfil (Role)</label>
+                    <select
+                      style={{ width: '100%', padding: '0.5rem', background: '#111827', border: '1px solid var(--border-color)', borderRadius: '8px', color: '#fff' }}
+                      value={editRole}
+                      onChange={(e) => setEditRole(e.target.value)}
+                    >
+                      <option value="Jogador">Jogador</option>
+                      <option value="Moderador">Moderador</option>
+                      <option value="Admin">Admin</option>
+                    </select>
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
+                    <button
+                      onClick={() => setEditingUser(null)}
+                      style={{
+                        flex: 1, padding: '0.5rem', borderRadius: '8px', border: '1px solid var(--border-color)',
+                        background: 'transparent', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 'bold'
+                      }}
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      onClick={handleSaveEditUser}
+                      style={{
+                        flex: 1, padding: '0.5rem', borderRadius: '8px', border: 'none',
+                        background: 'linear-gradient(135deg, var(--accent-gold), #b8860b)', color: '#000', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 'bold'
+                      }}
+                    >
+                      Salvar
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -3633,7 +3822,7 @@ function DashboardContent() {
           };
 
           const activeStageConfig = stagesConfig[knockoutStage] || stagesConfig.r32;
-          const isApprovedForActiveStage = currentUserRole === 'Admin' || (currentUserObj && currentUserObj[activeStageConfig.key]) || sandboxMode;
+          const isApprovedForActiveStage = currentUserRole === 'Admin' || currentUserRole === 'Moderador' || (currentUserObj && currentUserObj[activeStageConfig.key]) || sandboxMode;
           const isUserAdminOrMod = currentUserRole === 'Admin' || currentUserRole === 'Moderador';
           if (!mataMataPublic && !isUserAdminOrMod && !sandboxMode) {
             return (
@@ -3673,7 +3862,7 @@ function DashboardContent() {
               <div style={{ display: 'flex', gap: '0.4rem', overflowX: 'auto', paddingBottom: '0.8rem', marginBottom: '1.25rem', scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}>
                 {Object.keys(stagesConfig).map(stageKey => {
                   const s = stagesConfig[stageKey];
-                  const isStageApproved = currentUserRole === 'Admin' || (currentUserObj && currentUserObj[s.key]);
+                  const isStageApproved = currentUserRole === 'Admin' || currentUserRole === 'Moderador' || (currentUserObj && currentUserObj[s.key]);
                   return (
                     <button
                       key={stageKey}

@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Icons } from '@/components/Icons';
 import { getFlagCode, formatMatchDate, fetchAllGames } from '@/lib/worldcupApi';
-import { supabase, defaultUsuarios, isSupabaseConfigured } from '@/lib/supabase';
+import { supabase, defaultUsuarios, isSupabaseConfigured, defaultConfrontos } from '@/lib/supabase';
 import { useChampion, CHAMPIONS } from '@/components/ChampionProvider';
 
 const ParticleCanvas = () => {
@@ -251,42 +251,60 @@ export default function Home() {
       // Dispara a sincronização de pontos e mata-mata em background silenciosamente
       fetch('/api/sync', { method: 'POST' }).catch(() => {});
 
-      const games = await fetchAllGames();
-      if (!games || games.length === 0) return;
+      // 1. Busca os confrontos do banco de dados (Supabase) ou localStorage
+      let dbConfs = [];
+      if (isSupabaseConfigured) {
+        const { data, error } = await supabase.from('confrontos').select('*').order('id', { ascending: true });
+        if (!error && data) dbConfs = data;
+      } else if (typeof window !== 'undefined') {
+        const raw = localStorage.getItem('copa26_confrontos');
+        if (raw) {
+          try {
+            dbConfs = JSON.parse(raw);
+          } catch(e) {}
+        }
+      }
 
+      if (dbConfs.length === 0) {
+        dbConfs = JSON.parse(JSON.stringify(defaultConfrontos || []));
+      }
+
+      // 2. Busca jogos ao vivo da API externa para termos o status "AO VIVO" dinâmico
+      const games = await fetchAllGames().catch(() => []);
+      
       const live = games.filter(g =>
         g.finished === 'FALSE' &&
         g.time_elapsed !== 'notstarted' &&
         g.time_elapsed !== 'finished'
       ).map(g => {
-        const homeName = g.home_team_name_en && g.home_team_name_en !== '0' && g.home_team_name_en !== 'tbd' ? g.home_team_name_en : (g.home_team_label || 'A definir');
-        const awayName = g.away_team_name_en && g.away_team_name_en !== '0' && g.away_team_name_en !== 'tbd' ? g.away_team_name_en : (g.away_team_label || 'A definir');
+        // Encontra o correspondente no banco para usar nomes traduzidos e corretos
+        const dbMatch = dbConfs.find(c => String(c.id) === String(g.id));
         return {
           ...g,
-          home_team_name_en: homeName,
-          away_team_name_en: awayName
+          home_team_name_en: dbMatch ? dbMatch.home_team : (g.home_team_name_en || g.home_team_label || 'A definir'),
+          away_team_name_en: dbMatch ? dbMatch.away_team : (g.away_team_name_en || g.away_team_label || 'A definir'),
+          local_date: dbMatch ? `${dbMatch.match_date} ${dbMatch.match_time}` : g.local_date
         };
       });
       setLiveMatches(live);
 
-      const upcoming = games.filter(g =>
-        g.finished === 'FALSE' &&
-        (g.time_elapsed === 'notstarted' || !g.time_elapsed)
-      ).map(g => {
-        const homeName = g.home_team_name_en && g.home_team_name_en !== '0' && g.home_team_name_en !== 'tbd' ? g.home_team_name_en : (g.home_team_label || 'A definir');
-        const awayName = g.away_team_name_en && g.away_team_name_en !== '0' && g.away_team_name_en !== 'tbd' ? g.away_team_name_en : (g.away_team_label || 'A definir');
-        return {
-          ...g,
-          home_team_name_en: homeName,
-          away_team_name_en: awayName
-        };
-      });
-
-      // Ordenar por data ascendente para mostrar os próximos cronologicamente
-      upcoming.sort((a, b) => {
-        const dateA = new Date(a.local_date);
-        const dateB = new Date(b.local_date);
+      // 3. Filtra os próximos confrontos diretamente do banco de dados para garantir data/horário/times 100% idênticos ao dashboard
+      const upcoming = dbConfs.filter(c => {
+        const isFinished = c.finished === 'TRUE' || c.finished === true;
+        return !isFinished;
+      }).sort((a, b) => {
+        const dateA = new Date(`${a.match_date}T${a.match_time}`);
+        const dateB = new Date(`${b.match_date}T${b.match_time}`);
         return dateA - dateB;
+      }).map(c => {
+        return {
+          id: c.id,
+          group: c.grupo,
+          home_team_name_en: c.home_team,
+          away_team_name_en: c.away_team,
+          local_date: `${c.match_date} ${c.match_time}`,
+          finished: 'FALSE'
+        };
       });
 
       setUpcomingMatches(upcoming.slice(0, 3));
@@ -392,14 +410,14 @@ export default function Home() {
           password: regPassword,
           whatsapp: regWhatsapp,
           role: 'Jogador',
-          approved: false
+          approved: true
         };
 
         const { error: insertErr } = await supabase.from('usuarios').insert(newUser);
         if (insertErr) throw insertErr;
       }
 
-      setShowPixModal(true);
+      alert("🎉 Cadastro realizado com sucesso! Clique em entrar para acessar seu painel.");
       setShowRegister(false);
       setShowLogin(true);
       setUsername(formattedUsername);
