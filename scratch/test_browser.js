@@ -2,6 +2,8 @@ const puppeteer = require('puppeteer');
 const fs = require('fs');
 const path = require('path');
 
+const delay = ms => new Promise(res => setTimeout(res, ms));
+
 async function run() {
   console.log('Starting puppeteer browser...');
   const browser = await puppeteer.launch({
@@ -22,6 +24,27 @@ async function run() {
 
     await page.screenshot({ path: path.join(__dirname, 'landing_page.png') });
     console.log('Saved landing_page.png');
+
+    console.log('Waiting for loading splash screen (6s)...');
+    await delay(6000);
+
+    console.log('Clicking ENTRAR action card...');
+    const divs = await page.$$('div');
+    let entrarCard = null;
+    for (const div of divs) {
+      const text = await page.evaluate(el => el.textContent, div);
+      if (text.trim() === 'ENTRAR') {
+        entrarCard = div;
+        break;
+      }
+    }
+
+    if (entrarCard) {
+      await entrarCard.click();
+      await delay(1000); // Wait for modal to pop up
+    } else {
+      console.log('ENTRAR card not found, assuming form is already open or skipping...');
+    }
 
     console.log('Filling login form...');
     await page.waitForSelector('input[type="text"]');
@@ -50,7 +73,7 @@ async function run() {
 
     console.log('Waiting for dashboard navigation...');
     // wait for network to be idle or URL to change
-    await page.waitForTimeout(5000); 
+    await delay(5000); 
 
     console.log('Current URL:', page.url());
 
@@ -71,7 +94,7 @@ async function run() {
     if (apostarTab) {
       console.log('Clicking "Apostar" tab...');
       await apostarTab.click();
-      await page.waitForTimeout(3000); // Wait for tab transition and sync
+      await delay(3000); // Wait for tab transition and sync
       
       await page.screenshot({ path: path.join(__dirname, 'dashboard_apostar.png') });
       console.log('Saved dashboard_apostar.png');
