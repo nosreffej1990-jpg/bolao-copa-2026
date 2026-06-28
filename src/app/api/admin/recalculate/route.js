@@ -51,7 +51,25 @@ export async function POST(request) {
     }
 
     // Busca dados no Supabase e ESPN
-    const { data: currentConfs } = await supabaseServer.from('confrontos').select('*').order('id', { ascending: true });
+    const { data: dbConfs } = await supabaseServer.from('confrontos').select('*').order('id', { ascending: true });
+    let currentConfs = dbConfs || [];
+
+    // Se houver confrontos faltando no banco de dados (ex: por falha no insert do VARCHAR do grupo), insere-os automaticamente
+    if (currentConfs.length < 104) {
+      console.log(`Recalculate: detectados confrontos em falta no banco. Banco tem ${currentConfs.length}/104. Inserindo os que faltam...`);
+      const missingConfs = defaultConfrontos.filter(d => !currentConfs.some(c => c.id === d.id));
+      if (missingConfs.length > 0) {
+        const { error: insertErr } = await supabaseServer.from('confrontos').insert(missingConfs);
+        if (insertErr) {
+          console.error('Recalculate: erro ao auto-inserir confrontos ausentes:', insertErr);
+        } else {
+          // Re-busca os confrontos para ter a lista completa
+          const { data: reloaded } = await supabaseServer.from('confrontos').select('*').order('id', { ascending: true });
+          currentConfs = reloaded || [];
+        }
+      }
+    }
+
     if (!currentConfs || currentConfs.length === 0) {
       return NextResponse.json({ error: 'Nenhum confronto encontrado no banco.' }, { status: 404 });
     }

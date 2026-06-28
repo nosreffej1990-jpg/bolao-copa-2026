@@ -89,6 +89,8 @@ Extraímos lógicas utilitárias complexas do frontend para hooks reutilizáveis
 ## 12. Sincronização do Mata-mata (Fase R32) e Correção de Banco de Dados
 - **Ajuste de VARCHAR na Coluna Grupo**: Corrigimos o tipo da coluna `grupo` na tabela `confrontos` no script [schema.sql](file:///C:/Users/nosre/OneDrive/Documentos/GitHub/bolao-copa-2026/schema.sql) de `VARCHAR(2)` para `VARCHAR(10)`. Isso permite salvar e atualizar os jogos do mata-mata correspondentes a `'R32'`, `'R16'`, `'THIRD'` e `'FINAL'` sem truncamento ou erros do PostgreSQL.
 - **Auto-Sincronização Local Fallback**: Modificamos a função `fetchData` no arquivo [page.js](file:///C:/Users/nosre/OneDrive/Documentos/GitHub/bolao-copa-2026/src/app/dashboard/page.js) para detectar se a aplicação está rodando em modo sandbox ou local sem conexão ativa com o Supabase. Caso o servidor não esteja configurado, o cliente realiza a sincronização dos dados da API diretamente no navegador e atualiza o `localStorage` com os confrontos oficiais do Round of 32 (R32) de forma 100% transparente.
+- **Auto-Inserção de Confrontos Ausentes no Servidor**: Corrigimos as rotas `/api/sync/route.js` e `/api/admin/recalculate/route.js` no servidor para detectar se os confrontos de mata-mata (IDs 73 a 104) estão ausentes no banco de dados Supabase de produção (caso o script SQL inicial tenha falhado para estas linhas no servidor). Se estiverem ausentes, o backend os cria automaticamente usando os modelos originais e realiza a sincronização imediata com os times oficiais da API.
+
 
 
 
